@@ -3,7 +3,7 @@
 | 目录 | 方向 | 实验分支 | 状态 |
 | --- | --- | --- | --- |
 | [token_pruning/](token_pruning/README.md) | 视觉 token 剪枝（主 baseline FastV） | code/token-pruning | CPU 随机权重核验完成（EXP-0001），GPU 复现待执行 |
-| [env/](env/windows_env.sh) | 实验室电脑（原生 Windows）的环境脚本 | 所有分支 | 未在 Windows 上运行过 |
+| [env/](env/windows_env.sh) | 实验室电脑（原生 Windows）的环境脚本 | 所有分支 | 2026-10-23 在实验室电脑上运行通过；六个环境已装好 CUDA 版 torch（“再装”一列待 source/ 克隆后进行） |
 | [ts_forecasting/](ts_forecasting/README.md) | 时序预测（主 baseline iTransformer） | code/ts-forecasting | 对照 DUET/TQNet/WPMixer 已在 CPU 上运行 ETTh1（EXP-0003）；iTransformer 待复现 |
 
 外部仓库（LLaVA、FastV、SparseVLM、VisionZip、iTransformer、DUET、TQNet、WPMixer）不放进本仓库，按 [source/README](../source/README.md) 登记的 commit 克隆到 `source/` 下（只读）；本目录只放本项目自己的代码。
@@ -78,6 +78,22 @@ source /d/6CJNM007/idea_rearch/code/env/windows_env.sh tp && cd /d/6CJNM007/idea
 - cu121 需要 `nvidia-smi` 右上角的 CUDA Version ≥ 12.1；驱动较旧时一律改用 cu118（上表各 torch 版本都有 cu118 构建）。
 - 每装完一批依赖都再查一次 torch 版本，确认没有被换成 CPU 版或别的版本；若被换掉，重装 CUDA 版并记录是哪个包引起的。
 - 若官方版本与本机驱动不兼容，记录实际使用的版本和原因。
+- **numpy**：从 CUDA 源装 torchvision 0.16.2 时会顺带装上 numpy 2.x，而 torch 2.1.2 按 NumPy 1.x 编译，`torch.from_numpy` 会报 “Numpy is not available”。`tp`、`sparsevlm` 装完 torch 后再执行 `pip install numpy==1.26.4`。
+
+#### 实验室电脑上的安装结果（2026-10-23）
+
+Miniforge 26.7.2-1 装在 `D:\6CJNM007\miniforge3`。它的 `.condarc` 加了 `register_envs: false` 和 `number_channel_notices: 0`，否则 conda 会往 `C:\Users\<用户>\.conda\environments.txt` 和 AppData 写文件。
+
+| 环境 | Python | torch | CUDA | `torch.cuda.is_available()` | 备注 |
+| --- | --- | --- | --- | --- | --- |
+| `tp` | 3.10.22 | 2.1.2+cu121（torchvision 0.16.2+cu121） | 12.1 | True | numpy 改为 1.26.4 |
+| `sparsevlm` | 3.10.22 | 2.1.2+cu121（torchvision 0.16.2+cu121） | 12.1 | True | numpy 改为 1.26.4 |
+| `itrans` | 3.10.22 | 2.0.0+cu118 | 11.8 | True | numpy 由 requirements 安装 |
+| `wpmixer` | 3.10.22 | 2.0.1+cu118 | 11.8 | True | numpy 由 requirements 安装 |
+| `duet` | 3.8.20 | 2.4.1+cu121 | 12.1 | True | numpy 由 requirements 安装 |
+| `tqnet` | 3.8.20 | 2.4.1+cu121 | 12.1 | True | numpy 由 requirements 安装 |
+
+每个环境都在 RTX 3090 上做过一次矩阵乘法。“再装”一列需要先把外部仓库克隆到 `source/`，尚未进行。
 
 ### 原生 Windows 上的已知差异（来自代码核查，尚未在 Windows 上运行）
 

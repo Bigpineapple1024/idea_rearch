@@ -16,8 +16,8 @@
 共同项：
 
 - **定位**：修士毕业论文，约 1 年；投稿目标待定。
-- **算力**：实验室电脑单张 GPU（用户报告为 RTX 3090 24GB），驱动与 CUDA 版本待用 `nvidia-smi` 确认。
-- **存储与环境**：实验室电脑上只用 `D:\6CJNM007`（DEC-0013），可用空间待确认；原生 Windows + Miniforge（DEC-0014）。
+- **算力**：实验室电脑单张 NVIDIA GeForce RTX 3090，显存 24GB（24576 MiB），计算能力 8.6；驱动 595.95，`nvidia-smi` 显示 CUDA Version 13.2（驱动支持的最高版本，PyTorch 的 cu121、cu118 构建都能用）；WDDM 模式，这张卡同时驱动显示器，桌面程序常驻约 1.2GB 显存（2026-10-23 用 `nvidia-smi` 确认）。
+- **存储与环境**：实验室电脑上只用 `D:\6CJNM007`（DEC-0013）；D 盘（NTFS）容量 1863GB，可用约 1500GB（2026-10-23 确认），足够放权重（约 15GB）、COCO val2014（约 6GB）和各 conda 环境；原生 Windows + Miniforge（DEC-0014），Miniforge 26.7.2-1 已装到 `D:\6CJNM007\miniforge3`，六个环境的 CUDA 版 torch 已装好并确认 GPU 可用（见 [code/README](../code/README.md)）。
 - **备份**：`D:\6CJNM007\backup\<EXP>\<RUN>\`。
 - **预算上限**：单个 idea 试验阶段 30 次运行或 20 GPU 小时；baseline 复现一周（见研究流程“实验执行规范”）。
 
