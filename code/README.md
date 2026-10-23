@@ -113,6 +113,7 @@ source /d/6CJNM007/idea_rearch/code/env/windows_env.sh tp && cd /d/6CJNM007/idea
 - **装“再装”一列时用约束文件固定 torch**：LLaVA 的 peft、bitsandbytes 等不固定版本，新版可能要求更高的 torch，pip 就会从 PyPI 换成 CPU 版。每个环境用 `pip install -c <约束文件> ...`，约束文件写已装的 `torch==<版本>+cu<版本>`；`tp`、`sparsevlm` 再加 `torchvision==0.16.2+cu121` 和 `numpy==1.26.4`。
 - **peft**：LLaVA 不固定 peft，最新版要用新版 accelerate 的 `clear_device_cache`，与 LLaVA 固定的 accelerate 0.21.0 不兼容，`import peft` 报 ImportError。`tp`、`sparsevlm` 装 `peft==0.10.0`（2024-03，与 LLaVA 固定的 commit 同期）。LLaVA 只在加载 LoRA 权重时用 peft，llava-v1.5-7b 本身不受影响。
 - **setuptools**：`wpmixer` 环境没有 `pkg_resources`，WPMixer 内置的 `pytorch_wavelets/dtcwt` 需要它，装 `setuptools==69.5.1`。外部仓库里只有这一处用到 `pkg_resources`。
+- **thop**（2026-10-24 补装）：WPMixer 的 `exp/exp_main.py` 在模块顶部导入 `thop`（只用于统计 GFLOPs），但它不在 requirements.txt 里；缺少时 `run_LTF.py` 一启动就报 ModuleNotFoundError（EXP-0005-R13～R24）。用约束文件固定 torch 后装 `thop`（0.1.1.post2209072238），torch 未变，`pip check` 无冲突。
 - **sparsevlm 的 transformers**：按 SparseVLM 官方要求装 4.37.0 后，`pip check` 会提示 llava 要求 4.37.2，这是预期的。
 
 #### 实验室电脑上的安装结果（2026-10-23）
@@ -124,7 +125,7 @@ Git 为 PortableGit 2.56.0.3（`D:\6CJNM007\git`），Miniforge 26.7.2-1 装在 
 | `tp` | 3.10.22 | 2.1.2+cu121（torchvision 0.16.2+cu121） | 12.1 | True | llava 1.2.2.post1（`source/LLaVA`，可编辑安装）、transformers 4.37.2、tokenizers 0.15.1、accelerate 0.21.0、timm 0.6.13、peft 0.10.0、bitsandbytes 0.45.5、numpy 1.26.4 |
 | `sparsevlm` | 3.10.22 | 2.1.2+cu121（torchvision 0.16.2+cu121） | 12.1 | True | llava 1.2.2.post1（`source/SparseVLMs` v1.5，可编辑安装）、transformers 4.37.0、tokenizers 0.15.1、accelerate 0.21.0、peft 0.10.0、bitsandbytes 0.45.5、numpy 1.26.4 |
 | `itrans` | 3.10.22 | 2.0.0+cu118 | 11.8 | True | numpy 1.23.5、pandas 1.5.3、scikit-learn 1.2.2、matplotlib 3.7.0、reformer-pytorch 1.4.4 |
-| `wpmixer` | 3.10.22 | 2.0.1+cu118 | 11.8 | True | numpy 1.25.2、pandas 1.5.3、scikit-learn 1.3.0、optuna 3.6.1、PyWavelets 1.6.0、setuptools 69.5.1 |
+| `wpmixer` | 3.10.22 | 2.0.1+cu118 | 11.8 | True | numpy 1.25.2、pandas 1.5.3、scikit-learn 1.3.0、optuna 3.6.1、PyWavelets 1.6.0、setuptools 69.5.1、thop 0.1.1（2026-10-24 补装） |
 | `duet` | 3.8.20 | 2.4.1+cu121 | 12.1 | True | numpy 1.24.4、pandas 1.5.3、darts 0.25.0、salesforce-merlion 2.0.2、ray 2.10.0、pytorch-lightning 2.4.0、lightgbm 4.1.0 |
 | `tqnet` | 3.8.20 | 2.4.1+cu121 | 12.1 | True | requirements 不固定版本，装到的是 numpy 1.24.4、pandas 2.0.3、scikit-learn 1.3.2、matplotlib 3.7.5 |
 
