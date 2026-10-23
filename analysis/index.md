@@ -10,7 +10,8 @@
 | 实验室电脑新会话的交接 | [实验室会话交接](实验室会话交接.md) |
 | 视觉 token 剪枝：六篇总结与趋势（原文） | [六篇论文总结与视觉Token压缩趋势](六篇论文总结与视觉Token压缩趋势.md) |
 | 视觉 token 剪枝：三篇共性、差异与 baseline（FastV） | [所有论文在baseline骨架的改进内容](专题分析/所有论文在baseline骨架的改进内容.md) |
-| 问题—现象—机制矩阵（两份，待 deep-read 合并） | [视觉Token压缩_ModeC](视觉Token压缩_ModeC.md)（原文）、[MODE_C-0001](MODE_C-0001_视觉token剪枝.md)（源码与探针） |
+| 问题—现象—机制矩阵（合并版，回流 EXP-0002） | [MODE_C-0002](MODE_C-0002_视觉token剪枝.md)；旧版保留：[视觉Token压缩_ModeC](视觉Token压缩_ModeC.md)（原文）、[MODE_C-0001](MODE_C-0001_视觉token剪枝.md)（源码与探针） |
+| 论文全文（MinerU 解析，只有文本） | [literature/processed](../literature/processed/README.md) |
 | 候选方案（待 baseline 复现与组合实验后重新排序） | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
 | baseline 复现代码与步骤 | [code/token_pruning](../code/token_pruning/README.md) |
 | 视觉方向 GPU 复现记录与深挖 | [EXP-0002](实验报告/EXP-0002_record.md)、[SQZ-EXP-0002](实验报告/EXP-0002_squeeze.md) |
@@ -64,7 +65,8 @@
 | [analysis/毕业选题候选.md](../analysis/毕业选题候选.md) | 毕业选题候选：约束、候选方向与下一步 |
 | [analysis/archied/2026-10-23_SOP-v1_从论文到融合方案.md](../analysis/archied/2026-10-23_SOP-v1_从论文到融合方案.md) | 已归档：SOP v1（被研究流程 v2.0 取代） |
 | [analysis/实验室会话交接.md](../analysis/实验室会话交接.md) | 实验室电脑新会话的交接说明 |
-| [analysis/MODE_C-0001_视觉token剪枝.md](../analysis/MODE_C-0001_视觉token剪枝.md) | MODE_C_PACKAGE：多模态大模型视觉 token 剪枝 |
+| [analysis/MODE_C-0001_视觉token剪枝.md](../analysis/MODE_C-0001_视觉token剪枝.md) | MODE_C_PACKAGE：多模态大模型视觉 token 剪枝（历史版本，已由 MODE_C-0002 取代） |
+| [analysis/MODE_C-0002_视觉token剪枝.md](../analysis/MODE_C-0002_视觉token剪枝.md) | MODE_C_PACKAGE：视觉 token 剪枝合并版（原文版 + 源码版 + EXP-0001/0002 回流） |
 | [analysis/IDEA-0001_编码器侧压缩的位置编号.md](../analysis/IDEA-0001_编码器侧压缩的位置编号.md) | IDEA_PACKAGE：编码器侧压缩的位置编号（融合路线候选，deferred） |
 | [analysis/论文笔记/PAPER-0004_FastV_源码核验.md](../analysis/论文笔记/PAPER-0004_FastV_源码核验.md) | 源码核验补充：FastV |
 | [analysis/论文笔记/PAPER-0005_SparseVLM_源码核验.md](../analysis/论文笔记/PAPER-0005_SparseVLM_源码核验.md) | 源码核验补充：SparseVLM / SparseVLM+ |
@@ -98,6 +100,7 @@
 | [CLAUDE.md](../CLAUDE.md) | Claude Code 项目入口 |
 | [code/README.md](../code/README.md) | 实验代码 |
 | [literature/README.md](../literature/README.md) | 论文解析材料 |
+| [literature/processed/README.md](../literature/processed/README.md) | MinerU 解析全文（flash 档，只有文本）与校验和 |
 | [paper/README.md](../paper/README.md) | 论文写作 |
 | [paper/论文写作-新会话读取清单.md](../paper/论文写作-新会话读取清单.md) | 论文写作：新会话读取清单 |
 | [README.md](../README.md) | 研究项目工作区 |

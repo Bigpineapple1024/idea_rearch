@@ -16,7 +16,7 @@ source_ids: [arXiv:2412.17176, github:Secure-and-Intelligent-Systems-Lab/WPMixer
 evidence_status: partial
 evidence_locations: [data_provider/data_factory.py L17-33, utils/Tuner.py L45-53, exp/exp_main.py L133-140 L165-188, models/wavelet_patch_mixer.py, scripts/Unified/ETTh1_Unified_setup.sh, scripts/Full_HyperSearch/ETTh1_full_hyp.sh, scripts/Multivariate_long_term_result_unified_setting.png, EXP-0003]
 missing_evidence:
-- 论文全文未读；论文正文是否说明测试集 drop_last 与超参数选择方式未知
+- 论文全文已回查（2026-10-24，E-WP-C01）：论文没有说明 Optuna 的搜索目标是验证集还是测试集；测试集 drop_last 在论文中未提
 - 只运行了 ETTh1 统一设置；Full_HyperSearch（回看 512）未运行
 next_skill: deep-read Mode C
 source_identity_and_version: "Murad, Aktukmak, Yilmaz, AAAI 2025, 39(18):19581-19588, arXiv 2412.17176；代码 MIT，74104c9d (2026-06-16)"
@@ -25,7 +25,7 @@ study_type_and_context: 多变量长期预测；ETT、Weather、Electricity、Tr
 design_units_samples_or_materials: 标准 TSLib 划分
 intervention_input_or_procedure: 输入经 RevIN 后做离散小波分解，每个分辨率的系数序列各用一个 patch + MLP Mixer 分支预测未来系数，再逆小波变换
 measurements_and_analysis: MSE、MAE、FLOPs
-results_with_uncertainty: 单种子 42；无方差
+results_with_uncertainty: 正文 Table 2 为种子 42 的单次运行，无方差；统一设置的结果（补充 Table 9 与 Table 4）用了 3 个种子
 claim_evidence_implementation_map: 见 E 表
 limitations_biases_and_ethics: 测试集 drop_last=True；超参数在测试集上调优
 reproducibility_and_transferability: 能跑通且接近报告值，但官方分数来自不完整的测试集与测试集调参
@@ -48,7 +48,7 @@ unresolved_questions: [去掉 drop_last 并改为验证集调参后，WPMixer �
 
 | E ID | 类型 | 内容 | 定位 | 支持范围 | 未知 / 替代解释 |
 | --- | --- | --- | --- | --- | --- |
-| E-WP-C01 | SC | 小波多分辨率分解 + patch 嵌入 + MLP 混合，以较低计算量显著优于 MLP 和 Transformer 类方法 | 论文摘要、README | 7 个数据集 | 未回查原文 |
+| E-WP-C01 | SC（已回查，部分成立，2026-10-24） | 小波多分辨率分解 + patch 嵌入 + MLP 混合，以较低计算量显著优于 MLP 和 Transformer 类方法。7 个数据集（ETTh1/2、ETTm1/2、Weather、Electricity、Traffic）。正文 Table 2（回看长度一起搜索，96～1200）中 WPMixer 的 MSE 第一 29 次、MAE 第一 26 次（每个指标 35 行，含 Avg），Electricity 的平均不如 TimeMixer；基线数字取自 TimeMixer 或原论文。“计算量更低”只有 Table 3 支持：ETTh1、统一设置、d=16，只与 TimeMixer 比较 GFLOPs（0.210～0.481 vs 2.774～6.066），没有与 Transformer 类方法比，也没有时间和显存数据；主结果配置没有对应的 GFLOPs。超参数用 Optuna TPE 搜索，论文没有说明搜索目标是验证集还是测试集（代码中是测试集，E-WP-C04） | 论文 p.5（数据集、Optuna、Electricity 排名）、p.6 Table 2～3；补充 Table 7～8（搜索空间与选定值）、p.11 Table 4 | 7 个数据集 | — |
 | E-WP-C02 | SC | 统一设置 Table 9：ETTh1-96 MSE 0.368 / MAE 0.394，四个长度平均 0.422 / 0.423。表注说明在统一设置下仍调了学习率、小波、层数、tfactor、dfactor、dropout、patch、stride、d_model；对比方法的数字取自 TimeMixer 论文 | scripts/Multivariate_long_term_result_unified_setting.png | ETTh1 等 | 对比方法的评测协议可能不同 |
 | E-WP-C03 | DE | **测试集 `drop_last=True`**：凑不满一个 batch 的最后几个测试窗口被丢弃。ETTh1 统一设置（batch 128）在 96/192/336/720 上丢弃 97/1/113/113 个窗口（3.5%/0.0%/4.4%/5.2%）；全搜索设置（batch 256）丢弃 225/129/241/113 个（8.1%/4.8%/9.5%/5.2%） | data_factory.py L21-23；窗口数按 2881 − pred_len 计算 | ETT 数据集 | 被丢弃的总是测试集末尾 |
 | E-WP-C04 | DE | **Optuna 调参的目标是测试集损失**：`Tuner.objective` 返回 `exp.min_test_loss`，即各 epoch 中测试集 MSE 的最小值；脚本中带 9 位小数的学习率（如 0.002991949）来自这一调参 | utils/Tuner.py L53；exp_main.py L135-140 | 全部数据集 | 正式测试仍加载按验证集早停的 checkpoint，但超参数已见过测试集 |

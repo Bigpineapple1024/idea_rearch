@@ -1,6 +1,6 @@
 # MODE_C_PACKAGE：多模态大模型视觉 token 剪枝（LLaVA-1.5-7B）
 
-状态：partial。模式：仅 Mode C。
+状态：partial。模式：仅 Mode C。**2026-10-24 起由 [MODE_C-0002](MODE_C-0002_视觉token剪枝.md) 取代**（与原文版矩阵合并，并回流 EXP-0002）；本文件保留为历史版本，内容不再修改。
 包 ID MODE_C-0001 / 2026-10-23 / 输入：PAPER-0004～0006（partial）、EXP-0001（代码级核验）、6 篇相关工作的检索摘要 / 材料范围：免训练视觉 token 剪枝，LLaVA-1.5 为主。
 
 ## 结构化交接包

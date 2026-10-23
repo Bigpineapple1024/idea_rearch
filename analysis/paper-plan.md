@@ -27,8 +27,8 @@
 | --- | --- | --- | --- | --- |
 | ① 选 baseline | 候选清单、DEC | 满足选择标准 | 完成（FastV，DEC-0012） | 完成（iTransformer，DEC-0012） |
 | ② 复现 | EXPERIMENT_RECORD + SQUEEZE_REPORT | 达到复现标准 | 完成（EXP-0002 + SQZ-EXP-0002）：vanilla POPE 与官方一致，VisionZip、SparseVLM 的 POPE 与论文相差 ≤0.2；MME-P 比官方低 3.07，记为偏差。CPU 代码核验见 EXP-0001 | iTransformer 待在 GPU 上复现（3 个种子）；对照 DUET、TQNet、WPMixer 已在 CPU 上运行 ETTh1（EXP-0003） |
-| ③ 解析论文 | 论文笔记（原文 + 源码核验） | 原文可追溯 | 三篇原文笔记与源码核验已完成；MinerU 解析待做 | 三篇对照与 iTransformer（PAPER-0007）的原文笔记与源码核验已完成 |
-| ④ 制造意外实验 | MODE_C、组合实验记录、squeeze 报告、现象台账 | 积累到足够的意外现象 | 进行中：EXP-0002 已给出 F8、F10、F11 与 F4 实测（SQZ-EXP-0002）；两份 Mode C 待 deep-read 合并 | 待开始（候选组合见对比文档） |
+| ③ 解析论文 | 论文笔记（原文 + 源码核验） | 原文可追溯 | 完成：三篇原文笔记与源码核验；MinerU 全文解析（flash 档，只有文本）与“待回查”条目已于 2026-10-24 补全 | 完成：三篇对照与 iTransformer（PAPER-0007）的笔记与源码核验；全文回查同上 |
+| ④ 制造意外实验 | MODE_C、组合实验记录、squeeze 报告、现象台账 | 积累到足够的意外现象 | 进行中：两份 Mode C 已合并为 MODE_C-0002（带入 EXP-0002 的 F8、F10、F11 与 F4 实测）；EXP-0006（保留 patch 的位置）已写计划 | 待开始（候选组合见对比文档） |
 | ⑤ 深挖意外现象 | 1a–2b 分析文档 | 定位到根因 | 待开始 | 待开始 |
 | ⑥ 骨架交叉分析 | 骨架全景图、改进内容统计 | 找到最容易突破的现象 | 已有三篇的初版 | 待开始 |
 | ⑦–⑫ 从 idea 到实现 | IDEA 包、迁移方案、验证实验 | 整体指标稳定提升 | 待开始 | 待开始 |
@@ -43,7 +43,7 @@
 1. **时序预测**：
    - iTransformer 用官方脚本在 ETTh1 上跑 3 个种子，过复现门槛后扩展到 ETTh2/ETTm1/ETTm2；
    - DUET、TQNet、WPMixer 在统一协议下重跑作对照（WPMixer 全部窗口计分）。
-2. **论文**：用 deep-read 合并两份视觉 Mode C（带入 SQZ-EXP-0002）；用 MinerU 解析全文并补全“待回查”条目。
+2. **论文**：已完成（2026-10-24）——两份视觉 Mode C 合并为 [MODE_C-0002](MODE_C-0002_视觉token剪枝.md)；MinerU 全文解析（flash 档）并补全“待回查”条目。MinerU 的版面、表格、公式模型需要另外下载，是否安装待用户决定（见 literature/README）。
 3. **视觉方向的意外实验**（研究流程第 ④、⑤ 步）：
    - 记录 FastV 与随机选择保留的 patch 位置，检验 F8 的机制（SQZ-EXP-0002 的最小下一步）；
    - 按实测 token 数对齐 VisionZip 与 SparseVLM（P-SQZ2-3）；

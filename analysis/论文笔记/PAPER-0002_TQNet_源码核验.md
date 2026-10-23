@@ -52,7 +52,7 @@ unresolved_questions: [超参数（lr、dropout、d_model）如何选定, cycle 
 
 | E ID | 类型 | 内容 | 定位 | 支持范围 | 未知 / 替代解释 |
 | --- | --- | --- | --- | --- | --- |
-| E-TQ-C01 | SC | 周期移位的可学习向量作 query，同时利用全局先验和样本局部信息；12 个数据集上达到最好，效率接近线性模型 | 论文摘要、README | 回看 96 | 未回查原文表格 |
+| E-TQ-C01 | SC（已回查，更正，2026-10-24） | 周期移位的可学习向量作 query，同时利用全局先验和样本局部信息。12 个数据集（ETT×4、Electricity、Solar、Traffic、Weather、PEMS03/04/07/08），回看 96，四个预测长度取平均（Table 2）。论文的说法是 24 个指标中 22 个进入前二（Count 行：TQNet 22、TimeXer 11、CycleNet 9、iTransformer 4、SCINet 2），不是“全部最好”；按加粗计 TQNet 最好 16/24，ETTm2 的两项都不在前二。效率证据只有 Fig.7（图片）：Electricity（H=720）上的训练时间（秒/epoch）与参数量，以及 Traffic 上训练时间随变量数的变化，作者称接近 DLinear；没有推理延迟或 FLOPs，实验用单张 RTX 4090。超参数是固定值（附录 A.2），没有说明怎样选出 | 论文 p.1 摘要、p.5 §4.1～4.2、p.6 Table 2、p.9 Fig.7、p.13 A.2 | 回看 96 | “效率接近线性模型”只有训练时间与参数量的证据 |
 | E-TQ-C02 | SC | 论文 Table 2（回看 96）ETTh1 四个预测长度平均 MSE 0.441、MAE 0.434；result.txt 中 ETTh1-96 为 0.3712 / 0.3928 | Figures/Table2.png；result.txt | 单种子 2024 | — |
 | E-TQ-C03 | DE | 结构如上：TQ 参数初始化为 0；注意力 embed_dim = seq_len、4 个头（因此 seq_len 必须能被 4 整除）、注意力 dropout 固定 0.5 | models/TQNet.py | — | — |
 | E-TQ-C04 | DE | `cycle_index` 按全数据中的绝对行号对周期取模，训练/验证/测试相位一致；周期长度需要逐数据集手动指定（ETTh1 为 24） | data_loader.py L84、L97；scripts/TQNet/etth1.sh | — | 周期未知或多周期的数据需要额外处理 |

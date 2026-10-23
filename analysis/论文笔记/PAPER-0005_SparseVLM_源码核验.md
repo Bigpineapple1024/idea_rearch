@@ -3,7 +3,7 @@
 > 本文件是源码核验补充；原文笔记见 [PAPER-0005_SparseVLM](PAPER-0005_SparseVLM.md)。两份冲突时以能追溯到原文页码或源码行号的一方为准。
 
 状态：partial。paper_id PAPER-0005 / 2026-10-23 / 分析者 Claude Code 会话 / 输入：代码 Gumpest/SparseVLMs main@a9e71427220c4cacb6afb5a96d23cfb43142e0c3 与 v1.5@734d9003879689713a132b83297dfad060a5c9af、README、论文检索摘要。
-**论文全文未读**（arxiv.org 被网络策略拦截），SC 条目需回查原文。
+**论文全文已回查（2026-10-24）**：初稿写作时 arxiv.org 被拦截，SC 条目来自检索摘要。2026-10-24 用 MinerU 解析的 arXiv v4（ICML 版）全文（literature/processed/PAPER-0005/）与 PDF 回查了 E-SV-C02、C03；Fig.4、Fig.8～10 只有图片，未能读取。EXP-0002 的真实权重结果补入 E-SV-C06、C12、C13。
 
 ## 结构化交接包
 
@@ -17,9 +17,9 @@ source_ids: [arXiv:2410.04417, github:Gumpest/SparseVLMs@a9e71427220c4cacb6afb5a
 evidence_status: partial
 evidence_locations: [README.md, llava/model/language_model/score.py, llava/model/language_model/modelling_sparse_llama.py L186-322 L540-615 L651-668, llava/model/language_model/utils.py cluster_and_merge, EXP-0001]
 missing_evidence:
-- 论文全文未读取；各版本论文数字不同（v1 与 ICML 版），需确认引用的是哪个版本
+- 已回查 v4（ICML 版）全文；各版本论文数字不同，引用时注明版本（E-SV-C02）
 - 论文描述的“按注意力矩阵的秩自适应确定稀疏率”在 main 与 v1.5 分支代码中均未找到
-- 未在真实权重上运行
+- 真实权重上的复现见 EXP-0002（v1.5 分支，Windows 上 FlashAttention-2 由 SDPA 替代）
 next_skill: deep-read Mode C
 source_identity_and_version: "Zhang et al., ICML 2025 (arXiv 2410.04417)；SparseVLM+ TPAMI 2026；代码 Apache-2.0，main 分支用 USE_VERSION=2_0 切换到 SparseVLM+"
 research_question: 视觉 token 应由问题文本引导、在 LLM 内部逐层稀疏，能否在保持准确率的同时降低计算
@@ -33,7 +33,7 @@ limitations_biases_and_ethics: 见“研究判断”
 reproducibility_and_transferability: 只支持 batch size 1；写死 .cuda() 和作者集群路径；需要 flash_attn 2.3.3 与 transformers 4.37.0
 candidate_P: [P1 注意力作为重要性的可靠性, P2 位置偏差, P3 层间预算分配, P4 被丢弃信息的处理]
 candidate_F: [F2 SparseVLM+ 的 RoPE 校正, F3 文本引导 vs 文本无关, F4 预算口径, F5 回收被取消, F6 位置处理不同]
-evidence_index: E-SV-C01..E-SV-C12
+evidence_index: E-SV-C01..E-SV-C13
 unresolved_questions: [秩自适应策略在哪个版本的代码里, v2 取消回收的消融数据]
 ```
 
@@ -55,17 +55,18 @@ unresolved_questions: [秩自适应策略在哪个版本的代码里, v2 取消�
 | E ID | 类型 | 内容 | 定位 | 支持范围 | 未知 / 替代解释 |
 | --- | --- | --- | --- | --- | --- |
 | E-SV-C01 | SC | 用相关文本 token 作评分者；用注意力矩阵的秩决定自适应稀疏率；回收被剪 token | 论文摘要（检索摘要） | — | 秩自适应在代码中未找到（E-SV-C05） |
-| E-SV-C02 | SC | ICML 版：LLaVA FLOPs 降 54%、CUDA 时间降 37%、准确率保留 97%；arXiv v1：FLOPs 降 61～67%、保留 93% | 论文摘要（不同版本） | LLaVA-1.5 | 版本间不一致，引用时注明版本 |
-| E-SV-C03 | SC | 与 FastV 延迟相近时高 11.2～17.3% | arXiv v1 摘要 | LLaVA | 未回查表格 |
+| E-SV-C02 | SC（已回查，更正） | v4（ICML 版）摘要没有数字；引言称 4.5 倍压缩保留 97% 准确率，CUDA 延迟降 37%、准确率降 0.9%；§5.3 给出 CUDA 时间降 43.1%、FLOPs 降 62.8%。初稿中“FLOPs 降 54%”在 v4 中找不到。arXiv v1 摘要为 FLOPs 降 61～67%、保留 93% | v4 p.2 引言、§5.3；v1 摘要 | LLaVA-1.5 | 版本间不一致，引用时注明版本 |
+| E-SV-C03 | SC（已回查，更正） | v4 引言仍称延迟相近时在 LLaVA 上比 FastV 高 11.2～17.3%，这是 Table 1 中 8 项基准归一化均值的**百分点**差（LLaVA-1.5-7B，A100），不是相对提升：192 档 99.1 vs 87.9，128 档 96.7 vs 82.4，64 档 89.3 vs 72.0。同档延迟 SparseVLM 36.50/33.28/29.89 ms，FastV 34.87/30.70/27.30 ms，SparseVLM 每档都略慢。VideoLLaVA 的 14.7 来自 Table 3（194 个 token，95.0% vs 80.3%）；MiniGemini 的 9.2～20.4% 只在 Fig.4 中，未能核对 | v4 p.2 引言、p.5 §4.1、p.6 Table 1、p.7 Table 3 | LLaVA-1.5-7B、A100 | “延迟相近”实际上是 SparseVLM 每档慢 1.6～2.6 ms |
 | E-SV-C04 | DE | 评分者在第 0 层输入嵌入上选一次：`m_v_t = v_t @ t_t^T`，softmax(dim=文本)，按视觉取平均，大于均值者入选 | modelling_sparse_llama.py L199-204 | main 分支 | 输入嵌入层的相似度能否代表语义相关性未验证 |
 | E-SV-C05 | DE | 剪枝层固定为 [2, 6, 15]，每阶段保留数来自查表（如 64 → 66/30/17），只支持 64/96/128/192；main 与 v1.5 分支都没有基于矩阵秩的计算 | score.py；v1.5 分支 score.py；全仓库搜索 rank/svd/linalg 无结果 | 两个分支 | 论文版本与代码可能不一致 |
-| E-SV-C06 | DE | “保留 64”是 32 层平均值：前 2 层 576 个，最后 17 层 17（v1）或 20（v2）个；平均 61.7 / 64.4 | EXP-0001 probe_sparsevlm.py 第 2 部分 | — | 与 VisionZip 的 64 口径不同 |
+| E-SV-C06 | DE | “保留 64”按预算表是 32 层平均值：前 2 层 576 个，最后 17 层 17（v1）或 20（v2）个，平均 61.7 / 64.4（EXP-0001 的推算）。真实权重实测（v1.5，EXP-0002-R47～R49）：剪枝层本身用剪枝前的 token 计算，并追加回收 token，64 档为 576×3、82×4、32×9、18×16，层平均 82.25；192/128 档为 206.5/145.4，比名义预算多 7.6%/13.6%/28.5% | EXP-0001 probe_sparsevlm.py 第 2 部分；EXP-0002-R47～R49 | v1.5 分支 | 与 VisionZip 的 64 口径不同；论文没有定义“保留 N 个”怎样计数 |
 | E-SV-C07 | DE | 打分是 softmax 后的注意力，v1 对所有 head 取平均，v2 只取 text→visual 注意力和最大的 14 个 head | score.py；L253-259、L562-576 | — | — |
 | E-SV-C08 | DE | v2 把注意力除以“全 1 q/k 的 RoPE 点积”；在 LLaVA-1.5-7B 维度下该除数在 1.5～6.2 之间、距离越远越小，因此会放大远处视觉 token 的分数 | L241-251；EXP-0001 probe_sparsevlm.py 第 3 部分 | head_dim=128，base=10000 | 作者主张是“注意力引力校正”；实际效果需消融 |
 | E-SV-C09 | DE | v1 剪枝后把 position id 压成连续编号；v2 保留原始 position id | L311-314、L653-662 | — | — |
 | E-SV-C10 | DE | v1 回收：被剪 token 中相关度前 30% 用 DPC-KNN 聚成 n/10+1 个；v2 设 `s_flag=False` 取消回收 | L273-306；utils.py cluster_and_merge | — | 取消回收的理由与消融未见 |
 | E-SV-C11 | DE | batch=2 时第二个样本保留 0 个视觉 token（mask 只写到第 0 行）；写死 `.cuda()`；eval 脚本路径是作者集群的 /mnt/bn/... | EXP-0001 probe_sparsevlm.py 第 1 部分；L552、L655；scripts/v1_5/eval/*.sh | — | 必须用 batch size 1 评测 |
-| E-SV-C12 | DE | score.py 注释“2*576 4*300 10*200 16*110”与剪枝层 [2,6,15] 实际对应的 2/4/9/17 层不一致 | score.py 第 9 行 | — | 只是注释问题 |
+| E-SV-C12 | DE | score.py 注释“2*576 4*300 10*200 16*110”与剪枝层 [2,6,15] 不一致。EXP-0001 推算为 2/4/9/17 层，真实前向中实测为 3/4/9/16 层（剪枝结果从剪枝层的下一层起生效，EXP-0002-R47～R49） | score.py 第 9 行（main）、第 7 行（v1.5）；v1.5 modelling_sparse_llama.py L265-313 | — | 只是注释问题，但影响按预算表推算的层平均 |
+| E-SV-C13 | DE | EXP-0002（LLaVA-1.5-7B，RTX 3090，batch 1）：POPE 三档与 v4 Table 1 相差 ≤0.2；同档预算下每题耗时最长（POPE 0.185/0.166/0.152 秒），评测显存 18.1 GiB，比其他方法多约 4 GiB（builder.py L114-121 为 32 层各复制一份注意力权重）。与论文 Table 1 中“SparseVLM 每档都比 FastV 略慢”一致 | EXP-0002 记录与 tables.md | Windows 上为 SDPA 替代 | — |
 
 ## 研究判断
 

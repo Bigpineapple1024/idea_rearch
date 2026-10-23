@@ -13,6 +13,8 @@
 - **数据位置**：`MINERU_HOME=D:/6CJNM007/cache/mineru`；不设置时默认写到 C 盘的 `~/.mineru`（DEC-0013 不允许）。
 - **遥测已关闭**：4.0.12 是预发布版，只要状态不是 disabled 就会发送使用统计：`doclib/telemetry/service.py` 第 100～102 行，“只在 enabled 时发送”的判断被注释掉了。安装后先 `mineru server start`、立即 `mineru telemetry disable`，`mineru telemetry status` 显示 `state: disabled`、`last_flush_at: never`。重装或换 `MINERU_HOME` 时必须重做。
 - **只在本地解析**：不使用 `--remote`（会把文档上传到 mineru.net）。`mineru parse` 默认只解析前 10 页，全文需 `--pages all`。
+- **本机只有 flash 档（2026-10-24 实测）**：basic/standard/advanced 需要本地 parse-server（`parse_server.local.mode`，默认 disabled）和另外下载的版面、表格、公式模型，没有安装；不加 `--tier flash` 时报“No basic, standard, or advanced engine available”。现有全文用 flash 档解析（只有文本），见 [processed/README](processed/README.md)。
+- **远端健康探测已关闭**：服务器运行时会定期向 `parse_server.remote.url`（默认 `https://mineru.net/api`）发 `GET /v1/tiers` 探测（`doclib/background/parse_server_health.py`），不含文档内容；不加 `--remote` 时解析任务的隐私级别是 local，不会改走远端（`doclib/services/parse_svc.py` 的 `_resolve_api_target`）。2026-10-24 已执行 `mineru config set parse_server.remote.url http://127.0.0.1:9/api`，探测改指本机无效地址，不再联系 mineru.net。重装或换 `MINERU_HOME` 时与遥测一起重做。
 - **用法**（每条命令先加载环境脚本并设置 `MINERU_HOME`）：
 
   ```bash
