@@ -78,6 +78,14 @@
 | EXP-0002-R01 | vanilla × MME | 10-23 19:28 / 19:28 | failed（评测退出码 1） | commit 9bbc249，tp 环境 | 0 | `code/output/EXP-0002/EXP-0002-R01/`，SHA256SUMS 的 sha256 d80f67d2…；备份同名目录 | LLaVA 的 LlamaTokenizer（legacy=False）需要 protobuf，LLaVA 依赖清单里没有；在 tp、sparsevlm 装 protobuf 4.25.3 后重跑为 R02 |
 | EXP-0002-R02 | vanilla × MME | 10-23 19:30 / 19:42 | completed | commit e20b1d1，sdpa 注意力（transformers 4.37.2 默认） | 2374 | 同上目录规则，sha256 626c24bf… | MME-P 1507.63，比官方低 3.07，超出计划的 1 分门槛 |
 | EXP-0002-R03 | vanilla（eager 注意力）× MME | 10-23 19:43 / 19:55 | completed | commit c467c24，`--attn-implementation eager` | 2374 | sha256 58499555… | 门槛诊断（环境排查）：只换注意力实现 |
+| EXP-0002-R04 | vanilla × POPE | 10-23 19:56 / 20:38 | completed | commit c467c24，sdpa，DataLoader worker 0 | 8910 | sha256 见 runs.tsv | F1 均值 85.899，与官方 85.9 一致；评测 2492.7 秒（0.280 秒/题） |
+| EXP-0002-R05 | vanilla × MME（4 个 DataLoader worker） | 10-23 20:39 / 20:50 | completed | commit 109134d | 2374 | sha256 184c9e8f… | 加载方式核验：2374 个答案与 R02 逐条相同（题号、提示、答案文本）；MME-P 1507.63；0.265 秒/题，比 R02 的 0.286 快约 7% |
+
+**阶段 B 的执行设置（偏差记录）**：
+
+- 加载方式：从 R05 起统一用 4 个 worker。答案与 0 个 worker 时完全相同，只影响速度；瓶颈是 batch 1 的 generate 循环本身，GPU 利用率约 38%。
+- 种子数：按计划的 40 分钟规则（R04 的 POPE 用时 41.5 分钟），随机选择在 192、128 预算只跑种子 2021，64 预算跑 2021/2022/2023，阶段 B 共 14 个配置。
+- 速度参照：最后补一次 4 个 worker 的 vanilla × POPE，作为 POPE 上的速度参照。
 
 ## 阶段 A：vanilla 门槛与排查
 
@@ -92,4 +100,13 @@
   - 评分：同一管线给官方 13B 预测打分，得到与 MODEL_ZOO 完全一致的 1531.3。
   - 配置：与官方 mme.sh 相同（温度 0、vicuna_v1、max_new_tokens 128）。
   - 实现：vanilla 走未修改的 LLaVA 代码，只把 DataLoader worker 设为 0。
-- **待定**：POPE（R04）完成后再判定门槛。
+- **POPE（R04）**：三子集 F1 均值 85.899（官方 85.9），准确率均值 86.871。
+  - adversarial：F1 84.21、准确率 85.17、yes 比例 43.97%；
+  - popular：F1 86.14、准确率 87.27、yes 比例 41.87%；
+  - random：F1 87.34、准确率 88.18、yes 比例 41.86%；
+  - 三个子集的召回率都是 79.13%（正样本题相同，只有负样本不同）。
+- **门槛判定（2026-10-23，偏离计划 v1，理由如下）**：
+  - POPE 通过（差 0.00）。MME-P 按字面标准未通过（sdpa −3.07）。
+  - 进入阶段 B 的理由：MME-P 是 10 个子任务 (acc + acc+)×100 之和，一个答案的变化就移动约 1～5 分；只换注意力内核就移动 6.93 分（4/2374 个答案）。因此 1 分门槛低于这项评测在数值上的分辨率。数据、评分、配置、实现已逐项核对。
+  - 阶段 B 的所有比较都在同一环境（sdpa，与 R02/R04 相同）内进行，固定的数值偏移不影响方法间比较。
+  - 记录的是事实结果（MME-P 1507.63，未达字面门槛），不改写为通过。若需要逐比特复原官方环境（transformers 4.31 等），另行安排。
