@@ -142,7 +142,7 @@ mode_C_input_bundle:
 
 ## 同步清单
 
-- [ ] experiment-results.md：登记 EXP-0005 的 39 次运行与本报告。
-- [ ] 已发现的实验现象.md：更新 F-TS2、F-TS4，新增 F-TS8、F-TS9。
-- [ ] 论文素材库.md：候选图（四种方法的十分位误差曲线、逐窗口相关矩阵）。
-- [ ] 最新实验分析报告.md、index.md。
+- [x] experiment-results.md：登记 EXP-0005 的 39 次运行与本报告（main 65b7335）。
+- [x] 已发现的实验现象.md：更新 F-TS2、F-TS4，新增 F-TS8、F-TS9（main 65b7335）；F-TS8 按补充分析更新（2026-10-24）。
+- [x] 论文素材库.md：候选图（四种方法的十分位误差曲线、逐窗口相关矩阵），MAT-0007（main 65b7335）。
+- [x] 最新实验分析报告.md、index.md（main 65b7335）。
