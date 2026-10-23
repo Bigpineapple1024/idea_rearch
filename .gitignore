@@ -1,0 +1,26 @@
+# 外部资源与实验产物
+/data/
+/checkpoints/
+/papers/
+/code/output/
+
+# 本地会话存档，只跟踪说明
+/sessions/*
+!/sessions/README.md
+
+# 凭据及本地环境
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+.claude/settings.local.json
+
+# 缓存及编辑器产物
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.DS_Store

@@ -1,0 +1,38 @@
+{
+  "source": "user-uploaded skills.zip",
+  "archive_sha256": "08eca303fb1d189fa811ba8ebc2512a55e22ea704c0d61a9e97dcfa7475d01fe",
+  "contract_version": "research-pipeline-contract v1.0",
+  "installation_scope": "project-local Claude Code skills",
+  "files": [
+    {
+      "path": "5-skill-research-workflow.md",
+      "size_bytes": 8200,
+      "sha256": "cb1539793189b5eb67306e79a65be0b2d8963cf31370850bbcb82db457a2a894"
+    },
+    {
+      "path": "analyze-paper/SKILL.md",
+      "size_bytes": 12325,
+      "sha256": "038ba3a5058789b70a80f223e38a23f6d62a053d76a22c0a4b9dc5d14550abc8"
+    },
+    {
+      "path": "deep-read/SKILL.md",
+      "size_bytes": 14288,
+      "sha256": "b77ef152937df06c1a3df8dcf318f6873a68b7f888d4b28233523725b36c9b83"
+    },
+    {
+      "path": "discover-innovation/SKILL.md",
+      "size_bytes": 14512,
+      "sha256": "9638b48c1f53e245d87faf6b6a9035e2478e2360f088bffbb55054521a9e1613"
+    },
+    {
+      "path": "record-experiment/SKILL.md",
+      "size_bytes": 12389,
+      "sha256": "2bd3812ccb19190f1bab1a346fd17daa5c078dbd1de6de85d27f23fcc0a8bb22"
+    },
+    {
+      "path": "squeeze-experiment/SKILL.md",
+      "size_bytes": 13853,
+      "sha256": "912439912d99e4a4db85d1d63c789ac1e9238b8d5671b3a6de8c04090c522e07"
+    }
+  ]
+}
