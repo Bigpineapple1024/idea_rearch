@@ -24,6 +24,7 @@ import os
 import sys
 import time
 
+import numpy as np
 import torch
 from llava.eval import model_vqa_loader as loader
 from torch.utils.data import DataLoader
@@ -57,6 +58,10 @@ def parse():
                       help="diagnostic: write the tokens entering each LLM layer during every prefill (JSON)")
     ours.add_argument("--kept-token-log", default=None,
                       help="diagnostic, fastv/random only: write the image-patch indices kept in every prefill (JSON)")
+    ours.add_argument("--score-log", default=None,
+                      help="diagnostic, fastv only: save FastV's attention score of every image patch per prefill (.npy)")
+    ours.add_argument("--fastv-score-prior", default=None,
+                      help="diagnostic, fastv only: .npy with one value per image patch; scores are divided by it")
     argv = sys.argv[1:]
     split = argv.index("--") if "--" in argv else len(argv)
     method_args = ours.parse_args(argv[:split])
@@ -79,6 +84,8 @@ def parse():
         ours.error("--method random needs --seed")
     if method_args.kept_token_log and method_args.method not in ("fastv", "random"):
         ours.error("--kept-token-log needs --method fastv or random")
+    if (method_args.score_log or method_args.fastv_score_prior) and method_args.method != "fastv":
+        ours.error("--score-log and --fastv-score-prior need --method fastv")
     if method_args.method == "sparsevlm":
         if method_args.retained_tokens is None:
             ours.error("--method sparsevlm needs --retained-tokens")
@@ -91,7 +98,9 @@ def parse():
 def apply_method(model, m):
     schedule = getattr(m, "fastv_schedule", None)
     if m.method == "fastv":
-        return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule)
+        prior_path = getattr(m, "fastv_score_prior", None)
+        prior = torch.from_numpy(np.load(prior_path)) if prior_path else None
+        return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule, score_prior=prior)
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "visionzip":
@@ -148,6 +157,15 @@ def _write_kept(path, keep):
         json.dump({"n_prefills": len(_KEPT), "keep": keep, "n_image_tokens": sorted(_KEPT_N_IMG), "kept": _KEPT}, f)
 
 
+_SCORES = []                 # one vector per prefill: FastV's score of every image patch, before any prior
+
+
+def _record_scores(module, args, kwargs, output):
+    embeds = kwargs.get("inputs_embeds")
+    if embeds is not None and embeds.shape[1] > 1:
+        _SCORES.append(module.fastv_last_scores.float().cpu().numpy())
+
+
 def main():
     method_args, llava_args = parse()
     original_load = loader.load_pretrained_model
@@ -164,6 +182,8 @@ def main():
                 layer.register_forward_pre_hook(functools.partial(_record_layer_tokens, i), with_kwargs=True)
         if method_args.kept_token_log:
             model.get_model().register_forward_hook(_record_kept, with_kwargs=True)
+        if method_args.score_log:
+            model.get_model().register_forward_hook(_record_scores, with_kwargs=True)
         torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
         times["loaded"] = time.time()                # evaluation timing starts after loading
@@ -203,6 +223,8 @@ def main():
     if method_args.kept_token_log:
         schedule = method_args.fastv_schedule
         _write_kept(method_args.kept_token_log, schedule[-1][1] if schedule else method_args.fastv_keep)
+    if method_args.score_log:
+        np.save(method_args.score_log, np.stack(_SCORES))
 
 
 if __name__ == "__main__":

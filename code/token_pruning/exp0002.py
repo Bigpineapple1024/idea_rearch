@@ -39,6 +39,9 @@ BENCHES = {
     # diagnostic only: every question (all three splits) about 20 images, from make_pope_subset.py; not scored
     "pope_img20": {"question_file": f"{DATA}/llava_eval/pope/llava_pope_test_img20.jsonl",
                    "image_folder": f"{DATA}/coco/val2014", "annotations": [], "score": False},
+    # diagnostic only: the pope_img20 questions on one blank grey image (make_blank_questions.py); not scored
+    "pope_img20_blank": {"question_file": f"{DATA}/llava_eval/pope/llava_pope_test_img20_blank.jsonl",
+                         "image_folder": f"{DATA}/blank", "annotations": [], "score": False},
 }
 # Budgets are 32-layer averages of visual tokens (code/token_pruning/README.md, "预算的口径").
 FASTV_KEEP = {192: 166, 128: 98, 64: 30}
@@ -65,11 +68,18 @@ for b in (192, 128, 64):
         CONFIGS[f"random_svp{b}_s{seed}"] = ("tp", ["--method", "random", "--fastv-schedule", SVP[b], "--seed", str(seed)])
         CONFIGS[f"random_flat{b}_s{seed}"] = ("tp", ["--method", "random", "--fastv-k", "2", "--fastv-keep",
                                                      str(FLAT_KEEP[b]), "--seed", str(seed)])
+# EXP-0008: FastV with its scores divided by the content-free position curve measured on blank images
+# (analyze_score_prior.py writes the curve after the blank-image run)
+SCORE_PRIOR = f"{REPO}/code/output/EXP-0008/analysis/position_prior.npy"
+for b in (192, 128, 64):
+    CONFIGS[f"fastv{b}_prior"] = ("tp", CONFIGS[f"fastv{b}"][1] + ["--fastv-score-prior", SCORE_PRIOR])
+# "<config>_scores": FastV with --score-log, for the score-curve diagnostic
+CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
 CONFIGS.update({f"{name}_layers": spec for name, spec in list(CONFIGS.items())})
 # "<config>_kept": FastV or random selection with --kept-token-log, for the kept-patch position diagnostic
 CONFIGS.update({f"{name}_kept": spec for name, spec in list(CONFIGS.items())
-                if name.startswith(("fastv", "random")) and not name.endswith("_layers")})
+                if name.startswith(("fastv", "random")) and not name.endswith(("_layers", "_scores"))})
 
 
 def experiment(run_id):
@@ -123,6 +133,8 @@ def run_one(run_id, config, bench):
         method_args = method_args + ["--layer-token-log", f"{run_dir}/layer_tokens.json"]
     if config.endswith("_kept"):
         method_args = method_args + ["--kept-token-log", f"{run_dir}/kept_tokens.json"]
+    if config.endswith("_scores"):
+        method_args = method_args + ["--score-log", f"{run_dir}/scores.npy"]
     eval_cmd = ("cd {here} && HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TQDM_MININTERVAL=30 VISIONZIP_ROOT={vz} "
                 "python run_eval.py {margs} -- --model-path {model} --question-file {q} --image-folder {img} "
                 "--answers-file {ans} --temperature 0 --conv-mode vicuna_v1").format(
@@ -132,7 +144,7 @@ def run_one(run_id, config, bench):
     with open(f"{run_dir}/cmd.txt", "w") as f:
         scoring = f"# scoring (tp env)\n{shlex.join(score_cmd)}\n" if b.get("score", True) else "# not scored (diagnostic)\n"
         f.write(f"# env: {env}\n{shlex.join(in_env(env, eval_cmd))}\n{scoring}")
-    config_rec = {"experiment": "EXP-0002", "run_id": run_id, "config": config, "bench": bench, "env": env,
+    config_rec = {"experiment": experiment(run_id), "run_id": run_id, "config": config, "bench": bench, "env": env,
                   "method_args": method_args, "model": MODEL, "decoding": "greedy (temperature 0), conv vicuna_v1",
                   "question_file": b["question_file"], "question_file_sha256": sha256(b["question_file"]),
                   "image_folder": b["image_folder"],
@@ -175,6 +187,15 @@ def run_one(run_id, config, bench):
                        "n_questions": n_questions, "keep": kept["keep"], "n_image_tokens": kept["n_image_tokens"],
                        "all_sets_full": all(len(s) == kept["keep"] for s in kept["kept"])}, f, indent=2)
         status["score_exit"] = 0 if kept["n_prefills"] == n_questions else 1
+    elif status["eval_exit"] == 0 and os.path.exists(f"{run_dir}/scores.npy"):
+        import numpy as np                                             # unscored diagnostic: one score vector per question
+        scores = np.load(f"{run_dir}/scores.npy")
+        with open(b["question_file"]) as f:
+            n_questions = sum(1 for _ in f)
+        with open(f"{run_dir}/metrics.json", "w") as f:
+            json.dump({"benchmark": bench, "headline": "n_prefills", "n_prefills": int(scores.shape[0]),
+                       "n_questions": n_questions, "n_image_tokens": int(scores.shape[1])}, f, indent=2)
+        status["score_exit"] = 0 if scores.shape[0] == n_questions else 1
     status["end"] = now()
     status["status"] = "completed" if status.get("score_exit") == 0 else "failed"
     with open(f"{run_dir}/status.json", "w") as f:

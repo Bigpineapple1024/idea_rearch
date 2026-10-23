@@ -66,6 +66,9 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             n_cur = kept.numel()
             if self.fastv_generator is None:
                 score = attn.mean(dim=1)[0, -1, start:start + n_cur]
+                self.fastv_last_scores = score                  # before any prior, for the score-log diagnostic
+                if self.fastv_score_prior is not None:          # diagnostic: divide out a content-free position curve
+                    score = score.float() / self.fastv_score_prior.to(score.device)[kept]
             else:
                 score = torch.rand(n_cur, generator=self.fastv_generator, device=self.fastv_generator.device)
                 score = score.to(hidden.device)
@@ -107,13 +110,17 @@ def _record_image_span(model):
     model.prepare_inputs_labels_for_multimodal = wrapped
 
 
-def bind_fastv(llama_model, k, keep, seed=None, schedule=None):
+def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None):
     """Turn a transformers LlamaModel into FastV in place (image span set by the caller).
 
     seed=None keeps FastV's attention ranking; an integer selects random image tokens from that seed.
     schedule, a list of (layer, keep) pairs, replaces the single stage (k, keep): before each listed layer the image
     tokens still present are cut to `keep`, ranked by the last token's attention at the layer before (or at random).
+    score_prior, a float tensor with one value per image patch, divides the attention scores before the ranking
+    (diagnostic: a position curve measured on blank images).
     """
+    llama_model.fastv_score_prior = None if score_prior is None else score_prior.float()
+    llama_model.fastv_last_scores = None
     stages = dict(schedule) if schedule else {k: keep}
     if min(stages) < 1:
         raise ValueError("every stage layer must be >= 1: the scores come from the layer before it")
@@ -128,8 +135,8 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None):
     return llama_model
 
 
-def apply_fastv(model, k=2, keep=288, seed=None, schedule=None):
+def apply_fastv(model, k=2, keep=288, seed=None, schedule=None, score_prior=None):
     """Enable FastV (or its random-selection control when seed is given) on a loaded LlavaLlamaForCausalLM."""
-    bind_fastv(model.get_model(), k, keep, seed, schedule)
+    bind_fastv(model.get_model(), k, keep, seed, schedule, score_prior)
     _record_image_span(model)
     return model
