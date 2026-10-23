@@ -1,6 +1,6 @@
 # Paper Plan：实验到论文的宏观规划
 
-状态：2026-10-23 更新（DEC-0012～0014）。两条方向并行，各自处于第 ② 步“复现 baseline”。baseline 按用户偏好选近三年、有源码、效果比当前最好的方法差一点的工作。流程规范见 [研究流程 v2.0](研究流程.md)。下表不代表已经完成研究。
+状态：2026-10-24 更新（DEC-0012～0014）。两条方向并行：视觉方向已完成第 ② 步“复现 baseline”（EXP-0002），进入第 ③、④ 步；时序方向仍在第 ② 步（iTransformer 待在 GPU 上复现）。baseline 按用户偏好选近三年、有源码、效果比当前最好的方法差一点的工作。流程规范见 [研究流程 v2.0](研究流程.md)。下表不代表已经完成研究。
 
 ## 项目定义
 
@@ -10,7 +10,7 @@
 | 主 baseline 与依据 | FastV（ECCV 2024，有源码）：同等预算下弱于 VisionZip、SparseVLM，后续工作普遍以它为对照；骨架模型 LLaVA-1.5-7B | iTransformer（ICLR 2024，有源码，MIT）：论文报告 ETTh1（回看 96）平均 MSE 0.454，弱于 2025 年方法（约 0.44，均为论文报告值）；备选 CycleNet（NeurIPS 2024） |
 | 对照与组合实验素材 | VisionZip、SparseVLM | DUET、TQNet、WPMixer |
 | 数据 | POPE（COCO val2014）、MME 为主；GQA、TextVQA 用于独立验证 | ETTh1/ETTh2/ETTm1/ETTm2、Weather、Electricity、Traffic（iTransformer 的标准划分；与 TFB 预处理版逐值比对后再跨框架比较） |
-| 主指标 | POPE 准确率、MME 感知分；同时报告理论 FLOPs 与实测延迟 | MSE、MAE（全部测试窗口计分），3 个种子的均值 ± 标准差 |
+| 主指标 | POPE 三子集 F1 均值（同时报告准确率、yes 比例和召回率）、MME 感知分；同时报告理论 FLOPs、实测每层 token 数与每题耗时 | MSE、MAE（全部测试窗口计分），3 个种子的均值 ± 标准差 |
 | 普遍性要求 | 至少两个 benchmark 上现象一致 | 至少两个数据集上现象一致 |
 
 共同项：
@@ -26,9 +26,9 @@
 | 阶段 | 交付物 | 进入下一阶段的依据 | 视觉 token 剪枝 | 时序预测 |
 | --- | --- | --- | --- | --- |
 | ① 选 baseline | 候选清单、DEC | 满足选择标准 | 完成（FastV，DEC-0012） | 完成（iTransformer，DEC-0012） |
-| ② 复现 | EXPERIMENT_RECORD + SQUEEZE_REPORT | 达到复现标准 | 待执行（EXP-0002，GPU）；CPU 代码核验已完成（EXP-0001） | iTransformer 待在 GPU 上复现（3 个种子）；对照 DUET、TQNet、WPMixer 已在 CPU 上运行 ETTh1（EXP-0003） |
-| ③ 解析论文 | 论文笔记（原文 + 源码核验） | 原文可追溯 | 三篇原文笔记与源码核验已完成；MinerU 解析待做 | 三篇对照的原文笔记与源码核验已完成；iTransformer 笔记待写 |
-| ④ 制造意外实验 | MODE_C、组合实验记录、squeeze 报告、现象台账 | 积累到足够的意外现象 | 待开始（两份 Mode C 待 deep-read 合并） | 待开始（候选组合见对比文档） |
+| ② 复现 | EXPERIMENT_RECORD + SQUEEZE_REPORT | 达到复现标准 | 完成（EXP-0002 + SQZ-EXP-0002）：vanilla POPE 与官方一致，VisionZip、SparseVLM 的 POPE 与论文相差 ≤0.2；MME-P 比官方低 3.07，记为偏差。CPU 代码核验见 EXP-0001 | iTransformer 待在 GPU 上复现（3 个种子）；对照 DUET、TQNet、WPMixer 已在 CPU 上运行 ETTh1（EXP-0003） |
+| ③ 解析论文 | 论文笔记（原文 + 源码核验） | 原文可追溯 | 三篇原文笔记与源码核验已完成；MinerU 解析待做 | 三篇对照与 iTransformer（PAPER-0007）的原文笔记与源码核验已完成 |
+| ④ 制造意外实验 | MODE_C、组合实验记录、squeeze 报告、现象台账 | 积累到足够的意外现象 | 进行中：EXP-0002 已给出 F8、F10、F11 与 F4 实测（SQZ-EXP-0002）；两份 Mode C 待 deep-read 合并 | 待开始（候选组合见对比文档） |
 | ⑤ 深挖意外现象 | 1a–2b 分析文档 | 定位到根因 | 待开始 | 待开始 |
 | ⑥ 骨架交叉分析 | 骨架全景图、改进内容统计 | 找到最容易突破的现象 | 已有三篇的初版 | 待开始 |
 | ⑦–⑫ 从 idea 到实现 | IDEA 包、迁移方案、验证实验 | 整体指标稳定提升 | 待开始 | 待开始 |
@@ -38,15 +38,15 @@
 
 交接细节见 [实验室会话交接](实验室会话交接.md)。
 
-1. **搭环境**：所有文件放在 `D:\6CJNM007`，用户选定原生 Windows（方案 B，DEC-0014）：Miniforge 装在该文件夹，Git Bash 中每条命令先加载 `code/env/windows_env.sh`，torch 先从 PyTorch 的 CUDA 源安装（见 [code/README](../code/README.md)）；跑通 CPU 自检脚本。
-2. **视觉 token 剪枝**：
-   - 复现 vanilla LLaVA-1.5-7B（POPE、MME）和 FastV（192/128/64 三档预算）；
-   - 核对 FastV 的 mask 与 inplace 两种实现的差别（原文笔记 E-FV-3、源码核验）；
-   - 再跑 VisionZip、SparseVLM（核对实际逐层 token 数）、同预算随机剪枝作为对照。
-3. **时序预测**：
+已完成（2026-10-24）：搭环境（DEC-0014，见 [code/README](../code/README.md)）与 CPU 自检；视觉方向的 GPU 复现 EXP-0002（vanilla、FastV、VisionZip、SparseVLM、同预算随机 × 三档预算 × POPE、MME，并实测 SparseVLM 逐层 token 数）；EXP-0001、EXP-0002、EXP-0003 的 squeeze；iTransformer 论文笔记（PAPER-0007）；引用量实查（2026-10-23）。
+
+1. **时序预测**：
    - iTransformer 用官方脚本在 ETTh1 上跑 3 个种子，过复现门槛后扩展到 ETTh2/ETTm1/ETTm2；
    - DUET、TQNet、WPMixer 在统一协议下重跑作对照（WPMixer 全部窗口计分）。
-4. **补做 squeeze**：对 EXP-0001、EXP-0003 和新的复现实验逐个做 squeeze，现象写入台账。
-5. **论文**：写 iTransformer 的论文笔记；用 deep-read 合并两份视觉 Mode C；用 MinerU 解析全文并补全“待回查”条目；实查引用量并注明日期。
+2. **论文**：用 deep-read 合并两份视觉 Mode C（带入 SQZ-EXP-0002）；用 MinerU 解析全文并补全“待回查”条目。
+3. **视觉方向的意外实验**（研究流程第 ④、⑤ 步）：
+   - 记录 FastV 与随机选择保留的 patch 位置，检验 F8 的机制（SQZ-EXP-0002 的最小下一步）；
+   - 按实测 token 数对齐 VisionZip 与 SparseVLM（P-SQZ2-3）；
+   - FastV 的 mask 与 inplace 两种实现的差别（原文笔记 E-FV-3）尚未在 GPU 上核对，EXP-0002 只用了本项目的 `fastv_llava.py`（真删 token）。
 
 每份 IDEA_PACKAGE 预先填写成功标准、最大预算与停止/回退条件。证据不足时回到缺证据的环节，不因投入时间而不断叠加机制。计划变化记录到 [version-evolution](version-evolution.md)。

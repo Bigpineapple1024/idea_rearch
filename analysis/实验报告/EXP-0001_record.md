@@ -118,3 +118,17 @@ visionzip_54_10   [64]*6                          ok
 ## 交接
 
 原始输出已全文保存在本文件中，可用 code/token_pruning/ 的脚本按 README 重新生成。下一步：在 GPU 上执行 run_pope_mme.sh 完成真实复现（EXP-0002），并把本记录的事实交给 deep-read 回流 MODE_C-0001。
+
+## 复验运行（2026-10-23，实验室电脑，squeeze 时补做）
+
+在 Windows 11、Python 3.10.22、torch 2.1.2+cu121（CPU 上运行）、transformers 4.37.2 下用同样的脚本重跑，作为 [SQZ-EXP-0001](EXP-0001_squeeze.md) 的稳健性检查。日志与 SHA256SUMS 在 `code/output/EXP-0001/rerun-windows-2026-10-23/`，备份在 `D:\6CJNM007\backup\EXP-0001\rerun-windows-2026-10-23\`。这些运行在记录写成之后进行，不改动上面 R1～R6 的事实。
+
+| 运行 ID | 对应 | 状态 | 与 Linux 原始输出的比较 |
+| --- | --- | --- | --- |
+| EXP-0001-R7 | R1 probe_fastv.py | completed（4 组中 3 组按预期报错） | 成败与报错类型相同；sdpa 无补丁时越界下标为 367（Linux 515），size 同为 347 |
+| EXP-0001-R8 | R2 probe_sparsevlm.py（main@a9e71427，`git archive` 导出） | completed | 全部数字相同 |
+| EXP-0001-R8b | R2 用 v1.5@734d9003 试跑 | failed（TypeError） | 探针按 main 分支签名编写；v1.5 的 `attn_postprocess_topk` 需要 `retained_tokens` 参数 |
+| EXP-0001-R9 | R3 probe_visionzip.py | completed | 全部输出相同 |
+| EXP-0001-R10 | R4 flops_budget.py | completed | 全部数字相同 |
+| EXP-0001-R11 | R5 check_fastv_equivalence.py | completed | KV 长度相同；相对 L2 差 3.13e-07（预填充）、2.60～3.08e-07（解码） |
+| EXP-0001-R12 | R6 smoke_test.py | completed | 每层视觉 token 数相同 |

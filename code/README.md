@@ -132,12 +132,17 @@ Git 为 PortableGit 2.56.0.3（`D:\6CJNM007\git`），Miniforge 26.7.2-1 装在 
 - 装完“再装”一列后又核对了三点：torch 没有被替换，关键包都能导入，`pip check` 没有冲突（sparsevlm 的 transformers 提示除外）。
 - 各环境的完整 `pip freeze`、安装脚本和日志在 `D:\6CJNM007\backup\env_setup_2026-10-23\`。
 
-### 原生 Windows 上的已知差异（来自代码核查，尚未在 Windows 上运行）
+### 原生 Windows 上的已知差异（视觉方向已在 EXP-0002 中实际运行；时序方向来自代码核查）
 
 - **DataLoader 子进程**：Windows 用 spawn 启动 worker，子进程会重新导入主模块。
-  - LLaVA 的 `model_vqa_loader` 在 worker 中读取只在 `__main__` 里定义的 `args`，worker 数大于 0 时会报 NameError。本项目的 `run_eval.py` 在 Windows 上已把 worker 设为 0；SparseVLM 自带的评测脚本没有这个处理，需要用包装脚本运行（候选做法：在 `sparsevlm` 环境里用 `run_eval.py --method vanilla`，待验证）。
+  - LLaVA 的 `model_vqa_loader` 在 worker 中读取只在 `__main__` 里定义的 `args`，worker 数大于 0 时会报 NameError。本项目的 `run_eval.py` 换用自己的 DataLoader（数据集、collate_fn 和顺序与 LLaVA 相同），在每个 worker 启动时把 `args` 传进去，默认 4 个 worker（`--num-workers` 可改）。答案与 0 个 worker 时逐条相同（EXP-0002-R05 对 R02、R34 对 R04），每题快约 7%。
+  - SparseVLM 不用它自带的评测脚本，而是在 `sparsevlm` 环境里运行 `run_eval.py --method sparsevlm`：它调用 SparseVLM 自己的 `model_vqa_loader`（剪枝在 SparseVLM 的模型代码里按 `retained_tokens` 执行），DataLoader 的处理同上（EXP-0002-R36～R41）。
   - TQNet 的 run.py 没有 `__main__` 保护，worker 数大于 0 时子进程会重新执行训练。时序方向的命令统一加 `--num_workers 0`（不影响结果，数据顺序由主进程决定）。
-- **flash-attn** 没有官方 Windows 版本，不装。LLaVA 推理评测不需要它。SparseVLM（main 分支 a9e71427）只在 `llava/train/` 的训练补丁里导入 flash_attn；评测时 `use_flash_attn` 默认为 False，走 transformers 默认的 sdpa，而它的解码层本来就断言只支持 sdpa。v1.5 分支（734d9003）已于 2026-10-23 核对，结论相同：`llava/train/` 以外没有任何 `flash_attn` 导入，`load_pretrained_model` 的 `use_flash_attn` 默认为 False，`modelling_sparse_llama.py` 的解码层断言只支持 sdpa。
+- **flash-attn** 没有官方 Windows 版本，不装。LLaVA 推理评测不需要它。
+  - **SparseVLM 需要它（更正，2026-10-24）**：之前按“`llava/train/` 以外没有 `flash_attn` 导入”判断评测不需要，这是错的。
+  - SparseVLM 的 `load_pretrained_model` 默认 `dynamic_sparse=True`，会给 32 层都挂上 `LlamaDynamicvitFlashAttention2`（`llava/model/builder.py` 第 114～121 行），每层注意力最终调用 transformers 的 `_flash_attention_forward`，也就是 `flash_attn_func`。导入发生在 transformers 内部，所以在 SparseVLM 源码里搜不到。
+  - 解码层“只支持 sdpa”的断言只针对不用的 `self_attn`。没有 flash-attn 时会报 `NameError: name 'flash_attn_func' is not defined`（EXP-0002-R18～R23）。
+  - 处理：`code/token_pruning/sparsevlm_sdpa.py` 在运行时把这一个函数换成 PyTorch 的 SDPA。注意力在数学上相同，只是内核不同，与显式 softmax 注意力的差在 2.1e-07 以内（`python sparsevlm_sdpa.py`）。SparseVLM 自己的 token 打分不受影响，仓库文件不改。`run_eval.py --method sparsevlm` 在 Windows 上自动启用，并在 meta.json 里记录。
 - **DUET**：requirements 里的 ray 在导入 TFB 时就会被加载；ray 2.10.0 已在实验室电脑上安装并能导入（2026-10-23）。评测用默认的 sequential 后端，它在本进程内运行，`--timeout` 参数会被忽略。
 - **HF 缓存**：未开启 Windows 开发者模式时，Hugging Face 缓存用复制代替符号链接，占用空间会多一些。
 
