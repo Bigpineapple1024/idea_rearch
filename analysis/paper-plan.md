@@ -30,6 +30,6 @@
 
 1. 在 GPU 上按 [code/token_pruning/README](../code/token_pruning/README.md) 执行 EXP-0002：vanilla、VisionZip、FastV × 192/128/64 × POPE、MME，另跑 SparseVLM（v1.5）与同预算随机剪枝。
 2. 回查三篇论文全文，补齐论文笔记中的 SC 条目，并补读 DART、VScan 等 3～5 篇相关工作做新颖性检索。
-3. EXP-0002 通过后执行 IDEA-0001，之后按融合路线建立 IDEA-0002（合并幅值与 CLS）。
+3. EXP-0002 通过后先做损失分解（C5），再按成功可能性决定先建 IDEA-0002（合并幅值与 CLS，当前先验优先）还是先执行 IDEA-0001（位置编号）。排序原则见 SOP“验证顺序原则”。
 
 每份 IDEA_PACKAGE 预先填写成功标准、最大预算与停止/回退条件。证据不足时回到缺证据的环节，不因投入时间而不断叠加机制。计划变化记录到 [version-evolution](version-evolution.md)。

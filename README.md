@@ -2,7 +2,7 @@
 
 从论文阅读、问题发现、实验验证到论文写作的可追溯工作区。
 
-**当前状态：**方向为多模态大模型的免训练视觉 token 剪枝（LLaVA-1.5-7B）。FastV、SparseVLM、VisionZip 三篇论文已完成代码级分析与 CPU 核验（EXP-0001），开发 baseline 选定为 VisionZip，融合方案第一步见 IDEA-0001。GPU 复现（EXP-0002）尚未执行，暂无准确率结果。入口见[文档索引](analysis/index.md)和 [SOP](analysis/SOP_从论文到融合方案.md)。
+**当前状态：**方向为多模态大模型的免训练视觉 token 剪枝（LLaVA-1.5-7B）。FastV、SparseVLM、VisionZip 三篇论文已完成代码级分析与 CPU 核验（EXP-0001），开发 baseline 选定为 VisionZip；融合路线按成功可能性排序（见 MODE_C-0001），IDEA-0001 已设计但排在损失分解和 C2 之后。GPU 复现（EXP-0002）尚未执行，暂无准确率结果。入口见[文档索引](analysis/index.md)和 [SOP](analysis/SOP_从论文到融合方案.md)。
 
 ## 目录与维护边界
 

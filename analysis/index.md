@@ -9,7 +9,7 @@
 | 从论文到融合方案的 SOP | [SOP_从论文到融合方案](SOP_从论文到融合方案.md) |
 | 三篇论文的共性、差异与 baseline 选择 | [所有论文在baseline骨架的改进内容](专题分析/所有论文在baseline骨架的改进内容.md) |
 | 问题—现象—机制矩阵 | [MODE_C-0001](MODE_C-0001_视觉token剪枝.md) |
-| 融合方案（第一步） | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
+| 融合路线（按成功可能性排序）与 C1 方案 | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
 | baseline 复现代码与步骤 | [code/token_pruning](../code/token_pruning/README.md) |
 
 ## 必需文档定位
@@ -47,7 +47,7 @@
 | [analysis/毕业选题候选.md](../analysis/毕业选题候选.md) | 毕业选题候选：约束、候选方向与下一步 |
 | [analysis/SOP_从论文到融合方案.md](../analysis/SOP_从论文到融合方案.md) | SOP：从分析新论文到输出融合方案 |
 | [analysis/MODE_C-0001_视觉token剪枝.md](../analysis/MODE_C-0001_视觉token剪枝.md) | MODE_C_PACKAGE：多模态大模型视觉 token 剪枝 |
-| [analysis/IDEA-0001_编码器侧压缩的位置编号.md](../analysis/IDEA-0001_编码器侧压缩的位置编号.md) | IDEA_PACKAGE：编码器侧压缩的位置编号（融合方案第一步） |
+| [analysis/IDEA-0001_编码器侧压缩的位置编号.md](../analysis/IDEA-0001_编码器侧压缩的位置编号.md) | IDEA_PACKAGE：编码器侧压缩的位置编号（融合路线候选，deferred） |
 | [analysis/论文笔记/PAPER-0001_FastV.md](../analysis/论文笔记/PAPER-0001_FastV.md) | ANALYSIS_PACKAGE：FastV |
 | [analysis/论文笔记/PAPER-0002_SparseVLM.md](../analysis/论文笔记/PAPER-0002_SparseVLM.md) | ANALYSIS_PACKAGE：SparseVLM / SparseVLM+ |
 | [analysis/论文笔记/PAPER-0003_VisionZip.md](../analysis/论文笔记/PAPER-0003_VisionZip.md) | ANALYSIS_PACKAGE：VisionZip |

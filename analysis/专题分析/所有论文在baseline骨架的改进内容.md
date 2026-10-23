@@ -39,10 +39,10 @@
 | 用途 | 选择 | 理由 |
 | --- | --- | --- |
 | 骨架 baseline（必须） | LLaVA-1.5-7B vanilla | 所有结论的参照；先复现官方 POPE 85.9、MME 1510.7 |
-| **开发 baseline（在其上做改进）** | **VisionZip** | ①代码约 600 行，两行接入官方 LLaVA，最容易做单变量修改；②LLM 侧不需要注意力矩阵，可用 SDPA，24GB 显存最宽裕；③作者报告的低预算结果最强，改进空间可信；④Apache-2.0；⑤本项目发现的三个可检验问题（合并幅值、CLS 注入、位置压缩）都在它身上 |
+| **开发 baseline（在其上做改进）** | **VisionZip** | 按 SOP 评分表的优先级：①**结果强度**：作者报告的低预算结果三篇中最好（SC，待 EXP-0002 在统一口径下确认）；②**可切入点**：本项目在它身上发现了三个有代码证据的问题（合并幅值、CLS 注入、位置压缩），其中 C2 有相近设置的正面证据；③可运行性：LLM 侧可用 SDPA，24GB 显存最宽裕；④Apache-2.0；⑤改动成本低（代码约 600 行）只是最后的次要理由 |
 | 对照方法（开山） | FastV | 领域内必比；用 `code/token_pruning/fastv_llava.py` 跑（已证明与官方实现输出一致），按层平均预算换算 keep |
 | 对照方法（文本引导） | SparseVLM（v1.5 分支，ICML 版） | 文本引导 + 逐层剪枝的代表；在它自己的仓库里跑，batch 1 |
 
-不推荐在 FastV 或 SparseVLM 上开发：FastV 无许可证文件且依赖修改版 transformers；SparseVLM 依赖 FlashAttention 编译、写死较多、版本间行为差异大。两者都在 LLM 内部剪枝，打分层需要显式注意力，改起来牵连更多。
+不推荐在 FastV 或 SparseVLM 上开发。主要理由是结果与可信度：FastV 在低预算下的报告结果最弱（E-VZ-02，SC），SparseVLM 论文描述的秩自适应在代码中找不到、版本间行为差异大（E-SV-05）。次要理由是工程：FastV 无许可证文件且依赖修改版 transformers；SparseVLM 依赖 FlashAttention 编译、写死较多。
 
 交叉结论：三篇论文的差异不是三个可以叠加的模块，而是同一问题在“剪枝位置、打分 query、丢弃信息处理、位置编号、预算口径”五个维度上的不同取值。直接把差异点拼起来（例如 VisionZip 压缩 + LLM 内文本引导剪枝）已有 VScan（ICML 2025）做过，见 [MODE_C-0001](../MODE_C-0001_视觉token剪枝.md)。
