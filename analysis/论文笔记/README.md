@@ -10,4 +10,8 @@
 | PAPER-0002 | SparseVLM / ICML 2025（SparseVLM+ TPAMI 2026） | arXiv 2410.04417；代码 Gumpest/SparseVLMs@a9e71427、v1.5@734d9003 | 未取得 | [PAPER-0002_SparseVLM](PAPER-0002_SparseVLM.md) | partial：代码已核验，论文待回查 |
 | PAPER-0003 | VisionZip / CVPR 2025 | arXiv 2412.04467；代码 dvlab-research/VisionZip@8f86b55c | 未取得 | [PAPER-0003_VisionZip](PAPER-0003_VisionZip.md) | partial：代码已核验，论文待回查 |
 
+| PAPER-0004 | DUET: Dual Clustering Enhanced Multivariate Time Series Forecasting / KDD 2025 | arXiv 2412.10859；代码 decisionintelligence/DUET@dcc6e678 | 未取得 | [PAPER-0004_DUET](PAPER-0004_DUET.md) | partial：代码已核验，ETTh1 已复现，论文待回查 |
+| PAPER-0005 | TQNet: Temporal Query Network / ICML 2025 | arXiv 2505.12917；代码 ACAT-SCUT/TQNet@15e19cb2 | 未取得 | [PAPER-0005_TQNet](PAPER-0005_TQNet.md) | partial：代码已核验，ETTh1 已复现，论文待回查 |
+| PAPER-0006 | WPMixer / AAAI 2025 | arXiv 2412.17176；代码 Secure-and-Intelligent-Systems-Lab/WPMixer@74104c9d | 未取得 | [PAPER-0006_WPMixer](PAPER-0006_WPMixer.md) | partial：代码已核验，ETTh1 已运行，论文待回查 |
+
 新增笔记后同步本表与 [index](../index.md)。

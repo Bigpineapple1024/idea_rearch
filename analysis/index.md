@@ -11,6 +11,8 @@
 | 问题—现象—机制矩阵 | [MODE_C-0001](MODE_C-0001_视觉token剪枝.md) |
 | 融合路线（按成功可能性排序）与 C1 方案 | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
 | baseline 复现代码与步骤 | [code/token_pruning](../code/token_pruning/README.md) |
+| 时序方向（用户提供的三篇）：对比、baseline 建议与切入点 | [时序预测_DUET_TQNet_WPMixer对比](专题分析/时序预测_DUET_TQNet_WPMixer对比.md) |
+| 时序方向复现记录与代码 | [EXP-0003](实验报告/EXP-0003_record.md)、[code/ts_forecasting](../code/ts_forecasting/README.md) |
 
 ## 必需文档定位
 
@@ -53,6 +55,12 @@
 | [analysis/论文笔记/PAPER-0003_VisionZip.md](../analysis/论文笔记/PAPER-0003_VisionZip.md) | ANALYSIS_PACKAGE：VisionZip |
 | [analysis/实验报告/EXP-0001_record.md](../analysis/实验报告/EXP-0001_record.md) | EXPERIMENT_RECORD：三个仓库的代码级核验（CPU） |
 | [code/token_pruning/README.md](../code/token_pruning/README.md) | 视觉 token 剪枝 baseline 复现与代码级核验 |
+| [analysis/论文笔记/PAPER-0004_DUET.md](../analysis/论文笔记/PAPER-0004_DUET.md) | ANALYSIS_PACKAGE：DUET |
+| [analysis/论文笔记/PAPER-0005_TQNet.md](../analysis/论文笔记/PAPER-0005_TQNet.md) | ANALYSIS_PACKAGE：TQNet |
+| [analysis/论文笔记/PAPER-0006_WPMixer.md](../analysis/论文笔记/PAPER-0006_WPMixer.md) | ANALYSIS_PACKAGE：WPMixer |
+| [analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md](../analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md) | 时序预测三篇论文对比：DUET、TQNet、WPMixer |
+| [analysis/实验报告/EXP-0003_record.md](../analysis/实验报告/EXP-0003_record.md) | EXPERIMENT_RECORD：DUET/TQNet/WPMixer 在 ETTh1 上的 CPU 复现 |
+| [code/ts_forecasting/README.md](../code/ts_forecasting/README.md) | 多变量长期时序预测 baseline 复现与评测核验 |
 | [analysis/专题分析/baseline骨架的全景图.md](../analysis/专题分析/baseline骨架的全景图.md) | baseline骨架的全景图 |
 | [analysis/专题分析/外部工具应用现状.md](../analysis/专题分析/外部工具应用现状.md) | 外部工具应用现状 |
 | [analysis/专题分析/所有论文创新类型全景分析.md](../analysis/专题分析/所有论文创新类型全景分析.md) | 所有论文创新类型全景分析 |
