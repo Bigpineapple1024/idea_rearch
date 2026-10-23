@@ -13,6 +13,8 @@ Batch size 1 without padding only, as in all three reference implementations.
 
 With a seed, the kept image tokens are drawn uniformly at random instead (same K, same count), so the
 attention ranking can be compared with chance at an identical budget; layer K-1 then skips its attention map.
+A schedule of several (layer, keep) stages prunes in steps (e.g. to copy another method's per-layer token counts);
+with a single stage the computation, including the random draws, is the same as before.
 """
 import types
 
@@ -52,26 +54,30 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
     if position_ids is None:
         position_ids = torch.arange(past_len, past_len + q_len, device=inputs_embeds.device).unsqueeze(0)
 
-    k, keep = self.fastv_k, self.fastv_keep
+    stages = self.fastv_stages                  # {layer: keep}; FastV itself is {K: keep}
     prefill = q_len > 1
     hidden = inputs_embeds
     attn = None
+    if prefill:
+        start, n_img = self.fastv_image_span
+        kept = torch.arange(n_img, device=hidden.device)       # original patch index of each image token still present
     for idx, layer in enumerate(self.layers):
-        if prefill and idx == k:
-            start, n_img = self.fastv_image_span
+        if prefill and idx in stages:
+            n_cur = kept.numel()
             if self.fastv_generator is None:
-                score = attn.mean(dim=1)[0, -1, start:start + n_img]
+                score = attn.mean(dim=1)[0, -1, start:start + n_cur]
             else:
-                score = torch.rand(n_img, generator=self.fastv_generator, device=self.fastv_generator.device)
+                score = torch.rand(n_cur, generator=self.fastv_generator, device=self.fastv_generator.device)
                 score = score.to(hidden.device)
-            top = score.topk(min(keep, n_img)).indices + start
-            keep_idx = torch.cat((torch.arange(start, device=hidden.device), top,
-                                  torch.arange(start + n_img, hidden.shape[1], device=hidden.device))).sort().values
+            top = score.topk(min(stages[idx], n_cur)).indices.sort().values
+            keep_idx = torch.cat((torch.arange(start, device=hidden.device), top + start,
+                                  torch.arange(start + n_cur, hidden.shape[1], device=hidden.device)))
             hidden = hidden[:, keep_idx]
             position_ids = position_ids[:, keep_idx]
-            self.fastv_kept_image_positions = top.sort().values - start
+            kept = kept[top]
+            self.fastv_kept_image_positions = kept
         mask = _causal_mask(hidden) if prefill else None
-        need_attn = prefill and idx == k - 1 and self.fastv_generator is None
+        need_attn = prefill and idx + 1 in stages and self.fastv_generator is None
         out = layer(hidden, attention_mask=mask, position_ids=position_ids, past_key_value=cache,
                     output_attentions=need_attn, use_cache=use_cache)
         hidden = out[0]
@@ -101,15 +107,19 @@ def _record_image_span(model):
     model.prepare_inputs_labels_for_multimodal = wrapped
 
 
-def bind_fastv(llama_model, k, keep, seed=None):
+def bind_fastv(llama_model, k, keep, seed=None, schedule=None):
     """Turn a transformers LlamaModel into FastV in place (image span set by the caller).
 
     seed=None keeps FastV's attention ranking; an integer selects random image tokens from that seed.
+    schedule, a list of (layer, keep) pairs, replaces the single stage (k, keep): before each listed layer the image
+    tokens still present are cut to `keep`, ranked by the last token's attention at the layer before (or at random).
     """
-    if k < 1:
-        raise ValueError("K must be >= 1: the scores come from layer K-1")
+    stages = dict(schedule) if schedule else {k: keep}
+    if min(stages) < 1:
+        raise ValueError("every stage layer must be >= 1: the scores come from the layer before it")
     modeling_llama.LlamaRotaryEmbedding.forward = _full_rotary_forward
     llama_model.fastv_k, llama_model.fastv_keep = k, keep
+    llama_model.fastv_stages = stages
     llama_model.fastv_generator = None
     if seed is not None:
         device = llama_model.embed_tokens.weight.device
@@ -118,8 +128,8 @@ def bind_fastv(llama_model, k, keep, seed=None):
     return llama_model
 
 
-def apply_fastv(model, k=2, keep=288, seed=None):
+def apply_fastv(model, k=2, keep=288, seed=None, schedule=None):
     """Enable FastV (or its random-selection control when seed is given) on a loaded LlavaLlamaForCausalLM."""
-    bind_fastv(model.get_model(), k, keep, seed)
+    bind_fastv(model.get_model(), k, keep, seed, schedule)
     _record_image_span(model)
     return model

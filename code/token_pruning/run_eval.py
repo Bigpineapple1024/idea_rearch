@@ -31,12 +31,21 @@ from torch.utils.data import DataLoader
 from fastv_llava import apply_fastv
 
 
+def _schedule(text):
+    stages = [tuple(int(x) for x in part.split(":")) for part in text.split(",")]
+    if any(len(s) != 2 for s in stages) or [s[0] for s in stages] != sorted({s[0] for s in stages}):
+        raise argparse.ArgumentTypeError("expected increasing 'layer:keep' pairs, e.g. 3:82,7:32,16:18")
+    return stages
+
+
 def parse():
     ours = argparse.ArgumentParser()
     ours.add_argument("--method", choices=["vanilla", "fastv", "visionzip", "random", "sparsevlm"], required=True)
     ours.add_argument("--fastv-k", type=int, default=2)
     ours.add_argument("--fastv-keep", type=int, default=288)
     ours.add_argument("--seed", type=int, default=None, help="random: seed of the token draw")
+    ours.add_argument("--fastv-schedule", type=_schedule, default=None,
+                      help="fastv/random: prune in stages 'layer:keep,layer:keep,...' instead of --fastv-k/--fastv-keep")
     ours.add_argument("--dominant", type=int, default=54)
     ours.add_argument("--contextual", type=int, default=10)
     ours.add_argument("--retained-tokens", type=int, default=None, help="sparsevlm: 32-layer average budget")
@@ -80,10 +89,11 @@ def parse():
 
 
 def apply_method(model, m):
+    schedule = getattr(m, "fastv_schedule", None)
     if m.method == "fastv":
-        return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep)
+        return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule)
     if m.method == "random":
-        return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed)
+        return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "visionzip":
         root = os.environ.get("VISIONZIP_ROOT")
         if root:
@@ -191,7 +201,8 @@ def main():
     if method_args.layer_token_log:
         _write_layer_tokens(method_args.layer_token_log, times["n_layers"])
     if method_args.kept_token_log:
-        _write_kept(method_args.kept_token_log, method_args.fastv_keep)
+        schedule = method_args.fastv_schedule
+        _write_kept(method_args.kept_token_log, schedule[-1][1] if schedule else method_args.fastv_keep)
 
 
 if __name__ == "__main__":

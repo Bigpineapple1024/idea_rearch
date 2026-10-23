@@ -54,6 +54,17 @@ for b in (192, 128, 64):
     for seed in (2021, 2022, 2023):
         CONFIGS[f"random{b}_s{seed}"] = ("tp", ["--method", "random", "--fastv-k", "2", "--fastv-keep",
                                                 str(FASTV_KEEP[b]), "--seed", str(seed)])
+# EXP-0007: FastV's ranking or random selection on SparseVLM's measured per-layer token counts (EXP-0002-R47~R49:
+# 576 up to layer 2, then three stages), and the flat K=2 profile with about the same 32-layer average
+SVP = {192: "3:309,7:204,16:113", 128: "3:312,7:117,16:39", 64: "3:82,7:32,16:18"}
+FLAT_KEEP = {192: 182, 128: 117, 64: 49}        # (2*576 + 30*keep)/32 = 206.6/145.7/81.9 vs 206.5/145.4/82.25
+for b in (192, 128, 64):
+    CONFIGS[f"fastv_svp{b}"] = ("tp", ["--method", "fastv", "--fastv-schedule", SVP[b]])
+    CONFIGS[f"fastv_flat{b}"] = ("tp", ["--method", "fastv", "--fastv-k", "2", "--fastv-keep", str(FLAT_KEEP[b])])
+    for seed in (2021, 2022, 2023):
+        CONFIGS[f"random_svp{b}_s{seed}"] = ("tp", ["--method", "random", "--fastv-schedule", SVP[b], "--seed", str(seed)])
+        CONFIGS[f"random_flat{b}_s{seed}"] = ("tp", ["--method", "random", "--fastv-k", "2", "--fastv-keep",
+                                                     str(FLAT_KEEP[b]), "--seed", str(seed)])
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
 CONFIGS.update({f"{name}_layers": spec for name, spec in list(CONFIGS.items())})
 # "<config>_kept": FastV or random selection with --kept-token-log, for the kept-patch position diagnostic
