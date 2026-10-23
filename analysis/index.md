@@ -18,6 +18,7 @@
 | 视觉方向第 ⑤ 步：深挖意外现象 | [1a-4b_FastV不如随机选择](1a-4b_FastV不如随机选择.md)；[EXP-0006](实验报告/EXP-0006_record.md)、[SQZ-EXP-0006](实验报告/EXP-0006_squeeze.md) |
 | 时序预测：baseline（iTransformer，DEC-0012）、三篇对照对比与组合实验候选 | [时序预测_DUET_TQNet_WPMixer对比](专题分析/时序预测_DUET_TQNet_WPMixer对比.md) |
 | 时序方向 GPU 复现与对照重评 | EXP-0004（阶段 A 完成，记录在 code/ts-forecasting 分支）；[EXP-0005](实验报告/EXP-0005_record.md)、[SQZ-EXP-0005](实验报告/EXP-0005_squeeze.md) |
+| 时序方向第 ⑤ 步：深挖意外现象 | [1a-4b_四种架构在同一批窗口上出错](1a-4b_四种架构在同一批窗口上出错.md)；[EXP-0009](实验报告/EXP-0009_record.md)（计划） |
 | 每篇论文的原文笔记与源码核验补充 | [论文笔记](论文笔记/README.md) |
 | 时序方向复现记录与代码 | [EXP-0003](实验报告/EXP-0003_record.md)、[code/ts_forecasting](../code/ts_forecasting/README.md) |
 
@@ -82,6 +83,8 @@
 | [analysis/实验报告/EXP-0006_record.md](../analysis/实验报告/EXP-0006_record.md) | EXPERIMENT_RECORD：FastV 与随机选择保留了图像的哪些位置（F8 的机制诊断） |
 | [analysis/实验报告/EXP-0006_squeeze.md](../analysis/实验报告/EXP-0006_squeeze.md) | SQUEEZE_REPORT：EXP-0006（FastV 的选择由位置主导、几乎不看问题，F15） |
 | [analysis/1a-4b_FastV不如随机选择.md](../analysis/1a-4b_FastV不如随机选择.md) | 1a–4b 机制分析：同预算下 FastV 为什么不如随机选择（第 1 轮，到 2b） |
+| [analysis/1a-4b_四种架构在同一批窗口上出错.md](../analysis/1a-4b_四种架构在同一批窗口上出错.md) | 1a–4b 机制分析：时序四种架构为什么在同一批窗口上出错（第 1 轮，到 2b；误差的水平/形状拆分） |
+| [analysis/实验报告/EXP-0009_record.md](../analysis/实验报告/EXP-0009_record.md) | EXPERIMENT_RECORD：iTransformer 检查点在验证期上的预测（不训练；计划） |
 | [code/token_pruning/README.md](../code/token_pruning/README.md) | 视觉 token 剪枝 baseline 复现与代码级核验 |
 | [analysis/论文笔记/PAPER-0001_DUET_源码核验.md](../analysis/论文笔记/PAPER-0001_DUET_源码核验.md) | 源码核验补充：DUET |
 | [analysis/论文笔记/PAPER-0002_TQNet_源码核验.md](../analysis/论文笔记/PAPER-0002_TQNet_源码核验.md) | 源码核验补充：TQNet |
