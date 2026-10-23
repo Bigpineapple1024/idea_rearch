@@ -1,6 +1,14 @@
 # 开源 baseline 参考
 
-预留给自己 fork 的开源代码；当前未选择或下载 baseline。
+预留给自己 fork 的开源代码。外部仓库不放进本仓库，只在此登记；需要时按 commit 克隆到 source/ 下（该目录内容不纳入提交）。
+
+| paper_id | 仓库 | 固定 commit / 日期 | 许可证 | 用途 | 复现入口 |
+| --- | --- | --- | --- | --- | --- |
+| — | github.com/haotian-liu/LLaVA | c121f0432da27facab705978f83c4ada465e46fd / 2024-05-12 | Apache-2.0 | 骨架模型与评测脚本 | docs/Evaluation.md、scripts/v1_5/eval/ |
+| PAPER-0001 | github.com/pkunlp-icler/FastV | d1659729b5bf1be225e99ee15783deeea80f63b1 / 2025-01-04 | 仓库根目录无 LICENSE 文件 | 对照方法（开山） | 本项目用 code/token_pruning/fastv_llava.py（已与官方 lmms-eval 实现做等价性检查） |
+| PAPER-0002 | github.com/Gumpest/SparseVLMs | v1.5：734d9003879689713a132b83297dfad060a5c9af；main：a9e71427220c4cacb6afb5a96d23cfb43142e0c3 / 2026-07-30 | Apache-2.0 | 对照方法（文本引导） | 在其仓库内运行 scripts/v1_5/eval/*.sh（需改路径，batch 1） |
+| PAPER-0003 | github.com/dvlab-research/VisionZip | 8f86b55c6f000eb033e6912538af2dd7dcb30502 / 2025-07-21 | Apache-2.0 | **开发 baseline** | code/token_pruning/run_eval.py（不要用 PyPI 包，见 E-VZ-11） |
+| 参考 | github.com/ZichenWen1/DART | 0c888673198b0f2784053a5686f95a519ceef209 / 2025-10-13 | 见仓库 LICENSE | 质疑类工作，未细读 | — |
 
 引入时登记论文 ID、原始仓库及 fork URL、固定 commit/tag、许可证、官方复现命令、依赖与数据版本。保留上游许可证。
 

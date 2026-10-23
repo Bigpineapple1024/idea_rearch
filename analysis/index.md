@@ -1,6 +1,16 @@
 # 项目文档索引
 
-状态：目录与模板已初始化，五个 skills 已安装并完成静态核验，尚无论文分析或实验结果。新增、移动或归档文档时同步本索引。
+状态：方向 T1（视觉 token 剪枝）已选定；3 篇论文完成代码级分析（PAPER-0001～0003），EXP-0001 完成 CPU 代码核验，MODE_C-0001 与 IDEA-0001 已设计；GPU 复现（EXP-0002）尚未执行，暂无准确率结果。新增、移动或归档文档时同步本索引。
+
+## 当前工作入口
+
+| 内容 | 入口 |
+| --- | --- |
+| 从论文到融合方案的 SOP | [SOP_从论文到融合方案](SOP_从论文到融合方案.md) |
+| 三篇论文的共性、差异与 baseline 选择 | [所有论文在baseline骨架的改进内容](专题分析/所有论文在baseline骨架的改进内容.md) |
+| 问题—现象—机制矩阵 | [MODE_C-0001](MODE_C-0001_视觉token剪枝.md) |
+| 融合方案（第一步） | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
+| baseline 复现代码与步骤 | [code/token_pruning](../code/token_pruning/README.md) |
 
 ## 必需文档定位
 
@@ -35,6 +45,14 @@
 | [analysis/templates/跨领域迁移方案.md](../analysis/templates/跨领域迁移方案.md) | 跨领域迁移方案：<方法> |
 | [analysis/version-evolution.md](../analysis/version-evolution.md) | Version Evolution：关键决策与方向调整 |
 | [analysis/毕业选题候选.md](../analysis/毕业选题候选.md) | 毕业选题候选：约束、候选方向与下一步 |
+| [analysis/SOP_从论文到融合方案.md](../analysis/SOP_从论文到融合方案.md) | SOP：从分析新论文到输出融合方案 |
+| [analysis/MODE_C-0001_视觉token剪枝.md](../analysis/MODE_C-0001_视觉token剪枝.md) | MODE_C_PACKAGE：多模态大模型视觉 token 剪枝 |
+| [analysis/IDEA-0001_编码器侧压缩的位置编号.md](../analysis/IDEA-0001_编码器侧压缩的位置编号.md) | IDEA_PACKAGE：编码器侧压缩的位置编号（融合方案第一步） |
+| [analysis/论文笔记/PAPER-0001_FastV.md](../analysis/论文笔记/PAPER-0001_FastV.md) | ANALYSIS_PACKAGE：FastV |
+| [analysis/论文笔记/PAPER-0002_SparseVLM.md](../analysis/论文笔记/PAPER-0002_SparseVLM.md) | ANALYSIS_PACKAGE：SparseVLM / SparseVLM+ |
+| [analysis/论文笔记/PAPER-0003_VisionZip.md](../analysis/论文笔记/PAPER-0003_VisionZip.md) | ANALYSIS_PACKAGE：VisionZip |
+| [analysis/实验报告/EXP-0001_record.md](../analysis/实验报告/EXP-0001_record.md) | EXPERIMENT_RECORD：三个仓库的代码级核验（CPU） |
+| [code/token_pruning/README.md](../code/token_pruning/README.md) | 视觉 token 剪枝 baseline 复现与代码级核验 |
 | [analysis/专题分析/baseline骨架的全景图.md](../analysis/专题分析/baseline骨架的全景图.md) | baseline骨架的全景图 |
 | [analysis/专题分析/外部工具应用现状.md](../analysis/专题分析/外部工具应用现状.md) | 外部工具应用现状 |
 | [analysis/专题分析/所有论文创新类型全景分析.md](../analysis/专题分析/所有论文创新类型全景分析.md) | 所有论文创新类型全景分析 |
@@ -71,4 +89,4 @@
 - literature/processed/.gitkeep 仅保留解析目录；.claude/skills/ 已包含实际技能文件。
 - [.claude/skills/manifest.json](../.claude/skills/manifest.json) 保存上传包来源、协议版本与六份原文件的校验和。
 - data/、checkpoints/、papers/、code/output/ 不跟踪；在对应笔记或实验记录中登记来源、校验和及可恢复位置。
-- 尚无外部论文、baseline 代码、实验数据或归档方案；技能安装不代表已经执行研究。
+- 外部代码（FastV、SparseVLM、VisionZip、LLaVA）只登记来源与 commit（见 [source/README](../source/README.md)），不纳入仓库；尚无真实实验数据或归档方案。

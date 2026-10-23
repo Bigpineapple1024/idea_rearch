@@ -1,6 +1,6 @@
 # 实验代码
 
-当前尚无实现或技术栈。
+当前实现：[token_pruning/](token_pruning/README.md)，即视觉 token 剪枝 baseline 的复现脚本与代码级核验（只在 CPU 随机权重上验证过）。
 
 在 code/<方向或实验编号> Git 分支开发，改造记录来源、许可证、基线 commit 与变更点。每次运行绑定 IDEA ID、实验 ID、代码 commit、配置、数据版本与划分、种子和环境。
 
