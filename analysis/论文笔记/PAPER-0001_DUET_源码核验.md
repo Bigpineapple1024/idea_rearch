@@ -1,5 +1,7 @@
 # ANALYSIS_PACKAGE：DUET: Dual Clustering Enhanced Multivariate Time Series Forecasting
 
+> 本文件是源码核验补充；原文笔记见 [PAPER-0001_DUET](PAPER-0001_DUET.md)。两份冲突时以能追溯到原文页码或源码行号的一方为准。
+
 状态：partial（代码已核验，ETTh1 已在 CPU 上真实运行；论文全文未读）。paper_id PAPER-0001 / 2026-10-23 / 分析者 Claude Code 会话 / 输入：代码 decisionintelligence/DUET@dcc6e6780a9138731b64b9b5398a94a1d97033f0、README、figures/DUET_unified_seq_len_96.png、论文检索摘要、EXP-0003。
 
 ## 结构化交接包
@@ -74,7 +76,7 @@ unresolved_questions: [更多种子下的均值与方差, 回看窗口的选择�
   - 路由器用未做实例归一化的输入，“按分布聚类”可能部分是“按水平/尺度聚类”（推断）。
   - 依赖栈重、训练慢（CPU 上每个 epoch 数分钟）。
   - 主结果的回看窗口选择依据不明。
-- **与自身实验的关系**：**时序预测方向的主 baseline**（DEC-0011，按研究流程第 ① 步选择，第 ② 步复现门槛已在 ETTh1-96 上初步通过），并用它的 TFB 框架做统一评测；详见 [时序三篇对比](../专题分析/时序预测_DUET_TQNet_WPMixer对比.md)。
+- **与自身实验的关系**：DEC-0012 起改为**强对照与组合实验素材**（主 baseline 改为 iTransformer）。此前曾是时序预测方向的主 baseline（DEC-0011，第 ② 步复现门槛已在 ETTh1-96 上初步通过），并用它的 TFB 框架做统一评测；详见 [时序三篇对比](../专题分析/时序预测_DUET_TQNet_WPMixer对比.md)。
 - **核心总结**：DUET 的价值在“双聚类”的问题设定和 TFB 的公平评测。本项目发现的测试随机性经实测影响很小，不值得作为改进方向；路由输入（E-DU-C04）仍待回查论文。
 
 ## 交接 Deep Read

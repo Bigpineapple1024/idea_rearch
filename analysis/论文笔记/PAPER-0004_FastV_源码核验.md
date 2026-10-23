@@ -1,5 +1,7 @@
 # ANALYSIS_PACKAGE：An Image is Worth 1/2 Tokens After Layer 2（FastV）
 
+> 本文件是源码核验补充；原文笔记见 [PAPER-0004_FastV](PAPER-0004_FastV.md)。两份冲突时以能追溯到原文页码或源码行号的一方为准。
+
 状态：partial。paper_id PAPER-0004 / 2026-10-23 / 分析者 Claude Code 会话 / 输入：代码 pkunlp-icler/FastV@d1659729b5bf1be225e99ee15783deeea80f63b1、仓库 README、论文检索摘要。
 **论文全文未读**：本环境网络策略拦截 arxiv.org 与 ecva.net，标 SC 的论文内容来自检索摘要和 README，需回查原文。
 

@@ -1,5 +1,7 @@
 # ANALYSIS_PACKAGE：WPMixer: Efficient Multi-Resolution Mixing for Long-Term Time Series Forecasting
 
+> 本文件是源码核验补充；原文笔记见 [PAPER-0003_WPMixer](PAPER-0003_WPMixer.md)。两份冲突时以能追溯到原文页码或源码行号的一方为准。
+
 状态：partial（代码已核验，ETTh1 已在 CPU 上真实运行；论文全文未读）。paper_id PAPER-0003 / 2026-10-23 / 分析者 Claude Code 会话 / 输入：代码 Secure-and-Intelligent-Systems-Lab/WPMixer@74104c9dddd54d279eb8323f48934b4fd75fcae7、README、仓库内结果图、论文检索摘要、EXP-0003。
 
 ## 结构化交接包

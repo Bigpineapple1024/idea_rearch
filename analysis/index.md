@@ -1,6 +1,6 @@
 # 项目文档索引
 
-状态（2026-10-23，DEC-0011）：视觉 token 剪枝与时序预测两条方向并行，各处于“复现 baseline”阶段：FastV 待在 GPU 上复现（EXP-0002）；DUET 已在 CPU 上初步复现（EXP-0003）。流程规范为[研究流程 v2.0](研究流程.md)。新增、移动或归档文档时同步本索引。
+状态（2026-10-23，DEC-0012/0013）：视觉 token 剪枝与时序预测两条方向并行，各处于“复现 baseline”阶段：FastV 待在 GPU 上复现（EXP-0002）；时序主 baseline 改为 iTransformer，待在实验室 GPU 上复现，三篇对照（DUET、TQNet、WPMixer）已在 CPU 上运行（EXP-0003）。六篇论文已有原文笔记与源码核验补充。实验室电脑上的文件只放在 D:\6CJNM007。流程规范为[研究流程 v2.0](研究流程.md)。新增、移动或归档文档时同步本索引。
 
 ## 当前工作入口
 
@@ -8,11 +8,13 @@
 | --- | --- |
 | **流程规范（唯一）** | [研究流程 v2.0](研究流程.md) |
 | 实验室电脑新会话的交接 | [实验室会话交接](实验室会话交接.md) |
+| 视觉 token 剪枝：六篇总结与趋势（原文） | [六篇论文总结与视觉Token压缩趋势](六篇论文总结与视觉Token压缩趋势.md) |
 | 视觉 token 剪枝：三篇共性、差异与 baseline（FastV） | [所有论文在baseline骨架的改进内容](专题分析/所有论文在baseline骨架的改进内容.md) |
-| 问题—现象—机制矩阵 | [MODE_C-0001](MODE_C-0001_视觉token剪枝.md) |
+| 问题—现象—机制矩阵（两份，待 deep-read 合并） | [视觉Token压缩_ModeC](视觉Token压缩_ModeC.md)（原文）、[MODE_C-0001](MODE_C-0001_视觉token剪枝.md)（源码与探针） |
 | 候选方案（待 baseline 复现与组合实验后重新排序） | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
 | baseline 复现代码与步骤 | [code/token_pruning](../code/token_pruning/README.md) |
-| 时序预测：三篇对比、baseline（DUET）与组合实验候选 | [时序预测_DUET_TQNet_WPMixer对比](专题分析/时序预测_DUET_TQNet_WPMixer对比.md) |
+| 时序预测：baseline（iTransformer，DEC-0012）、三篇对照对比与组合实验候选 | [时序预测_DUET_TQNet_WPMixer对比](专题分析/时序预测_DUET_TQNet_WPMixer对比.md) |
+| 每篇论文的原文笔记与源码核验补充 | [论文笔记](论文笔记/README.md) |
 | 时序方向复现记录与代码 | [EXP-0003](实验报告/EXP-0003_record.md)、[code/ts_forecasting](../code/ts_forecasting/README.md) |
 
 ## 必需文档定位
@@ -33,9 +35,18 @@
 
 | 文档 | 定位 |
 | --- | --- |
+| [六篇总结与趋势](六篇论文总结与视觉Token压缩趋势.md) | 六篇摘要、方法纠正、数字解释与VisionZip开发定位 |
+| [视觉Mode C](视觉Token压缩_ModeC.md) | P/F/M/E矩阵及候选连接点 |
+| [PAPER-0001_DUET](论文笔记/PAPER-0001_DUET.md) | 双聚类时序预测证据包 |
+| [PAPER-0002_TQNet](论文笔记/PAPER-0002_TQNet.md) | 周期查询证据包 |
+| [PAPER-0003_WPMixer](论文笔记/PAPER-0003_WPMixer.md) | 多分辨率混合证据包 |
+| [PAPER-0004_FastV](论文笔记/PAPER-0004_FastV.md) | 注意力剪枝与实现差异 |
+| [PAPER-0005_SparseVLM](论文笔记/PAPER-0005_SparseVLM.md) | 文本raters、回收与阶段预算 |
+| [PAPER-0006_VisionZip](论文笔记/PAPER-0006_VisionZip.md) | dominant/contextual压缩及边界 |
 | [.claude/README.md](../.claude/README.md) | Claude Code 运行时支持 |
 | [AGENTS.md](../AGENTS.md) | 研究工作区协作规则 |
 | [analysis/archied/README.md](../analysis/archied/README.md) | 归档方案 |
+| [analysis/baseline候选筛选.md](baseline候选筛选.md) | 3090 24GB 下的三篇候选、源码与许可核验、引用量待核实项 |
 | [analysis/experiment-results.md](../analysis/experiment-results.md) | Experiment Results：实验详细数据总表 |
 | [analysis/paper-plan.md](../analysis/paper-plan.md) | Paper Plan：实验到论文的宏观规划 |
 | [analysis/templates/1a-4b机制分析.md](../analysis/templates/1a-4b机制分析.md) | 1a–4b 机制分析：<问题> |
@@ -52,14 +63,14 @@
 | [analysis/实验室会话交接.md](../analysis/实验室会话交接.md) | 实验室电脑新会话的交接说明 |
 | [analysis/MODE_C-0001_视觉token剪枝.md](../analysis/MODE_C-0001_视觉token剪枝.md) | MODE_C_PACKAGE：多模态大模型视觉 token 剪枝 |
 | [analysis/IDEA-0001_编码器侧压缩的位置编号.md](../analysis/IDEA-0001_编码器侧压缩的位置编号.md) | IDEA_PACKAGE：编码器侧压缩的位置编号（融合路线候选，deferred） |
-| [analysis/论文笔记/PAPER-0004_FastV_源码核验.md](../analysis/论文笔记/PAPER-0004_FastV_源码核验.md) | ANALYSIS_PACKAGE：FastV |
-| [analysis/论文笔记/PAPER-0005_SparseVLM_源码核验.md](../analysis/论文笔记/PAPER-0005_SparseVLM_源码核验.md) | ANALYSIS_PACKAGE：SparseVLM / SparseVLM+ |
-| [analysis/论文笔记/PAPER-0006_VisionZip_源码核验.md](../analysis/论文笔记/PAPER-0006_VisionZip_源码核验.md) | ANALYSIS_PACKAGE：VisionZip |
+| [analysis/论文笔记/PAPER-0004_FastV_源码核验.md](../analysis/论文笔记/PAPER-0004_FastV_源码核验.md) | 源码核验补充：FastV |
+| [analysis/论文笔记/PAPER-0005_SparseVLM_源码核验.md](../analysis/论文笔记/PAPER-0005_SparseVLM_源码核验.md) | 源码核验补充：SparseVLM / SparseVLM+ |
+| [analysis/论文笔记/PAPER-0006_VisionZip_源码核验.md](../analysis/论文笔记/PAPER-0006_VisionZip_源码核验.md) | 源码核验补充：VisionZip |
 | [analysis/实验报告/EXP-0001_record.md](../analysis/实验报告/EXP-0001_record.md) | EXPERIMENT_RECORD：三个仓库的代码级核验（CPU） |
 | [code/token_pruning/README.md](../code/token_pruning/README.md) | 视觉 token 剪枝 baseline 复现与代码级核验 |
-| [analysis/论文笔记/PAPER-0001_DUET_源码核验.md](../analysis/论文笔记/PAPER-0001_DUET_源码核验.md) | ANALYSIS_PACKAGE：DUET |
-| [analysis/论文笔记/PAPER-0002_TQNet_源码核验.md](../analysis/论文笔记/PAPER-0002_TQNet_源码核验.md) | ANALYSIS_PACKAGE：TQNet |
-| [analysis/论文笔记/PAPER-0003_WPMixer_源码核验.md](../analysis/论文笔记/PAPER-0003_WPMixer_源码核验.md) | ANALYSIS_PACKAGE：WPMixer |
+| [analysis/论文笔记/PAPER-0001_DUET_源码核验.md](../analysis/论文笔记/PAPER-0001_DUET_源码核验.md) | 源码核验补充：DUET |
+| [analysis/论文笔记/PAPER-0002_TQNet_源码核验.md](../analysis/论文笔记/PAPER-0002_TQNet_源码核验.md) | 源码核验补充：TQNet |
+| [analysis/论文笔记/PAPER-0003_WPMixer_源码核验.md](../analysis/论文笔记/PAPER-0003_WPMixer_源码核验.md) | 源码核验补充：WPMixer |
 | [analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md](../analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md) | 时序预测三篇论文对比：DUET、TQNet、WPMixer |
 | [analysis/实验报告/EXP-0003_record.md](../analysis/实验报告/EXP-0003_record.md) | EXPERIMENT_RECORD：DUET/TQNet/WPMixer 在 ETTh1 上的 CPU 复现 |
 | [code/ts_forecasting/README.md](../code/ts_forecasting/README.md) | 多变量长期时序预测 baseline 复现与评测核验 |
@@ -99,4 +110,5 @@
 - literature/processed/.gitkeep 仅保留解析目录；.claude/skills/ 已包含实际技能文件。
 - [.claude/skills/manifest.json](../.claude/skills/manifest.json) 保存上传包来源、协议版本与六份原文件的校验和。
 - data/、checkpoints/、papers/、code/output/ 不跟踪；在对应笔记或实验记录中登记来源、校验和及可恢复位置。
-- 外部代码（FastV、SparseVLM、VisionZip、LLaVA）只登记来源与 commit（见 [source/README](../source/README.md)），不纳入仓库；尚无真实实验数据或归档方案。
+- [论文来源清单](论文笔记/sources-20261023.json) 保存 PDF 来源、版本、校验和与源码 commit；PDF 在被忽略的 papers/，临时源码核验副本未纳入项目。
+- 外部代码（LLaVA、FastV、SparseVLM、VisionZip、iTransformer、DUET、TQNet、WPMixer 等）只登记来源与 commit（见 [source/README](../source/README.md)），不纳入仓库。真实实验数据只有 EXP-0003 的 CPU 运行（原始日志未保留，关键数字已抄录）；尚无归档方案以外的归档。

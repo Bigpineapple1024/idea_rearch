@@ -1,5 +1,7 @@
 # ANALYSIS_PACKAGE：VisionZip: Longer is Better but Not Necessary in Vision Language Models
 
+> 本文件是源码核验补充；原文笔记见 [PAPER-0006_VisionZip](PAPER-0006_VisionZip.md)。两份冲突时以能追溯到原文页码或源码行号的一方为准。
+
 状态：partial。paper_id PAPER-0006 / 2026-10-23 / 分析者 Claude Code 会话 / 输入：代码 dvlab-research/VisionZip@8f86b55c6f000eb033e6912538af2dd7dcb30502、README、论文与补充材料检索摘要。
 **论文全文未读**（arxiv.org、openaccess.thecvf.com 被网络策略拦截），SC 条目需回查原文。
 

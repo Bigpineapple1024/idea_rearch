@@ -1,8 +1,8 @@
 # ts_forecasting：多变量长期时序预测 baseline 复现与评测核验
 
-方向：多变量长期预测（DUET、TQNet、WPMixer）。论文分析见 analysis/论文笔记/PAPER-0001～0003，复现记录见 [EXP-0003](../../analysis/实验报告/EXP-0003_record.md)，三篇对比与 baseline 选择见 [时序三篇对比](../../analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md)。
+方向：多变量长期预测。主 baseline 为 iTransformer（DEC-0012，备选 CycleNet）；DUET、TQNet、WPMixer 为强对照。三篇对照的论文分析见 analysis/论文笔记/PAPER-0001～0003，复现记录见 [EXP-0003](../../analysis/实验报告/EXP-0003_record.md)，三篇对比与 baseline 选择见 [时序三篇对比](../../analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md)。
 
-**状态（2026-10-23）**：在 CPU（4 核）上用真实 ETTh1 数据跑了三个官方仓库；这些是真实训练与测试结果，不是随机权重的代码检查。其他数据集尚未运行。
+**状态（2026-10-23）**：在 CPU（4 核）上用真实 ETTh1 数据跑了 DUET、TQNet、WPMixer 三个官方仓库；这些是真实训练与测试结果，不是随机权重的代码检查。其他数据集尚未运行。iTransformer 尚未复现（云端 CPU 运行按用户要求中止，没有留下结果）。
 
 ## 文件
 
@@ -19,6 +19,7 @@
 
 | 组件 | 来源 | commit / 版本 |
 | --- | --- | --- |
+| iTransformer | github.com/thuml/iTransformer | c2426e68ca13f74aaec08045c5c724d8ad328124 |
 | DUET | github.com/decisionintelligence/DUET | dcc6e6780a9138731b64b9b5398a94a1d97033f0 |
 | TQNet | github.com/ACAT-SCUT/TQNet | 15e19cb23483ed52398566c4baa959168cfffa57 |
 | WPMixer | github.com/Secure-and-Intelligent-Systems-Lab/WPMixer | 74104c9dddd54d279eb8323f48934b4fd75fcae7 |
@@ -32,6 +33,16 @@
 ```bash
 # 数据
 curl -o ETTh1.csv https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv
+
+# iTransformer（主 baseline；官方 scripts/multivariate_forecasting/ETT/iTransformer_ETTh1.sh 的第 1 组参数）
+# 预测长度 192 的 d_model/d_ff 为 256，336、720 为 512，以脚本为准
+cd iTransformer && mkdir -p dataset/ETT-small && cp ../ETTh1.csv dataset/ETT-small/
+python -u run.py --is_training 1 --root_path ./dataset/ETT-small/ --data_path ETTh1.csv --model_id ETTh1_96_96 \
+  --model iTransformer --data ETTh1 --features M --seq_len 96 --pred_len 96 --e_layers 2 --enc_in 7 --dec_in 7 --c_out 7 \
+  --des Exp --d_model 256 --d_ff 256 --itr 1
+# 注意：run.py 把随机种子写死为 2023（fix_seed = 2023）。跑 3 个种子需要一个包装脚本在本进程内替换种子，
+# 不修改官方文件；包装脚本待在实验室电脑上编写并先用种子 2023 核对与直接运行的结果一致。
+# 测试集 batch_size=1，drop_last=True 不会丢窗口。
 
 # TQNet（官方 scripts/TQNet/etth1.sh 的参数；CPU 约 1 分钟）
 cd TQNet && mkdir -p dataset && cp ../ETTh1.csv dataset/

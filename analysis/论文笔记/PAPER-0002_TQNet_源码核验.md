@@ -1,5 +1,7 @@
 # ANALYSIS_PACKAGE：TQNet: Temporal Query Network for Efficient Multivariate Time Series Forecasting
 
+> 本文件是源码核验补充；原文笔记见 [PAPER-0002_TQNet](PAPER-0002_TQNet.md)。两份冲突时以能追溯到原文页码或源码行号的一方为准。
+
 状态：partial（代码已核验，ETTh1 已在 CPU 上真实复现；论文全文未读）。paper_id PAPER-0002 / 2026-10-23 / 分析者 Claude Code 会话 / 输入：代码 ACAT-SCUT/TQNet@15e19cb23483ed52398566c4baa959168cfffa57、README、仓库内 result.txt 与 Figures/Table2.png、论文检索摘要、EXP-0003。
 
 ## 结构化交接包
@@ -70,7 +72,7 @@ unresolved_questions: [超参数（lr、dropout、d_model）如何选定, cycle 
   - 周期长度需要人为指定，多周期或周期不明显的数据怎么办，代码中没有处理。
   - 注意力维度等于 seq_len，回看窗口变化时注意力规模随之变化；README 自述难以扩展到超长回看。
   - 论文和脚本只用一个种子。
-- **与自身实验的关系**：作为对照方法和组合实验素材（DEC-0011 改为以 DUET 为主 baseline）；因为训练快、复现精确，也适合在 DUET 上做正式实验前先做快速诊断（见 [时序三篇对比](../专题分析/时序预测_DUET_TQNet_WPMixer对比.md)）。
+- **与自身实验的关系**：作为对照方法和组合实验素材（DEC-0012 起主 baseline 为 iTransformer，DUET 也改为对照）；因为训练快、复现精确，也适合在主 baseline 上做正式实验前先做快速诊断（见 [时序三篇对比](../专题分析/时序预测_DUET_TQNet_WPMixer对比.md)）。
 - **核心总结**：TQNet 的贡献是把“周期先验”从单变量（CycleNet）推广到变量间相关性；它可复现、协议干净、实验便宜，这三点对一年期的硕士课题最重要。
 
 ## 交接 Deep Read

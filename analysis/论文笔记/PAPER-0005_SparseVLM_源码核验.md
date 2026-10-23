@@ -1,5 +1,7 @@
 # ANALYSIS_PACKAGE：SparseVLM（ICML 2025）与 SparseVLM+（TPAMI 2026）
 
+> 本文件是源码核验补充；原文笔记见 [PAPER-0005_SparseVLM](PAPER-0005_SparseVLM.md)。两份冲突时以能追溯到原文页码或源码行号的一方为准。
+
 状态：partial。paper_id PAPER-0005 / 2026-10-23 / 分析者 Claude Code 会话 / 输入：代码 Gumpest/SparseVLMs main@a9e71427220c4cacb6afb5a96d23cfb43142e0c3 与 v1.5@734d9003879689713a132b83297dfad060a5c9af、README、论文检索摘要。
 **论文全文未读**（arxiv.org 被网络策略拦截），SC 条目需回查原文。
 
