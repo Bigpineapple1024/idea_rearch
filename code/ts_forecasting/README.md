@@ -8,6 +8,8 @@
 
 | 文件 | 作用 |
 | --- | --- |
+| exp_ts.py | 实验室 GPU 上的运行器（EXP-0004 起）：每次运行一个目录（仓库自己的 checkpoints/、results/ 也在其中），写 cmd、config、git、seed、env、gpu、stdout、metrics、status 和 SHA256SUMS，复制到备份并核对，追加到 runs.tsv；拒绝复用已有的 run ID |
+| itransformer_seed.py | 用其他种子运行 iTransformer 官方 run.py：在内存中只替换 `fix_seed = 2023` 这一行后执行，不修改官方文件；种子 2023 时执行的代码与 run.py 字节相同 |
 | wpmixer_droplast.py | 运行 WPMixer 官方 run_LTF.py，同一个 checkpoint 在测试集上分别按官方 `drop_last=True` 和全部窗口打分 |
 | duet_test_stochasticity.py | 运行 DUET 官方 TFB 入口，并在测试时用另外 10 个随机种子重新采样通道 mask，测量分数波动 |
 | probe_duet_mask.py | 代码级探针：随机权重下 DUET 在 eval 模式对同一输入两次前向输出是否相同 |
@@ -42,8 +44,9 @@ cd iTransformer && mkdir -p dataset/ETT-small && cp ../ETTh1.csv dataset/ETT-sma
 python -u run.py --is_training 1 --root_path ./dataset/ETT-small/ --data_path ETTh1.csv --model_id ETTh1_96_96 \
   --model iTransformer --data ETTh1 --features M --seq_len 96 --pred_len 96 --e_layers 2 --enc_in 7 --dec_in 7 --c_out 7 \
   --des Exp --d_model 256 --d_ff 256 --itr 1 --num_workers 0
-# 注意：run.py 把随机种子写死为 2023（fix_seed = 2023）。跑 3 个种子需要一个包装脚本在本进程内替换种子，
-# 不修改官方文件；包装脚本待在实验室电脑上编写并先用种子 2023 核对与直接运行的结果一致。
+# 注意：run.py 把随机种子写死为 2023（fix_seed = 2023）。其他种子用本目录的 itransformer_seed.py，
+# 先用种子 2023 核对它与直接运行的结果一致（EXP-0004 计划）。实验室电脑上用 exp_ts.py 运行，例如
+#   python exp_ts.py EXP-0004 EXP-0004-R01:itransformer:ETTh1:96:2023:direct EXP-0004-R04:itransformer:ETTh1:96:2021
 # 测试集 batch_size=1，drop_last=True 不会丢窗口。
 
 # TQNet（官方 scripts/TQNet/etth1.sh 的参数；CPU 约 1 分钟）
