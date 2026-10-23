@@ -1,6 +1,6 @@
 # ts_forecasting：多变量长期时序预测 baseline 复现与评测核验
 
-方向：多变量长期预测（DUET、TQNet、WPMixer）。论文分析见 analysis/论文笔记/PAPER-0004～0006，复现记录见 [EXP-0003](../../analysis/实验报告/EXP-0003_record.md)，三篇对比与 baseline 选择见 [时序三篇对比](../../analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md)。
+方向：多变量长期预测（DUET、TQNet、WPMixer）。论文分析见 analysis/论文笔记/PAPER-0001～0003，复现记录见 [EXP-0003](../../analysis/实验报告/EXP-0003_record.md)，三篇对比与 baseline 选择见 [时序三篇对比](../../analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md)。
 
 **状态（2026-10-23）**：在 CPU（4 核）上用真实 ETTh1 数据跑了三个官方仓库；这些是真实训练与测试结果，不是随机权重的代码检查。其他数据集尚未运行。
 

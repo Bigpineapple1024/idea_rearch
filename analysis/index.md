@@ -1,6 +1,6 @@
 # 项目文档索引
 
-状态（2026-10-23，DEC-0009）：视觉 token 剪枝与时序预测两条方向并行，各处于“复现 baseline”阶段：FastV 待在 GPU 上复现（EXP-0002）；DUET 已在 CPU 上初步复现（EXP-0003）。流程规范为[研究流程 v2.0](研究流程.md)。新增、移动或归档文档时同步本索引。
+状态（2026-10-23，DEC-0011）：视觉 token 剪枝与时序预测两条方向并行，各处于“复现 baseline”阶段：FastV 待在 GPU 上复现（EXP-0002）；DUET 已在 CPU 上初步复现（EXP-0003）。流程规范为[研究流程 v2.0](研究流程.md)。新增、移动或归档文档时同步本索引。
 
 ## 当前工作入口
 
@@ -52,14 +52,14 @@
 | [analysis/实验室会话交接.md](../analysis/实验室会话交接.md) | 实验室电脑新会话的交接说明 |
 | [analysis/MODE_C-0001_视觉token剪枝.md](../analysis/MODE_C-0001_视觉token剪枝.md) | MODE_C_PACKAGE：多模态大模型视觉 token 剪枝 |
 | [analysis/IDEA-0001_编码器侧压缩的位置编号.md](../analysis/IDEA-0001_编码器侧压缩的位置编号.md) | IDEA_PACKAGE：编码器侧压缩的位置编号（融合路线候选，deferred） |
-| [analysis/论文笔记/PAPER-0001_FastV.md](../analysis/论文笔记/PAPER-0001_FastV.md) | ANALYSIS_PACKAGE：FastV |
-| [analysis/论文笔记/PAPER-0002_SparseVLM.md](../analysis/论文笔记/PAPER-0002_SparseVLM.md) | ANALYSIS_PACKAGE：SparseVLM / SparseVLM+ |
-| [analysis/论文笔记/PAPER-0003_VisionZip.md](../analysis/论文笔记/PAPER-0003_VisionZip.md) | ANALYSIS_PACKAGE：VisionZip |
+| [analysis/论文笔记/PAPER-0001_FastV_源码核验.md](../analysis/论文笔记/PAPER-0001_FastV_源码核验.md) | ANALYSIS_PACKAGE：FastV |
+| [analysis/论文笔记/PAPER-0002_SparseVLM_源码核验.md](../analysis/论文笔记/PAPER-0002_SparseVLM_源码核验.md) | ANALYSIS_PACKAGE：SparseVLM / SparseVLM+ |
+| [analysis/论文笔记/PAPER-0003_VisionZip_源码核验.md](../analysis/论文笔记/PAPER-0003_VisionZip_源码核验.md) | ANALYSIS_PACKAGE：VisionZip |
 | [analysis/实验报告/EXP-0001_record.md](../analysis/实验报告/EXP-0001_record.md) | EXPERIMENT_RECORD：三个仓库的代码级核验（CPU） |
 | [code/token_pruning/README.md](../code/token_pruning/README.md) | 视觉 token 剪枝 baseline 复现与代码级核验 |
-| [analysis/论文笔记/PAPER-0004_DUET.md](../analysis/论文笔记/PAPER-0004_DUET.md) | ANALYSIS_PACKAGE：DUET |
-| [analysis/论文笔记/PAPER-0005_TQNet.md](../analysis/论文笔记/PAPER-0005_TQNet.md) | ANALYSIS_PACKAGE：TQNet |
-| [analysis/论文笔记/PAPER-0006_WPMixer.md](../analysis/论文笔记/PAPER-0006_WPMixer.md) | ANALYSIS_PACKAGE：WPMixer |
+| [analysis/论文笔记/PAPER-0004_DUET_源码核验.md](../analysis/论文笔记/PAPER-0004_DUET_源码核验.md) | ANALYSIS_PACKAGE：DUET |
+| [analysis/论文笔记/PAPER-0005_TQNet_源码核验.md](../analysis/论文笔记/PAPER-0005_TQNet_源码核验.md) | ANALYSIS_PACKAGE：TQNet |
+| [analysis/论文笔记/PAPER-0006_WPMixer_源码核验.md](../analysis/论文笔记/PAPER-0006_WPMixer_源码核验.md) | ANALYSIS_PACKAGE：WPMixer |
 | [analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md](../analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md) | 时序预测三篇论文对比：DUET、TQNet、WPMixer |
 | [analysis/实验报告/EXP-0003_record.md](../analysis/实验报告/EXP-0003_record.md) | EXPERIMENT_RECORD：DUET/TQNet/WPMixer 在 ETTh1 上的 CPU 复现 |
 | [code/ts_forecasting/README.md](../code/ts_forecasting/README.md) | 多变量长期时序预测 baseline 复现与评测核验 |
