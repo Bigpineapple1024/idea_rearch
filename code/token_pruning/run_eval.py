@@ -14,6 +14,7 @@ visionzip 0.1.3 wheel on PyPI ships no code.
 `random` is FastV with the attention ranking replaced by a seeded uniform draw (same K, same count).
 `sparsevlm` runs SparseVLM's own fork of model_vqa_loader (pip install -e source/SparseVLMs), which
 prunes inside generate() from `retained_tokens`; it refuses to run against the official LLaVA loader.
+Its decoder layers call FlashAttention-2, which has no Windows build; sparsevlm_sdpa.py swaps in SDPA.
 """
 import argparse
 import functools
@@ -107,6 +108,9 @@ def main():
 
     loader.load_pretrained_model = load_and_patch
     loader.args = llava_args                         # CustomDataset reads the module-level `args`
+    if method_args.method == "sparsevlm" and os.name == "nt":
+        import sparsevlm_sdpa
+        sparsevlm_sdpa.apply()
 
     def create_data_loader(questions, image_folder, tokenizer, image_processor, model_config, batch_size=1, num_workers=4):
         # Same dataset, collate_fn and order as LLaVA's create_data_loader. Workers spawned on Windows re-import
@@ -127,7 +131,8 @@ def main():
             "n_answers": n_answers, "load_seconds": round(times["loaded"] - times["start"], 1),
             "eval_seconds": round(eval_seconds, 1), "seconds_per_answer": round(eval_seconds / max(n_answers, 1), 4),
             "eval_peak_gpu_mem_gib": round(torch.cuda.max_memory_allocated() / 2**30, 2),
-            "wall_seconds": round(end - times["start"], 1), "gpu": torch.cuda.get_device_name(0)}
+            "wall_seconds": round(end - times["start"], 1), "gpu": torch.cuda.get_device_name(0),
+            "flash_attention_stand_in": "sdpa" if method_args.method == "sparsevlm" and os.name == "nt" else None}
     with open(answers_file + ".meta.json", "w") as f:
         json.dump(meta, f, indent=2)
 
