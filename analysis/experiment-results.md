@@ -1,6 +1,6 @@
 # Experiment Results：实验详细数据总表
 
-状态：视觉 token 剪枝有 GPU 复现（EXP-0002，LLaVA-1.5-7B，POPE、MME，49 次运行）和代码级核验（EXP-0001，CPU，随机权重）；时序预测有 ETTh1 上的 CPU 真实复现（EXP-0003）。空表表示无数据，绝不表示数值为零。
+状态（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）和代码级核验（EXP-0001）；时序预测有 iTransformer 的 GPU 复现（EXP-0004 阶段 A，20 次运行）和 ETTh1 上的 CPU 复现（EXP-0003），对照的 GPU 重跑（EXP-0005）进行中。空表表示无数据，绝不表示数值为零。
 
 ## 实验登记
 
@@ -9,6 +9,10 @@
 | EXP-0001 | none | 三个剪枝仓库的代码实际行为、预算口径、能否在官方 LLaVA 推理中跑通 | [EXP-0001_record](实验报告/EXP-0001_record.md) | [SQZ-EXP-0001](实验报告/EXP-0001_squeeze.md)（含 Windows 复验 R7～R12） | completed |
 | EXP-0002 | none | 视觉 token 剪枝 GPU 复现：主 baseline FastV，以及 vanilla / VisionZip / SparseVLM / 随机剪枝 × 192/128/64 × POPE、MME | [EXP-0002_record](实验报告/EXP-0002_record.md) | [SQZ-EXP-0002](实验报告/EXP-0002_squeeze.md) | completed（MME-P 门槛偏离计划，见记录） |
 | EXP-0003 | none | 时序预测：DUET、TQNet、WPMixer 在 ETTh1 上的 CPU 复现；WPMixer drop_last 与 DUET 测试随机性核验 | [EXP-0003_record](实验报告/EXP-0003_record.md) | [SQZ-EXP-0003](实验报告/EXP-0003_squeeze.md)（只基于抄录数字） | partial |
+| EXP-0004 | none | 时序主 baseline iTransformer 在 ETT 上的 GPU 复现（论文 Table 10，3 个种子） | 分支 code/ts-forecasting 上的 EXP-0004_record（完成后同步） | 待做 | 进行中：阶段 A（ETTh1）完成，96/192/720 达标、336 未达标；阶段 B 待运行 |
+| EXP-0005 | none | DUET、TQNet、WPMixer 在统一协议下的 GPU 重跑（ETTh1，3 个种子）与 TFB 数据核对 | 分支 code/ts-forecasting 上的 EXP-0005_record（完成后同步） | 待做 | 运行中 |
+| EXP-0006 | none | FastV 与随机选择保留了图像的哪些位置（F8 的机制诊断） | [EXP-0006_record](实验报告/EXP-0006_record.md) | [SQZ-EXP-0006](实验报告/EXP-0006_squeeze.md) | completed |
+| EXP-0007 | none | 层分布与选择规则的拆分（MODE_C-0002 的 C11） | 分支 code/token-pruning 上的 EXP-0007_record（计划已提交） | — | planned |
 
 ## 全部运行
 
@@ -81,6 +85,30 @@
 | EXP-0003-R12 | DUET 统一设置 96→96 + 10 次测试 mask 重采样 | DUET dcc6e678；duet_test_stochasticity.py | 同上 | ETTh1 前 14400 行转 TFB 格式 | 2021 | completed | mse_norm 0.3898 | mae_norm 0.3990；mask 重采样 MSE 标准差 0.0003 | 12 个 epoch | 同上 |
 | EXP-0003-R13 | DUET 随机权重 eval 两次前向 | probe_duet_mask.py | 同上 | 随机输入 | 0 | completed | NA（代码核验） | 最大输出差 0.186 | — | 同上 |
 | EXP-0003-R14 | DUET 统一设置 96→96 | 同 R12 | 同上 | 同上 | 2022 | completed | mse_norm 0.3790 | mae_norm 0.3960 | 约 11 分钟 | 同上 |
+| EXP-0004-R01 | itransformer ETTh1-96（官方 run.py） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2785 | 2023 | completed | MSE 0.3866（↓） | MAE 0.4046 | 05:01～05:03 | `code/output/EXP-0004/EXP-0004-R01/`，SHA256SUMS 的 sha256 1f2d7af5…；备份同名目录 |
+| EXP-0004-R02 | itransformer ETTh1-96（官方 run.py） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2785 | 2023 | completed | MSE 0.3866（↓） | MAE 0.4046 | 05:04～05:06 | `code/output/EXP-0004/EXP-0004-R02/`，SHA256SUMS 的 sha256 c9f9059d…；备份同名目录 |
+| EXP-0004-R03 | itransformer ETTh1-96（包装脚本） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2785 | 2023 | completed | MSE 0.3866（↓） | MAE 0.4046 | 05:06～05:08 | `code/output/EXP-0004/EXP-0004-R03/`，SHA256SUMS 的 sha256 87ef8159…；备份同名目录 |
+| EXP-0004-R04 | itransformer ETTh1-96（包装脚本） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2785 | 2021 | completed | MSE 0.3855（↓） | MAE 0.4045 | 05:08～05:10 | `code/output/EXP-0004/EXP-0004-R04/`，SHA256SUMS 的 sha256 3b955470…；备份同名目录 |
+| EXP-0004-R05 | itransformer ETTh1-96（包装脚本） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2785 | 2022 | completed | MSE 0.3852（↓） | MAE 0.4031 | 05:10～05:13 | `code/output/EXP-0004/EXP-0004-R05/`，SHA256SUMS 的 sha256 cb82c8e2…；备份同名目录 |
+| EXP-0004-R06 | itransformer ETTh1-192（官方 run.py） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2689 | 2023 | completed | MSE 0.4413（↓） | MAE 0.4362 | 05:13～05:16 | `code/output/EXP-0004/EXP-0004-R06/`，SHA256SUMS 的 sha256 ee58292d…；备份同名目录 |
+| EXP-0004-R07 | itransformer ETTh1-192（官方 run.py） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2689 | 2023 | completed | MSE 0.4413（↓） | MAE 0.4362 | 05:16～05:18 | `code/output/EXP-0004/EXP-0004-R07/`，SHA256SUMS 的 sha256 2376e723…；备份同名目录 |
+| EXP-0004-R08 | itransformer ETTh1-192（包装脚本） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2689 | 2023 | completed | MSE 0.4413（↓） | MAE 0.4362 | 05:18～05:21 | `code/output/EXP-0004/EXP-0004-R08/`，SHA256SUMS 的 sha256 02d3d88d…；备份同名目录 |
+| EXP-0004-R09 | itransformer ETTh1-192（包装脚本） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2689 | 2021 | completed | MSE 0.4401（↓） | MAE 0.4359 | 05:21～05:23 | `code/output/EXP-0004/EXP-0004-R09/`，SHA256SUMS 的 sha256 c67e879d…；备份同名目录 |
+| EXP-0004-R10 | itransformer ETTh1-192（包装脚本） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2689 | 2022 | completed | MSE 0.4463（↓） | MAE 0.4380 | 05:23～05:25 | `code/output/EXP-0004/EXP-0004-R10/`，SHA256SUMS 的 sha256 e8235370…；备份同名目录 |
+| EXP-0004-R11 | itransformer ETTh1-336（官方 run.py） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2545 | 2023 | completed | MSE 0.4910（↓） | MAE 0.4622 | 05:25～05:26 | `code/output/EXP-0004/EXP-0004-R11/`，SHA256SUMS 的 sha256 3fcac1b7…；备份同名目录 |
+| EXP-0004-R12 | itransformer ETTh1-336（官方 run.py） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2545 | 2023 | completed | MSE 0.4910（↓） | MAE 0.4622 | 05:26～05:28 | `code/output/EXP-0004/EXP-0004-R12/`，SHA256SUMS 的 sha256 e5677447…；备份同名目录 |
+| EXP-0004-R13 | itransformer ETTh1-336（包装脚本） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2545 | 2023 | completed | MSE 0.4910（↓） | MAE 0.4622 | 05:28～05:29 | `code/output/EXP-0004/EXP-0004-R13/`，SHA256SUMS 的 sha256 dd7532ae…；备份同名目录 |
+| EXP-0004-R14 | itransformer ETTh1-336（包装脚本） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2545 | 2021 | completed | MSE 0.4910（↓） | MAE 0.4606 | 05:29～05:30 | `code/output/EXP-0004/EXP-0004-R14/`，SHA256SUMS 的 sha256 d326399f…；备份同名目录 |
+| EXP-0004-R15 | itransformer ETTh1-336（包装脚本） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2545 | 2022 | completed | MSE 0.4885（↓） | MAE 0.4594 | 05:30～05:32 | `code/output/EXP-0004/EXP-0004-R15/`，SHA256SUMS 的 sha256 98bfa288…；备份同名目录 |
+| EXP-0004-R16 | itransformer ETTh1-720（官方 run.py） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2161 | 2023 | completed | MSE 0.5093（↓） | MAE 0.4938 | 05:32～05:33 | `code/output/EXP-0004/EXP-0004-R16/`，SHA256SUMS 的 sha256 f3670d7b…；备份同名目录 |
+| EXP-0004-R17 | itransformer ETTh1-720（官方 run.py） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2161 | 2023 | completed | MSE 0.5093（↓） | MAE 0.4938 | 05:33～05:34 | `code/output/EXP-0004/EXP-0004-R17/`，SHA256SUMS 的 sha256 800d5259…；备份同名目录 |
+| EXP-0004-R18 | itransformer ETTh1-720（包装脚本） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2161 | 2023 | completed | MSE 0.5093（↓） | MAE 0.4938 | 05:35～05:36 | `code/output/EXP-0004/EXP-0004-R18/`，SHA256SUMS 的 sha256 e9b2161b…；备份同名目录 |
+| EXP-0004-R19 | itransformer ETTh1-720（包装脚本） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2161 | 2021 | completed | MSE 0.5174（↓） | MAE 0.4979 | 05:36～05:38 | `code/output/EXP-0004/EXP-0004-R19/`，SHA256SUMS 的 sha256 b5adec30…；备份同名目录 |
+| EXP-0004-R20 | itransformer ETTh1-720（包装脚本） | b140cf9；无未提交改动 | `itrans`，GPU；seq_len 96，官方脚本参数 | ETTh1.csv（sha256 f18de3ad…），测试窗口 2161 | 2022 | completed | MSE 0.5092（↓） | MAE 0.4925 | 05:38～05:39 | `code/output/EXP-0004/EXP-0004-R20/`，SHA256SUMS 的 sha256 556d0145…；备份同名目录 |
+| EXP-0006-R01 | fastv64_kept × pope_img20 | 1eee940；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --kept-token-log | pope_img20 358 题 | — | completed | 主指标 358 | 见实验记录 | 0.175 秒/题，峰值 13.93 GiB | `code/output/EXP-0006/EXP-0006-R01/`，SHA256SUMS 的 sha256 f3c2ee50…；备份同名目录 |
+| EXP-0006-R02 | random64_s2021_kept × pope_img20 | 1eee940；无未提交改动 | `tp`；--method random --fastv-k 2 --fastv-keep 30 --seed 2021 --kept-token-log | pope_img20 358 题 | 2021 | completed | 主指标 358 | 见实验记录 | 0.1782 秒/题，峰值 13.93 GiB | `code/output/EXP-0006/EXP-0006-R02/`，SHA256SUMS 的 sha256 41655a78…；备份同名目录 |
+| EXP-0006-R03 | fastv192_kept × pope_img20 | 1eee940；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 166 --kept-token-log | pope_img20 358 题 | — | completed | 主指标 358 | 见实验记录 | 0.2063 秒/题，峰值 14.08 GiB | `code/output/EXP-0006/EXP-0006-R03/`，SHA256SUMS 的 sha256 eb34d89c…；备份同名目录 |
+| EXP-0006-R04 | random192_s2021_kept × pope_img20 | 1eee940；无未提交改动 | `tp`；--method random --fastv-k 2 --fastv-keep 166 --seed 2021 --kept-token-log | pope_img20 358 题 | 2021 | completed | 主指标 358 | 见实验记录 | 0.2041 秒/题，峰值 14.08 GiB | `code/output/EXP-0006/EXP-0006-R04/`，SHA256SUMS 的 sha256 5fbc1766…；备份同名目录 |
 
 ## 汇总与比较
 
@@ -91,5 +119,7 @@
 | C-0002-3 | VisionZip R12～R15、R17、R35；SparseVLM R36～R41 | 同上 | 与各自论文 Table 1 的差 | POPE 三档都在 0.2 以内；MME P+C：VisionZip +1.2/−2.5/+6.0，SparseVLM −0.8/+16.1/+0.6 | POPE 1 个点 | R16、R18～R23 失败，已用新 ID 重跑 | 两种方法在本环境复现通过（SparseVLM 为 SDPA 替代） |
 | C-0002-4 | 见 analysis/tables.md 的方法间比较表 | 同上 | 配对 bootstrap 差值（探索性，未校正） | 例如 FastV-192 − VisionZip-192：POPE −9.72 [−10.60, −8.90]，MME-P +21.68 [−30.21, 69.88] | — | — | 描述性；方法排序随 benchmark 改变 |
 | C-0002-5 | R46～R49 | 50 道 POPE，每次 50 个预填充 | 32 层平均视觉 token（实测） | SparseVLM 206.5/145.4/82.25，比名义预算多 7.6%/13.6%/28.5%；FastV-64 为 64.125 | — | R43～R45 钩子漏记 3 层，不用 | SparseVLM 的名义预算不等于实际 token 数 |
+| C-0004-1 | EXP-0004-R01～R20 | ETTh1 × 4 个预测长度；每档直接运行 2 次 + 包装脚本 3 个种子 | 包装脚本三个种子的均值 ± 样本标准差，与论文 Table 10 比较 | MSE：96 档 0.3858 ± 0.0008（论文 0.386），192 档 0.4426 ± 0.0033（0.441），336 档 0.4902 ± 0.0015（0.487），720 档 0.5120 ± 0.0047（0.503）；包装脚本（种子 2023）与直接运行逐位相同 | 论文值在均值 ± 2 SD 内 | 无 | 阶段 A：3 档达标、336 档未达标（差 0.0002），按计划进入阶段 B |
+| C-0006-1 | EXP-0006-R01～R04 | pope_img20 358 道题，keep 30 与 166 | 保留 patch 的位置统计（无随机重复） | FastV 平均行号 15.92 / 16.56，随机 11.53 / 11.50；底部 1/4 占比 57.3% / 56.0% vs 24.8%；4×4 块覆盖率 45.4% / 85.4% vs 57.7% / 99.6%；同图不同题 Jaccard 0.948 / 0.957 vs 0.026 / 0.169 | 计划中的方向性预测（H1～H3） | 无 | FastV（K=2）的选择由位置主导、几乎不看问题 |
 
 指标较多时在单次记录中使用长表，或引用可恢复的 CSV/JSON 并登记 schema、计算命令与校验和。缺失写 NA 及原因，未运行不写成失败或通过。见[事实记录模板](templates/EXPERIMENT_RECORD.md)。
