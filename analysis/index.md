@@ -1,6 +1,6 @@
 # 项目文档索引
 
-状态：目录与模板已初始化，五个 skills 已安装并完成静态核验，尚无论文分析或实验结果。新增、移动或归档文档时同步本索引。
+状态：六篇论文原文笔记和视觉 token 压缩 Mode C 已完成，尚无独立复现或实验结果。新增、移动或归档文档时同步本索引。
 
 ## 必需文档定位
 
@@ -20,6 +20,14 @@
 
 | 文档 | 定位 |
 | --- | --- |
+| [六篇总结与趋势](六篇论文总结与视觉Token压缩趋势.md) | 六篇摘要、方法纠正、数字解释与VisionZip开发定位 |
+| [视觉Mode C](视觉Token压缩_ModeC.md) | P/F/M/E矩阵及候选连接点 |
+| [PAPER-0001_DUET](论文笔记/PAPER-0001_DUET.md) | 双聚类时序预测证据包 |
+| [PAPER-0002_TQNet](论文笔记/PAPER-0002_TQNet.md) | 周期查询证据包 |
+| [PAPER-0003_WPMixer](论文笔记/PAPER-0003_WPMixer.md) | 多分辨率混合证据包 |
+| [PAPER-0004_FastV](论文笔记/PAPER-0004_FastV.md) | 注意力剪枝与实现差异 |
+| [PAPER-0005_SparseVLM](论文笔记/PAPER-0005_SparseVLM.md) | 文本raters、回收与阶段预算 |
+| [PAPER-0006_VisionZip](论文笔记/PAPER-0006_VisionZip.md) | dominant/contextual压缩及边界 |
 | [.claude/README.md](../.claude/README.md) | Claude Code 运行时支持 |
 | [AGENTS.md](../AGENTS.md) | 研究工作区协作规则 |
 | [analysis/archied/README.md](../analysis/archied/README.md) | 归档方案 |
@@ -71,4 +79,5 @@
 - literature/processed/.gitkeep 仅保留解析目录；.claude/skills/ 已包含实际技能文件。
 - [.claude/skills/manifest.json](../.claude/skills/manifest.json) 保存上传包来源、协议版本与六份原文件的校验和。
 - data/、checkpoints/、papers/、code/output/ 不跟踪；在对应笔记或实验记录中登记来源、校验和及可恢复位置。
-- 尚无外部论文、baseline 代码、实验数据或归档方案；技能安装不代表已经执行研究。
+- [论文来源清单](论文笔记/sources-20261023.json) 保存PDF来源、版本、校验和和源码commit；PDF在被忽略的papers/，临时源码核验副本未纳入项目。
+- 已完成原文阅读与Mode C分析；尚无独立复现、实验数据或归档方案。按技能指引分析不等于Claude CLI加载验证。

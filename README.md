@@ -2,7 +2,9 @@
 
 从论文阅读、问题发现、实验验证到论文写作的可追溯工作区。
 
-**当前状态：**目录、文档模板与五个项目级 skills 已落盘，交接模板已对齐；研究主题、baseline、数据集和依赖环境待补充。尚未运行论文解析、复现或实验。
+**当前状态：**目录、模板与五个 skills 已就绪。已完成六篇原文笔记及视觉 token 压缩 Mode C 分析；按用户定位，以 VisionZip 为开发 baseline、FastV/SparseVLM 为对照进入复现准备。数据集与依赖待配置，未执行复现/实验。
+
+阅读入口：[六篇总结与趋势](analysis/六篇论文总结与视觉Token压缩趋势.md)、[逐篇笔记](analysis/论文笔记/README.md)、[问题—现象矩阵](analysis/视觉Token压缩_ModeC.md)。
 
 ## 目录与维护边界
 
@@ -37,7 +39,7 @@ mkdir -p data checkpoints papers code/output
 
 闭环：Analyze Paper → Deep Read（仅 Mode C）→ Discover Innovation → 实际执行实验 → Record Experiment → Squeeze Experiment → 回流 Deep Read。
 
-技能入口及验证范围见[技能说明](.claude/README.md)。当前完成文件安装与静态核验，未执行研究流程。缺少材料或运行证据时标注待补充，不生成虚构结果。
+技能入口见[技能说明](.claude/README.md)。本轮已按 analyze-paper/deep-read 指引完成阅读与证据包；未验证 Claude CLI 加载，未运行实验。PDF 使用 pdftotext/PyMuPDF 提取核对，未使用 MinerU。缺少材料或运行证据时标注待补充，不生成虚构结果。
 
 ## 分支与复现约定
 

@@ -1,0 +1,132 @@
+{
+  "retrieved_at": "2026-10-23",
+  "scope": "six original-source readings; no independent experiments",
+  "extraction": {
+    "tool": "pdftotext -layout; PyMuPDF page inspection",
+    "mineru_used": false,
+    "text_location": "/tmp/paper-reading-20261023",
+    "limitation": "two-column formulas and tables can extract imperfectly; use original PDF locators",
+    "pdftotext_version": "pdftotext version 25.03.0",
+    "pymupdf_version": "1.26.6"
+  },
+  "sources": [
+    {
+      "id": "PAPER-0001",
+      "name": "DUET",
+      "title": "DUET: Dual Clustering Enhanced Multivariate Time Series Forecasting",
+      "version": "arXiv:2412.10859v3，2025-01-10；KDD 2025",
+      "authors": "Xiangfei Qiu 等，华东师范大学、Aalborg University",
+      "url": "https://arxiv.org/pdf/2412.10859v3",
+      "repo": "https://github.com/decisionintelligence/DUET",
+      "sha": "dcc6e6780a9138731b64b9b5398a94a1d97033f0",
+      "branch": "main",
+      "license": "MIT（代码；不自动覆盖数据和第三方依赖）",
+      "local_pdf": "papers/DUET-arxiv-2412.10859.pdf",
+      "pdf_sha256": "a26e3deb2ec3821c56f39e12ce78c1097e5482a0620d50f2f7fa4c0d9bd76a19",
+      "pages": 14,
+      "note": "analysis/论文笔记/PAPER-0001_DUET.md",
+      "read_scope": "method, main results, selected ablations/appendix and static code; not exhaustive proof/data audit"
+    },
+    {
+      "id": "PAPER-0002",
+      "name": "TQNet",
+      "title": "Temporal Query Network for Efficient Multivariate Time Series Forecasting",
+      "version": "arXiv:2505.12917v2，2025-09-11；ICML 2025，阅读版本晚于会议",
+      "authors": "Shengsheng Lin 等，华南理工大学、鹏城实验室",
+      "url": "https://arxiv.org/pdf/2505.12917v2",
+      "repo": "https://github.com/ACAT-SCUT/TQNet",
+      "sha": "15e19cb23483ed52398566c4baa959168cfffa57",
+      "branch": "master",
+      "license": "Apache-2.0（代码）",
+      "local_pdf": "papers/TQNet-arxiv-2505.12917.pdf",
+      "pdf_sha256": "3a406d4a89215be1ab70f6bf1c9f38c9cdde04cb021b8c4a4ef3ea6a896af2f0",
+      "pages": 18,
+      "note": "analysis/论文笔记/PAPER-0002_TQNet.md",
+      "read_scope": "method, main results, selected ablations/appendix and static code; not exhaustive proof/data audit"
+    },
+    {
+      "id": "PAPER-0003",
+      "name": "WPMixer",
+      "title": "WPMixer: Efficient Multi-Resolution Mixing for Long-Term Time Series Forecasting",
+      "version": "arXiv:2412.17176v1，2024-12-22；AAAI 2025",
+      "authors": "Md Mahmuddun Nabi Murad、Mehmet Aktukmak、Yasin Yilmaz，University of South Florida / Intel",
+      "url": "https://arxiv.org/pdf/2412.17176v1",
+      "repo": "https://github.com/Secure-and-Intelligent-Systems-Lab/WPMixer",
+      "sha": "74104c9dddd54d279eb8323f48934b4fd75fcae7",
+      "branch": "main",
+      "license": "MIT（代码）",
+      "local_pdf": "papers/WPMixer-arxiv-2412.17176.pdf",
+      "pdf_sha256": "f95ac458aef1fbfc5b1df187ac99605889efd9dd30025a7b4bd0f5d6f6da26e9",
+      "pages": 12,
+      "note": "analysis/论文笔记/PAPER-0003_WPMixer.md",
+      "read_scope": "method, main results, selected ablations/appendix and static code; not exhaustive proof/data audit"
+    },
+    {
+      "id": "PAPER-0004",
+      "name": "FastV",
+      "title": "An Image is Worth 1/2 Tokens After Layer 2: Plug-and-Play Inference Acceleration for Large Vision-Language Models",
+      "version": "arXiv:2403.06764v3，2024-09-02；ECCV 2024",
+      "authors": "Liang Chen 等，北京大学、阿里巴巴",
+      "url": "https://arxiv.org/pdf/2403.06764v3",
+      "repo": "https://github.com/pkunlp-icler/FastV",
+      "sha": "d1659729b5bf1be225e99ee15783deeea80f63b1",
+      "branch": "main",
+      "license": "根目录未发现统一 LICENSE；子目录含上游许可证，不能据此推断全部新增代码许可",
+      "local_pdf": "papers/FastV-arxiv-2403.06764.pdf",
+      "pdf_sha256": "b4532650958db4f5d2955d76987386bb43318745e4a35d168ff9ce46dda6895b",
+      "pages": 18,
+      "note": "analysis/论文笔记/PAPER-0004_FastV.md",
+      "read_scope": "method, main results, selected ablations/appendix and static code; not exhaustive proof/data audit"
+    },
+    {
+      "id": "PAPER-0005",
+      "name": "SparseVLM",
+      "title": "SparseVLM: Visual Token Sparsification for Efficient Vision-Language Model Inference",
+      "version": "arXiv:2410.04417v4，2025-06-03；ICML 2025；不是 SparseVLM+",
+      "authors": "Yuan Zhang、Chun-Kai Fan、Junpeng Ma 等，北京大学/复旦/UC Berkeley 等",
+      "url": "https://arxiv.org/pdf/2410.04417v4",
+      "repo": "https://github.com/Gumpest/SparseVLMs",
+      "sha": "734d9003879689713a132b83297dfad060a5c9af",
+      "branch": "v1.5",
+      "license": "Apache-2.0（代码）",
+      "local_pdf": "papers/SparseVLM-arxiv-2410.04417.pdf",
+      "pdf_sha256": "ccb0ff92d74d782fdf6aead5580b9c50c224ade23e4f99ed3ab9541f19cb167b",
+      "pages": 18,
+      "note": "analysis/论文笔记/PAPER-0005_SparseVLM.md",
+      "read_scope": "method, main results, selected ablations/appendix and static code; not exhaustive proof/data audit"
+    },
+    {
+      "id": "PAPER-0006",
+      "name": "VisionZip",
+      "title": "VisionZip: Longer is Better but Not Necessary in Vision Language Models",
+      "version": "CVPR 2025 正式 PDF + 官方 supplement；不采用 arXiv v2（2026-03-15）新增内容作会议版证据",
+      "authors": "Senqiao Yang 等，CUHK / HKUST / HITSZ",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Yang_VisionZip_Longer_is_Better_but_Not_Necessary_in_Vision_Language_CVPR_2025_paper.pdf",
+      "repo": "https://github.com/JIA-Lab-research/VisionZip",
+      "sha": "8f86b55c6f000eb033e6912538af2dd7dcb30502",
+      "branch": "main",
+      "license": "Apache-2.0（代码；模型权重另按其许可）",
+      "local_pdf": "papers/VisionZip-cvpr.pdf",
+      "pdf_sha256": "d4e22f2136ba1b7e95a971d99f008a53141b9dbe1b2dfae5bdfbf8c06778e13d",
+      "pages": 11,
+      "note": "analysis/论文笔记/PAPER-0006_VisionZip.md",
+      "read_scope": "method, main results, selected ablations/appendix and static code; not exhaustive proof/data audit",
+      "supplement": {
+        "url": "https://openaccess.thecvf.com/content/CVPR2025/supplemental/Yang_VisionZip_Longer_is_CVPR_2025_supplemental.pdf",
+        "local_pdf": "papers/VisionZip-cvpr-supp.pdf",
+        "sha256": "f47e9bd1b26bdc8b9361ca083ce227d3c7c6c69e7d8e718cf1e8d3c5d9ffd579"
+      }
+    }
+  ],
+  "excluded_versions": [
+    {
+      "paper": "VisionZip",
+      "version": "arxiv:2412.04467v2 (2026-03-15)",
+      "reason": "downloaded latest first, then used CVPR2025 official paper and supplement to avoid mixing publication versions"
+    },
+    {
+      "paper": "SparseVLM+",
+      "reason": "later method on main branch; outside requested ICML2025 scope"
+    }
+  ]
+}

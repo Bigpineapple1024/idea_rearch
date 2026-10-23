@@ -1,7 +1,7 @@
 # 研究工作区协作规则
 
 - 开始前读取 README.md、analysis/index.md、analysis/paper-plan.md 和 analysis/version-evolution.md；继续实验时读取最新报告及对应事实记录。
-- 当前研究主题、baseline 与数据集待确定；五个 skills 已安装到 .claude/skills/。缺材料或真实运行时写“待补充 / 未执行”，不得编造引用、结果、统计量或根因。
+- 当前阅读主线为视觉 token 压缩：用户定位 VisionZip 为开发 baseline、FastV/SparseVLM 为对照；六篇原文笔记已完成，数据集与实测协议待确定。五个 skills 已安装到 .claude/skills/。缺材料或真实运行时写“待补充 / 未执行”，不得编造引用、结果、统计量或根因。
 - 区分作者主张、直接证据、分析推断、待验证假设与未知事项。因果解释附验证方式及替代解释。
 - source/ 的外部代码和 literature/ 的解析全文只读。实验改动放 code/；不为匹配结论改写原始证据。
 - data/、checkpoints/、papers/、code/output/ 不纳入版本控制。记录来源、版本、许可、校验和、输出及备份位置；不提交凭据。

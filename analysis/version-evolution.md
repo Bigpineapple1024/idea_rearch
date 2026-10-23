@@ -8,6 +8,7 @@
 | DEC-0002 | 2026-10-23 | 原样接入用户提供的五个 skills，并按 research-pipeline-contract v1.0 补齐模板 | 用户上传 skills.zip，含五个 SKILL.md 与流程协议 | 原文件及校验和保留；更新元数据、证据标记和回流字段；实际研究尚未执行 |
 | DEC-0003 | 2026-10-23 | 将项目结构、文档与五个 skills 纳入首次 Git 提交，以 main 为共享基线 | 用户明确要求提交并推送到 Bigpineapple1024/idea_rearch | 外部资源和实验产物继续忽略；具体实验开始时再建立 code/<方向或实验编号> 分支 |
 | DEC-0004 | 2026-10-23 | 按单张 RTX 3090 24GB 初筛多变量长时序预测的 DUET、TQNet、WPMixer | 用户允许 CS 方向不限；已核查三份官方仓库、许可证及训练入口 | 仅候选，不是最终选题或引用排名；学术 API 网络受阻，引用量与后续改进数量待核实 |
+| DEC-0005 | 2026-10-23 | 按用户定位转向 VisionZip 开发、FastV/SparseVLM 对照的视觉 token 压缩研究准备 | 六篇原文及 ANALYSIS_PACKAGE 已完成，视觉三篇形成 Mode C；固定 CVPR2025/ICML2025 方法范围 | 时序候选保留为旁支；先核对7B单卡预算及实现，无自有实验；VisionZip+SparseVLM已有组合，不以此声称新颖性 |
 
 ## 后续条目模板
 
