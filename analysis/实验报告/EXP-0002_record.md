@@ -75,3 +75,21 @@
 
 | 运行 ID | 组别 / 种子 | 开始 / 结束 | 状态 / 退出码 | 实际配置 | 样本量 | 原始输出 / 校验和 / 备份 | 异常与偏差 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| EXP-0002-R01 | vanilla × MME | 10-23 19:28 / 19:28 | failed（评测退出码 1） | commit 9bbc249，tp 环境 | 0 | `code/output/EXP-0002/EXP-0002-R01/`，SHA256SUMS 的 sha256 d80f67d2…；备份同名目录 | LLaVA 的 LlamaTokenizer（legacy=False）需要 protobuf，LLaVA 依赖清单里没有；在 tp、sparsevlm 装 protobuf 4.25.3 后重跑为 R02 |
+| EXP-0002-R02 | vanilla × MME | 10-23 19:30 / 19:42 | completed | commit e20b1d1，sdpa 注意力（transformers 4.37.2 默认） | 2374 | 同上目录规则，sha256 626c24bf… | MME-P 1507.63，比官方低 3.07，超出计划的 1 分门槛 |
+| EXP-0002-R03 | vanilla（eager 注意力）× MME | 10-23 19:43 / 19:55 | completed | commit c467c24，`--attn-implementation eager` | 2374 | sha256 58499555… | 门槛诊断（环境排查）：只换注意力实现 |
+
+## 阶段 A：vanilla 门槛与排查
+
+- **MME（R02、R03）**：
+  - R02（sdpa）：Perception 1507.63、Cognition 357.86、P+C 1865.49。bootstrap 95% 区间 [1440.6, 1569.3]（1000 次，按图像重采样）。
+  - R03（eager）：Perception 1514.56、Cognition 357.86、P+C 1872.41。
+  - 两者只差 4 个答案（2374 题中），集中在 position（128.33→133.33）、celebrity（136.18→137.35）、landmark（163.00→163.75）。官方 1510.7 落在两者之间（−3.07 / +3.86）。
+  - 按计划的字面标准（相差不超过 1 分），两种注意力实现都没通过。
+- **排查（按“环境 → 数据 → 配置 → 实现”）**：
+  - 环境：只换注意力内核就使 MME-P 变化 6.93 分（4 个答案翻转），说明这个量级的差异来自浮点数值。官方数字产生于 2023 年 10 月的 transformers 4.31，原环境无法完全复原。
+  - 数据：MME 图像包的 sha256 与 Hugging Face 的 LFS 记录一致；题目文件来自官方 eval.zip。
+  - 评分：同一管线给官方 13B 预测打分，得到与 MODEL_ZOO 完全一致的 1531.3。
+  - 配置：与官方 mme.sh 相同（温度 0、vicuna_v1、max_new_tokens 128）。
+  - 实现：vanilla 走未修改的 LLaVA 代码，只把 DataLoader worker 设为 0。
+- **待定**：POPE（R04）完成后再判定门槛。

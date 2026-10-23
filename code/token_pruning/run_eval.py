@@ -16,6 +16,7 @@ visionzip 0.1.3 wheel on PyPI ships no code.
 prunes inside generate() from `retained_tokens`; it refuses to run against the official LLaVA loader.
 """
 import argparse
+import functools
 import inspect
 import json
 import os
@@ -24,6 +25,7 @@ import time
 
 import torch
 from llava.eval import model_vqa_loader as loader
+from torch.utils.data import DataLoader
 
 from fastv_llava import apply_fastv
 
@@ -39,6 +41,8 @@ def parse():
     ours.add_argument("--retained-tokens", type=int, default=None, help="sparsevlm: 32-layer average budget")
     ours.add_argument("--attn-implementation", choices=["eager", "sdpa"], default=None,
                       help="load the LLM with this attention kernel (default: transformers' choice, sdpa in 4.37)")
+    ours.add_argument("--num-workers", type=int, default=4,
+                      help="DataLoader workers (LLaVA's default 4; 0 loads images in this process)")
     argv = sys.argv[1:]
     split = argv.index("--") if "--" in argv else len(argv)
     method_args = ours.parse_args(argv[:split])
@@ -82,6 +86,10 @@ def apply_method(model, m):
     return model
 
 
+def _give_worker_args(llava_args, worker_id):
+    loader.args = llava_args
+
+
 def main():
     method_args, llava_args = parse()
     original_load = loader.load_pretrained_model
@@ -99,15 +107,15 @@ def main():
 
     loader.load_pretrained_model = load_and_patch
     loader.args = llava_args                         # CustomDataset reads the module-level `args`
-    if os.name == "nt":
-        # Windows spawns DataLoader workers; they re-import model_vqa_loader without `args` and fail
-        # in CustomDataset.__getitem__, so load the data in this process instead.
-        original_create = loader.create_data_loader
 
-        def create_in_process(*a, **kw):
-            return original_create(*a, **{**kw, "num_workers": 0})
+    def create_data_loader(questions, image_folder, tokenizer, image_processor, model_config, batch_size=1, num_workers=4):
+        # Same dataset, collate_fn and order as LLaVA's create_data_loader. Workers spawned on Windows re-import
+        # model_vqa_loader without its module-level `args` (set only under its __main__), so hand it over here.
+        dataset = loader.CustomDataset(questions, image_folder, tokenizer, image_processor, model_config)
+        return DataLoader(dataset, batch_size=batch_size, num_workers=method_args.num_workers, shuffle=False,
+                          collate_fn=loader.collate_fn, worker_init_fn=functools.partial(_give_worker_args, llava_args))
 
-        loader.create_data_loader = create_in_process
+    loader.create_data_loader = create_data_loader
     loader.eval_model(llava_args)
     torch.cuda.synchronize()
     end = time.time()
