@@ -1,6 +1,6 @@
 # Baseline 候选初筛：单张 RTX 3090 24GB
 
-后续状态（2026-10-23）：本文件保留初筛时的判断。此后六篇原文已取得，用户提供了 VisionZip 开发、FastV/SparseVLM 对照的定位；更新见[六篇阅读与趋势](六篇论文总结与视觉Token压缩趋势.md)。按用户“近三年、效果差一点、有源码”的偏好，时序主 baseline 已改为 iTransformer，DUET、TQNet、WPMixer 改作对照（[DEC-0012](version-evolution.md)）。下文“原文未取得”是初筛时的证据状态；引用量仍未核验。
+后续状态（2026-10-23）：本文件保留初筛时的判断。此后六篇原文已取得，用户提供了 VisionZip 开发、FastV/SparseVLM 对照的定位；更新见[六篇阅读与趋势](六篇论文总结与视觉Token压缩趋势.md)。按用户“近三年、效果差一点、有源码”的偏好，时序主 baseline 已改为 iTransformer，DUET、TQNet、WPMixer 改作对照（[DEC-0012](version-evolution.md)）；视觉方向以 FastV 为主 baseline，VisionZip 只作对照（DEC-0014）。下文“原文未取得”是初筛时的证据状态；引用量仍未核验。
 
 检索日期：2026-10-23（Asia/Tokyo）。状态：**代码与可复现性初筛完成，引用量排序及后续改进论文的系统检索未完成**。
 

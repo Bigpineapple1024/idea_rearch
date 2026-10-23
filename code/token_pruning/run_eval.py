@@ -70,6 +70,15 @@ def main():
 
     loader.load_pretrained_model = load_and_patch
     loader.args = llava_args                         # CustomDataset reads the module-level `args`
+    if os.name == "nt":
+        # Windows spawns DataLoader workers; they re-import model_vqa_loader without `args` and fail
+        # in CustomDataset.__getitem__, so load the data in this process instead.
+        original_create = loader.create_data_loader
+
+        def create_in_process(*a, **kw):
+            return original_create(*a, **{**kw, "num_workers": 0})
+
+        loader.create_data_loader = create_in_process
     start = time.time()
     loader.eval_model(llava_args)
     meta = {"method": vars(method_args), "llava_args": vars(llava_args), "wall_seconds": round(time.time() - start, 1)}

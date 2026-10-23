@@ -1,6 +1,6 @@
 # 项目文档索引
 
-状态（2026-10-23，DEC-0012/0013）：视觉 token 剪枝与时序预测两条方向并行，各处于“复现 baseline”阶段：FastV 待在 GPU 上复现（EXP-0002）；时序主 baseline 改为 iTransformer，待在实验室 GPU 上复现，三篇对照（DUET、TQNet、WPMixer）已在 CPU 上运行（EXP-0003）。六篇论文已有原文笔记与源码核验补充。实验室电脑上的文件只放在 D:\6CJNM007。流程规范为[研究流程 v2.0](研究流程.md)。新增、移动或归档文档时同步本索引。
+状态（2026-10-23，DEC-0012～0014）：视觉 token 剪枝与时序预测两条方向并行，各处于“复现 baseline”阶段：FastV 待在 GPU 上复现（EXP-0002）；时序主 baseline 改为 iTransformer，待在实验室 GPU 上复现，三篇对照（DUET、TQNet、WPMixer）已在 CPU 上运行（EXP-0003）。六篇论文已有原文笔记与源码核验补充。实验室电脑是原生 Windows，文件只放在 D:\6CJNM007。流程规范为[研究流程 v2.0](研究流程.md)。新增、移动或归档文档时同步本索引。
 
 ## 当前工作入口
 
@@ -35,7 +35,7 @@
 
 | 文档 | 定位 |
 | --- | --- |
-| [六篇总结与趋势](六篇论文总结与视觉Token压缩趋势.md) | 六篇摘要、方法纠正、数字解释与VisionZip开发定位 |
+| [六篇总结与趋势](六篇论文总结与视觉Token压缩趋势.md) | 六篇摘要、方法纠正、数字解释（文中的 VisionZip 开发定位已被 DEC-0014 取代） |
 | [视觉Mode C](视觉Token压缩_ModeC.md) | P/F/M/E矩阵及候选连接点 |
 | [PAPER-0001_DUET](论文笔记/PAPER-0001_DUET.md) | 双聚类时序预测证据包 |
 | [PAPER-0002_TQNet](论文笔记/PAPER-0002_TQNet.md) | 周期查询证据包 |
@@ -106,7 +106,8 @@
 
 ## 非文档与外部资源
 
-- 根目录 .gitignore 定义外部资源、实验产物和本地运行时文件的忽略规则。
+- 根目录 .gitignore 定义外部资源、实验产物和本地运行时文件的忽略规则；.gitattributes 固定 *.sh 为 LF 换行（Windows 上 CRLF 的脚本在 Git Bash 中无法运行）。
+- [code/env/windows_env.sh](../code/env/windows_env.sh)：实验室电脑（原生 Windows）每条命令前加载的环境脚本。
 - literature/processed/.gitkeep 仅保留解析目录；.claude/skills/ 已包含实际技能文件。
 - [.claude/skills/manifest.json](../.claude/skills/manifest.json) 保存上传包来源、协议版本与六份原文件的校验和。
 - data/、checkpoints/、papers/、code/output/ 不跟踪；在对应笔记或实验记录中登记来源、校验和及可恢复位置。

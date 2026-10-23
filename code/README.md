@@ -3,70 +3,94 @@
 | 目录 | 方向 | 实验分支 | 状态 |
 | --- | --- | --- | --- |
 | [token_pruning/](token_pruning/README.md) | 视觉 token 剪枝（主 baseline FastV） | code/token-pruning | CPU 随机权重核验完成（EXP-0001），GPU 复现待执行 |
+| [env/](env/windows_env.sh) | 实验室电脑（原生 Windows）的环境脚本 | 所有分支 | 未在 Windows 上运行过 |
 | [ts_forecasting/](ts_forecasting/README.md) | 时序预测（主 baseline iTransformer） | code/ts-forecasting | 对照 DUET/TQNet/WPMixer 已在 CPU 上运行 ETTh1（EXP-0003）；iTransformer 待复现 |
 
 外部仓库（LLaVA、FastV、SparseVLM、VisionZip、iTransformer、DUET、TQNet、WPMixer）不放进本仓库，按 [source/README](../source/README.md) 登记的 commit 克隆到 `source/` 下（只读）；本目录只放本项目自己的代码。
 
-## 环境（实验室电脑）
+## 环境（实验室电脑：原生 Windows，DEC-0014）
 
-**所有文件只放在 `D:\6CJNM007`**（用户在实验室电脑上的专用文件夹，DEC-0013）：仓库、外部仓库、conda 或 WSL 发行版、模型与包缓存、数据、运行产物和备份都不写到其他位置。开始前先确认该文件夹所在盘的可用空间：LLaVA-1.5-7B 与 CLIP 权重约 15GB，COCO val2014 约 6GB，conda 环境每个数 GB。
-
-### 方案 A（优先）：WSL2，发行版导入到 D:\6CJNM007\wsl
-
-LLaVA 生态、SparseVLM 指定的 flash_attn 2.3.3、DUET 依赖的 ray 在 Linux 上最省事。WSL 默认把发行版装在 C 盘，所以用 `wsl --import` 把整个 Linux 文件系统放进该文件夹：
-
-```powershell
-wsl --status        # 确认本机已启用 WSL2；未启用且没有管理员权限时改用方案 B
-# 从 cloud-images.ubuntu.com/wsl/ 下载 Ubuntu 22.04 的 WSL rootfs（.tar.gz）到 D:\6CJNM007\wsl\
-wsl --import idea D:\6CJNM007\wsl\idea D:\6CJNM007\wsl\<下载的 rootfs 文件> --version 2
-wsl -d idea
-```
-
-进入发行版后，仓库、conda（`~/miniconda3`）、缓存和数据都放在 Linux 主目录里；它们实际存放在 `D:\6CJNM007\wsl\idea\ext4.vhdx` 中，IO 速度正常，也满足只用该文件夹的要求。备份写到 `/mnt/d/6CJNM007/backup/`，在 Windows 里可以直接看到。
-
-### 方案 B：原生 Windows
+**所有文件只放在 `D:\6CJNM007`**（DEC-0013）。用户选择方案 B：原生 Windows，不用 WSL。Claude Code 在 Windows 上通过 Git Bash 执行命令。
 
 ```text
 D:\6CJNM007\
 ├── idea_rearch\      本仓库；外部仓库克隆到 idea_rearch\source\（不提交）
-├── miniconda3\       conda 安装位置（安装时选 Just Me 并指定此路径），环境在 miniconda3\envs\
-├── cache\            huggingface\、torch\、pip\、conda_pkgs\
+├── miniforge3\       conda（Miniforge），各环境在 miniforge3\envs\
+├── cache\            huggingface\、torch\、pip\、conda_pkgs\、matplotlib\
 ├── data\             LLaVA eval、COCO val2014、MME、ETT 与 TFB 数据
 ├── tmp\              临时文件
 └── backup\<EXP>\<RUN>\  运行产物备份
 ```
 
-在用户环境变量（或每次会话开头）设置：
+开始前先确认 D 盘可用空间：LLaVA-1.5-7B 与 CLIP 权重约 15GB，COCO val2014 约 6GB，每个 conda 环境数 GB。
 
-```powershell
-setx HF_HOME D:\6CJNM007\cache\huggingface
-setx TORCH_HOME D:\6CJNM007\cache\torch
-setx PIP_CACHE_DIR D:\6CJNM007\cache\pip
-setx CONDA_PKGS_DIRS D:\6CJNM007\cache\conda_pkgs
-# 装包时编译和解压的临时文件：在当前终端里临时设置即可
-$env:TMP="D:\6CJNM007\tmp"; $env:TEMP="D:\6CJNM007\tmp"
+### 一次性安装
+
+1. **conda 用 Miniforge**（github.com/conda-forge/miniforge 的 `Miniforge3-Windows-x86_64.exe`），不用 Miniconda：Anaconda 默认频道对 200 人以上的机构有付费条款，conda-forge 没有这一限制。在 cmd 中静默安装到该文件夹，不改 PATH、不注册为系统 Python：
+
+   ```bat
+   start /wait "" Miniforge3-Windows-x86_64.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /S /D=D:\6CJNM007\miniforge3
+   ```
+
+   不要运行 `conda init`，它会修改用户目录（C 盘）里的 shell 配置；改用下面的环境脚本激活。
+2. **克隆时关闭换行符转换**，否则 .sh 脚本会被转成 CRLF，在 Git Bash 里报 `$'\r': command not found`。本仓库已用 `.gitattributes` 固定 `*.sh` 为 LF，外部仓库没有，所以一律这样克隆：
+
+   ```bash
+   git clone -c core.autocrlf=false https://github.com/Bigpineapple1024/idea_rearch /d/6CJNM007/idea_rearch
+   ```
+
+   本仓库若已按默认设置克隆过，不必重新克隆：拉取后执行 `rm code/token_pruning/run_pope_mme.sh && git checkout -- code/token_pruning/run_pope_mme.sh`，让这个脚本按 `.gitattributes` 重新以 LF 检出。
+
+### 每条命令先加载环境脚本
+
+```bash
+source /d/6CJNM007/idea_rearch/code/env/windows_env.sh tp && python ...
 ```
 
-原生 Windows 的已知风险（遇到时记录实际做法，作为环境偏差写进实验记录）：
+[env/windows_env.sh](env/windows_env.sh) 把 `HF_HOME`、`TORCH_HOME`、`PIP_CACHE_DIR`、`CONDA_PKGS_DIRS`、`MPLCONFIGDIR`、`TMP/TEMP/TMPDIR` 指向 `D:\6CJNM007`，设置 `PYTHONUTF8=1`（否则 Python 按系统代码页读文件），然后激活参数指定的 conda 环境。Claude Code 不在两条命令之间保留 shell 状态，所以每条命令都要加载。
 
-- flash-attn 没有官方 Windows wheel。LLaVA 推理评测不需要它；SparseVLM 指定了 flash_attn 2.3.3，先试不装它能否用 eager 注意力运行。
-- `.sh` 脚本（如 `run_pope_mme.sh`、各仓库的 scripts/）需要用 Git Bash 运行，或改写为 PowerShell。
-- DUET 依赖 ray；TFB 的串行后端是否在 Windows 上可用需要先试。
+传给 Python 的路径一律写成 `D:/6CJNM007/...`：Git Bash 只对命令参数里的 `/d/...` 做自动转换，环境变量和配置文件里的路径不能指望它，而 Windows 上的 Python 不认识 `/d/...`。
 
-### 两种方案共同的环境隔离
+### 各环境：先从 PyTorch 的 CUDA 源装 torch
 
-每个外部仓库一个 conda 环境，版本按官方推荐：
+Windows 上 PyPI 的 torch 只有 CPU 版。每个环境先从 PyTorch 的 CUDA 源装与官方要求**同版本号**的 torch，之后 `pip install -r requirements.txt` 或 `pip install -e` 会认为已满足，不再替换。
 
-- LLaVA / FastV / VisionZip 共用 `tp`：Python 3.10，torch 2.1.2，transformers 4.37.2；
-- SparseVLM 单独 `sparsevlm`：transformers 4.37.0，flash_attn 2.3.3；
-- iTransformer 单独 `itrans`：按其 requirements.txt；
-- DUET 单独 `duet`：Python 3.8，torch 2.4.1；
-- TQNet 单独 `tqnet`：Python 3.8；
-- WPMixer 单独 `wpmixer`：Python 3.10，torch 2.0.1。
+| 环境 | 用途 | Python | 先装（CUDA 源） | 再装 |
+| --- | --- | --- | --- | --- |
+| `tp` | LLaVA、FastV、VisionZip | 3.10 | torch==2.1.2 torchvision==0.16.2（cu121） | `pip install -e source/LLaVA` |
+| `sparsevlm` | SparseVLM | 3.10 | torch==2.1.2 torchvision==0.16.2（cu121） | `pip install -e source/SparseVLMs` 和 transformers==4.37.0；不装 flash_attn |
+| `itrans` | iTransformer | 3.10 | torch==2.0.0（cu118） | `pip install -r source/iTransformer/requirements.txt` |
+| `duet` | DUET | 3.8 | torch==2.4.1（cu121） | `pip install -r source/DUET/requirements.txt` |
+| `tqnet` | TQNet | 3.8 | torch==2.4.1（cu121） | `pip install -r source/TQNet/requirements.txt` |
+| `wpmixer` | WPMixer | 3.10 | torch==2.0.1（cu118） | `pip install -r source/WPMixer/requirements.txt` |
 
-若官方版本与本机 CUDA 驱动不兼容，记录实际使用的版本和原因。
+以 `tp` 为例：
 
-**开始前先检查**：`nvidia-smi`（显卡、显存、驱动、CUDA 版本）；每个环境里运行 `python -c "import torch; print(torch.__version__, torch.cuda.is_available())"`；然后跑各方向目录里的 CPU 自检脚本。
+```bash
+source /d/6CJNM007/idea_rearch/code/env/windows_env.sh && conda create -n tp python=3.10 -y
+source /d/6CJNM007/idea_rearch/code/env/windows_env.sh tp && cd /d/6CJNM007/idea_rearch \
+  && pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu121 \
+  && pip install -e source/LLaVA \
+  && python -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())"
+# 应输出 2.1.2+cu121 12.1 True
+```
+
+- cu121 需要 `nvidia-smi` 右上角的 CUDA Version ≥ 12.1；驱动较旧时一律改用 cu118（上表各 torch 版本都有 cu118 构建）。
+- 每装完一批依赖都再查一次 torch 版本，确认没有被换成 CPU 版或别的版本；若被换掉，重装 CUDA 版并记录是哪个包引起的。
+- 若官方版本与本机驱动不兼容，记录实际使用的版本和原因。
+
+### 原生 Windows 上的已知差异（来自代码核查，尚未在 Windows 上运行）
+
+- **DataLoader 子进程**：Windows 用 spawn 启动 worker，子进程会重新导入主模块。
+  - LLaVA 的 `model_vqa_loader` 在 worker 中读取只在 `__main__` 里定义的 `args`，worker 数大于 0 时会报 NameError。本项目的 `run_eval.py` 在 Windows 上已把 worker 设为 0；SparseVLM 自带的评测脚本没有这个处理，需要用包装脚本运行（候选做法：在 `sparsevlm` 环境里用 `run_eval.py --method vanilla`，待验证）。
+  - TQNet 的 run.py 没有 `__main__` 保护，worker 数大于 0 时子进程会重新执行训练。时序方向的命令统一加 `--num_workers 0`（不影响结果，数据顺序由主进程决定）。
+- **flash-attn** 没有官方 Windows 版本，不装。LLaVA 推理评测不需要它。SparseVLM（main 分支 a9e71427）只在 `llava/train/` 的训练补丁里导入 flash_attn；评测时 `use_flash_attn` 默认为 False，走 transformers 默认的 sdpa，而它的解码层本来就断言只支持 sdpa。v1.5 分支是否相同，克隆后先核对。
+- **DUET**：requirements 里的 ray 在导入 TFB 时就会被加载，需确认 Windows 上能装上；评测用默认的 sequential 后端，它在本进程内运行，`--timeout` 参数会被忽略。
+- **HF 缓存**：未开启 Windows 开发者模式时，Hugging Face 缓存用复制代替符号链接，占用空间会多一些。
+
+### 开始前先检查
+
+`nvidia-smi`（显卡、显存、驱动、CUDA 版本）；每个环境里运行上面的 torch 检查；然后跑各方向目录里的 CPU 自检脚本。
 
 ## 每次运行的留存（详见研究流程“运行产物、编号与备份”）
 
@@ -83,7 +107,7 @@ code/output/<EXP-xxxx>/<EXP-xxxx-Rnn>/
 └── SHA256SUMS       以上文件的 sha256
 ```
 
-- `code/output/` 不进 git；每次运行结束后复制到 `D:\6CJNM007\backup\<EXP>\<RUN>\`（WSL 下为 `/mnt/d/6CJNM007/backup/<EXP>/<RUN>/`）。
+- `code/output/` 不进 git；每次运行结束后复制到 `D:\6CJNM007\backup\<EXP>\<RUN>\`（Git Bash 中为 `/d/6CJNM007/backup/<EXP>/<RUN>/`）。
 - 实验记录中写明备份路径和 `SHA256SUMS` 的校验和。
 - 所有运行（包括失败、中断）登记到 [实验结果总表](../analysis/experiment-results.md)。
 

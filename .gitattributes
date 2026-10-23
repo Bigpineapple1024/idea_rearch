@@ -1,0 +1,2 @@
+# Shell scripts keep LF endings on Windows checkouts; Git Bash rejects CRLF ($'\r': command not found).
+*.sh text eol=lf

@@ -26,7 +26,9 @@
 | ETTh1 | github.com/zhouhaoyi/ETDataset ETT-small/ETTh1.csv | 仓库 HEAD 1d16c8f4，文件 sha256 f18de3ad…ee066，17420 行 |
 | 本次运行环境 | CPU | Python 3.11、torch 2.1.2（CPU 运行）、pandas 1.5.3、scikit-learn 1.3.2、PyWavelets 1.6.0、optuna 3.6.1；DUET 另需 ray、dash、dash-bootstrap-components、reformer-pytorch |
 
-各仓库官方推荐的环境不同（DUET：Python 3.8 + torch 2.4.1；TQNet：Python 3.8；WPMixer：Python 3.10 + torch 2.0.1）。在 GPU 上正式实验时，建议每个仓库用各自的推荐环境，并记录与本次 CPU 结果的差异。
+各仓库官方推荐的环境不同（iTransformer：torch 2.0.0；DUET：Python 3.8 + torch 2.4.1；TQNet：Python 3.8；WPMixer：Python 3.10 + torch 2.0.1）。在实验室电脑（原生 Windows）上每个仓库用各自的环境，安装方法和每条命令前要加载的环境脚本见 [code/README](../README.md)，并记录与本次 CPU 结果的差异。
+
+**Windows 上统一加 `--num_workers 0`**：TQNet 的 run.py 没有 `__main__` 保护，worker 数大于 0 时 Windows 会在子进程里重新执行训练；iTransformer 默认 10 个 worker，每个 epoch 都要重新启动子进程，很慢。数据顺序由主进程决定，worker 数不影响结果。WPMixer、DUET 的默认值已经是 0。下面命令中的 `/path/to/...` 换成 `D:/6CJNM007/idea_rearch/source/<仓库>`。
 
 ## 复现命令
 
@@ -39,7 +41,7 @@ curl -o ETTh1.csv https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT
 cd iTransformer && mkdir -p dataset/ETT-small && cp ../ETTh1.csv dataset/ETT-small/
 python -u run.py --is_training 1 --root_path ./dataset/ETT-small/ --data_path ETTh1.csv --model_id ETTh1_96_96 \
   --model iTransformer --data ETTh1 --features M --seq_len 96 --pred_len 96 --e_layers 2 --enc_in 7 --dec_in 7 --c_out 7 \
-  --des Exp --d_model 256 --d_ff 256 --itr 1
+  --des Exp --d_model 256 --d_ff 256 --itr 1 --num_workers 0
 # 注意：run.py 把随机种子写死为 2023（fix_seed = 2023）。跑 3 个种子需要一个包装脚本在本进程内替换种子，
 # 不修改官方文件；包装脚本待在实验室电脑上编写并先用种子 2023 核对与直接运行的结果一致。
 # 测试集 batch_size=1，drop_last=True 不会丢窗口。
@@ -48,7 +50,7 @@ python -u run.py --is_training 1 --root_path ./dataset/ETT-small/ --data_path ET
 cd TQNet && mkdir -p dataset && cp ../ETTh1.csv dataset/
 python -u run.py --is_training 1 --root_path ./dataset/ --data_path ETTh1.csv --model_id ETTh1_96_96 \
   --model TQNet --data ETTh1 --features M --seq_len 96 --pred_len 96 --enc_in 7 --cycle 24 \
-  --train_epochs 30 --patience 5 --dropout 0.5 --itr 1 --batch_size 256 --learning_rate 0.001 --random_seed 2024
+  --train_epochs 30 --patience 5 --dropout 0.5 --itr 1 --batch_size 256 --learning_rate 0.001 --random_seed 2024 --num_workers 0
 
 # WPMixer（scripts/Unified/ETTh1_Unified_setup.sh 第 1 组参数；GPU 上可加 --use_amp）
 cd WPMixer && mkdir -p data/ETT && cp ../ETTh1.csv data/ETT/

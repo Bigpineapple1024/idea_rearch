@@ -28,28 +28,36 @@ SparseVLM 不经过本目录，它自带一套 LLaVA 分叉，直接在它自己
 | Python 依赖 | LLaVA pyproject.toml | torch 2.1.2、torchvision 0.16.2、transformers 4.37.2、tokenizers 0.15.1、accelerate 0.21.0、timm 0.6.13 |
 | 权重 | Hugging Face | liuhaotian/llava-v1.5-7b、openai/clip-vit-large-patch14-336 |
 
-## GPU 上的复现步骤
+## GPU 上的复现步骤（实验室电脑：原生 Windows + Git Bash）
+
+环境约定见 [code/README](../README.md)：所有文件在 `D:\6CJNM007`，每条命令先加载 `code/env/windows_env.sh`。下面的 `$E`、`$SRC` 只是简写；Claude Code 不在命令之间保留 shell 变量，实际执行时每条命令都要写出完整路径或在同一条命令里定义它们：
 
 ```bash
-# 1. 环境（Python 3.10，与 LLaVA 官方一致）
-conda create -n tp python=3.10 -y && conda activate tp
-git clone https://github.com/haotian-liu/LLaVA && git -C LLaVA checkout c121f0432da27facab705978f83c4ada465e46fd
-git clone https://github.com/dvlab-research/VisionZip && git -C VisionZip checkout 8f86b55c6f000eb033e6912538af2dd7dcb30502
-pip install -e LLaVA            # 会装 torch 2.1.2 / transformers 4.37.2
+E="source /d/6CJNM007/idea_rearch/code/env/windows_env.sh"
+SRC=/d/6CJNM007/idea_rearch/source
+
+# 1. 环境（Python 3.10，与 LLaVA 官方一致）。Windows 上先从 CUDA 源装 torch，再装 LLaVA
+$E && conda create -n tp python=3.10 -y
+cd $SRC && git clone -c core.autocrlf=false https://github.com/haotian-liu/LLaVA && git -C LLaVA checkout c121f0432da27facab705978f83c4ada465e46fd
+cd $SRC && git clone -c core.autocrlf=false https://github.com/dvlab-research/VisionZip && git -C VisionZip checkout 8f86b55c6f000eb033e6912538af2dd7dcb30502
+$E tp && pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu121 && pip install -e $SRC/LLaVA
+$E tp && python -c "import torch; print(torch.__version__, torch.cuda.is_available())"   # 2.1.2+cu121 True
 # 不要 pip install visionzip：PyPI 上 0.1.3 的 wheel 只有元数据，没有代码；用 VISIONZIP_ROOT 指向仓库
 
-# 2. 权重：国内可设 HF_ENDPOINT=https://hf-mirror.com，首次运行自动下载约 14GB
+# 2. 权重：首次运行自动下载到 HF_HOME（D:\6CJNM007\cache\huggingface），约 15GB；国内可设 HF_ENDPOINT=https://hf-mirror.com
 
 # 3. 数据：按 LLaVA docs/Evaluation.md 下载 eval.zip，解压到 LLaVA/playground/data/eval
 #    POPE 需要 COCO val2014 图像；MME 需要 MME_Benchmark_release_version 与 eval_tool
 
-# 4. 先跑 CPU 自检（可选，验证环境）
-cd /path/to/idea_rearch/code/token_pruning
-VISIONZIP_ROOT=/path/to/VisionZip python smoke_test.py
+# 4. 先跑 CPU 自检（可选，验证环境）。传给 Python 的路径用 D:/ 形式
+$E tp && cd /d/6CJNM007/idea_rearch/code/token_pruning && VISIONZIP_ROOT=D:/6CJNM007/idea_rearch/source/VisionZip python smoke_test.py
 
 # 5. 正式评测：vanilla、VisionZip、FastV × 192/128/64 × POPE、MME
-LLAVA_ROOT=/path/to/LLaVA VISIONZIP_ROOT=/path/to/VisionZip bash run_pope_mme.sh
+$E tp && LLAVA_ROOT=D:/6CJNM007/idea_rearch/source/LLaVA VISIONZIP_ROOT=D:/6CJNM007/idea_rearch/source/VisionZip \
+  bash /d/6CJNM007/idea_rearch/code/token_pruning/run_pope_mme.sh
 ```
+
+在 Windows 上，`run_eval.py` 会把 LLaVA 评测的 DataLoader worker 设为 0：LLaVA 的 `CustomDataset` 在 worker 中读取只在 `__main__` 里定义的 `args`，Windows 用 spawn 启动的 worker 取不到它。这只影响数据加载速度，不影响结果。
 
 每次运行在答案文件旁写 `<answers>.meta.json`（方法参数、LLaVA 参数、墙钟时间）。所有运行（包括失败和中断）都要登记到 [实验结果总表](../../analysis/experiment-results.md)。
 
@@ -60,13 +68,19 @@ LLAVA_ROOT=/path/to/LLaVA VISIONZIP_ROOT=/path/to/VisionZip bash run_pope_mme.sh
 ### SparseVLM（在它自己的仓库中运行）
 
 ```bash
-git clone https://github.com/Gumpest/SparseVLMs && cd SparseVLMs && git checkout v1.5
-pip install -e . && pip install transformers==4.37.0 flash_attn==2.3.3
+cd $SRC && git clone -c core.autocrlf=false https://github.com/Gumpest/SparseVLMs && git -C SparseVLMs checkout v1.5
+$E && conda create -n sparsevlm python=3.10 -y
+$E sparsevlm && pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu121 \
+  && pip install -e $SRC/SparseVLMs && pip install transformers==4.37.0
+# 官方说明还要装 flash_attn==2.3.3；它没有 Windows 版本，评测路径也不需要（见 code/README），不装
 # scripts/v1_5/eval/*.sh 里的路径写死为作者集群的 /mnt/bn/...，先改成本地路径
-RETAIN_TOKN=64 bash scripts/v1_5/eval/pope.sh
+RETAIN_TOKN=64 bash scripts/v1_5/eval/pope.sh   # Linux 上的官方用法；Windows 上见下方说明
 ```
 
-注意：只支持 batch size 1（batch 2 时第二个样本会被剪掉全部视觉 token，见 EXP-0001）；代码里写死了 `.cuda()`；它的“64/128/192”是 32 层平均的视觉 token 数，不是输入 LLM 的 token 数。
+注意：
+
+- 只支持 batch size 1（batch 2 时第二个样本会被剪掉全部视觉 token，见 EXP-0001）；代码里写死了 `.cuda()`；它的“64/128/192”是 32 层平均的视觉 token 数，不是输入 LLM 的 token 数。
+- **Windows**：官方脚本调用 `python -m llava.eval.model_vqa_loader`，DataLoader 默认 4 个 worker，会遇到与 LLaVA 相同的 `args` 问题而报 NameError。不改它的仓库文件，用包装脚本把 worker 设为 0。候选做法是在 `sparsevlm` 环境里运行本目录的 `run_eval.py --method vanilla`（剪枝由 SparseVLM 自己的模型代码按环境变量执行），待验证它的参数与 SparseVLM 的 `model_vqa_loader` 一致。
 
 ## 预算的口径
 

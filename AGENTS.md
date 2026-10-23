@@ -2,7 +2,7 @@
 
 - 开始前读取 README.md、analysis/index.md、analysis/研究流程.md、analysis/paper-plan.md 和 analysis/version-evolution.md；在实验室电脑上开新会话时先读 analysis/实验室会话交接.md；继续实验时读取最新报告及对应事实记录。
 - 两条方向并行：视觉 token 剪枝（主 baseline FastV）与时序预测（主 baseline iTransformer），见 analysis/paper-plan.md。baseline 按用户偏好选“近三年、有源码、效果比当前最好的方法差一点”的工作（DEC-0012）。六篇论文各有原文笔记和源码核验补充（analysis/论文笔记/README.md）。流程以 analysis/研究流程.md（v2.0）为唯一规范。缺材料或真实运行时写“待补充 / 未执行”，不得编造引用、结果、统计量或根因。
-- 实验室电脑上的所有文件（仓库、环境、缓存、权重、数据、产物、备份）只放在 D:\6CJNM007，不写入其他位置（DEC-0013）。
+- 实验室电脑上的所有文件（仓库、环境、缓存、权重、数据、产物、备份）只放在 D:\6CJNM007，不写入其他位置（DEC-0013）。实验室电脑是原生 Windows（DEC-0014）：命令在 Git Bash 中执行，每条命令先 `source /d/6CJNM007/idea_rearch/code/env/windows_env.sh <环境名>`；传给 Python 的路径写成 D:/6CJNM007/...；Windows 上的已知差异见 code/README.md。
 - 区分作者主张、直接证据、分析推断、待验证假设与未知事项。因果解释附验证方式及替代解释。
 - source/ 的外部代码和 literature/ 的解析全文只读。实验改动放 code/；不为匹配结论改写原始证据。
 - data/、checkpoints/、papers/、code/output/ 不纳入版本控制。记录来源、版本、许可、校验和、输出及备份位置；不提交凭据。
