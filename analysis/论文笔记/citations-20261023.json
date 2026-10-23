@@ -1,0 +1,132 @@
+﻿{
+    "queried_at":  "2026-10-23T21:48:00+09:00",
+    "source":  "Semantic Scholar Graph API v1, POST /graph/v1/paper/batch (unauthenticated)",
+    "note":  "Counts merge preprint and published versions as Semantic Scholar does; Google Scholar counts are usually higher and were not queried (automated access is blocked). OpenAlex arXiv-DOI records cover only the preprint and were not used.",
+    "ids":  [
+                "2403.06764",
+                "2410.04417",
+                "2412.04467",
+                "2412.10859",
+                "2505.12917",
+                "2412.17176",
+                "2310.06625",
+                "2409.18479"
+            ],
+    "response":  {
+                     "value":  [
+                                   {
+                                       "paperId":  "3421d12d98956c36c5d39c0ef023b378b6922068",
+                                       "externalIds":  {
+                                                           "DBLP":  "conf/eccv/ChenZLBLZC24",
+                                                           "ArXiv":  "2403.06764",
+                                                           "DOI":  "10.48550/arXiv.2403.06764",
+                                                           "CorpusId":  268358224
+                                                       },
+                                       "title":  "An Image is Worth 1/2 Tokens After Layer 2: Plug-and-Play Inference Acceleration for Large Vision-Language Models",
+                                       "venue":  "European Conference on Computer Vision",
+                                       "year":  2024,
+                                       "citationCount":  799,
+                                       "influentialCitationCount":  225
+                                   },
+                                   {
+                                       "paperId":  "a05c0dd5a8bc70814517fb424cf55e94b4208e67",
+                                       "externalIds":  {
+                                                           "DBLP":  "conf/icml/0020FMZ0CGONKZ25",
+                                                           "ArXiv":  "2410.04417",
+                                                           "DOI":  "10.48550/arXiv.2410.04417",
+                                                           "CorpusId":  273185573
+                                                       },
+                                       "title":  "SparseVLM: Visual Token Sparsification for Efficient Vision-Language Model Inference",
+                                       "venue":  "International Conference on Machine Learning",
+                                       "year":  2024,
+                                       "citationCount":  467,
+                                       "influentialCitationCount":  73
+                                   },
+                                   {
+                                       "paperId":  "ba7ae5960415eb6312f41443db2e336db216f509",
+                                       "externalIds":  {
+                                                           "DBLP":  "journals/corr/abs-2412-04467",
+                                                           "ArXiv":  "2412.04467",
+                                                           "DOI":  "10.1109/CVPR52734.2025.01843",
+                                                           "CorpusId":  274514545
+                                                       },
+                                       "title":  "VisionZip: Longer is Better but Not Necessary in Vision Language Models",
+                                       "venue":  "Computer Vision and Pattern Recognition",
+                                       "year":  2024,
+                                       "citationCount":  379,
+                                       "influentialCitationCount":  76
+                                   },
+                                   {
+                                       "paperId":  "b3fe521a097db7e520b7acb6289b64de7882053a",
+                                       "externalIds":  {
+                                                           "DBLP":  "conf/kdd/QiuW0GH025",
+                                                           "ArXiv":  "2412.10859",
+                                                           "DOI":  "10.1145/3690624.3709325",
+                                                           "CorpusId":  274777080
+                                                       },
+                                       "title":  "DUET: Dual Clustering Enhanced Multivariate Time Series Forecasting",
+                                       "venue":  "Knowledge Discovery and Data Mining",
+                                       "year":  2024,
+                                       "citationCount":  230,
+                                       "influentialCitationCount":  13
+                                   },
+                                   {
+                                       "paperId":  "6d3a2b57731d89c28d39cca589e84118c9055a6f",
+                                       "externalIds":  {
+                                                           "ArXiv":  "2505.12917",
+                                                           "DBLP":  "conf/icml/LinCWQL25",
+                                                           "DOI":  "10.48550/arXiv.2505.12917",
+                                                           "CorpusId":  278739715
+                                                       },
+                                       "title":  "Temporal Query Network for Efficient Multivariate Time Series Forecasting",
+                                       "venue":  "International Conference on Machine Learning",
+                                       "year":  2025,
+                                       "citationCount":  72,
+                                       "influentialCitationCount":  12
+                                   },
+                                   {
+                                       "paperId":  "44c1e8a43f5ec190ab9b3e1f16d6ef74a861dfed",
+                                       "externalIds":  {
+                                                           "DBLP":  "conf/aaai/MuradAY25",
+                                                           "ArXiv":  "2412.17176",
+                                                           "DOI":  "10.48550/arXiv.2412.17176",
+                                                           "CorpusId":  274981459
+                                                       },
+                                       "title":  "WPMixer: Efficient Multi-Resolution Mixing for Long-Term Time Series Forecasting",
+                                       "venue":  "AAAI Conference on Artificial Intelligence",
+                                       "year":  2024,
+                                       "citationCount":  139,
+                                       "influentialCitationCount":  9
+                                   },
+                                   {
+                                       "paperId":  "afeeb8f5018eebb1a1d334b94dbbfc48d167efef",
+                                       "externalIds":  {
+                                                           "ArXiv":  "2310.06625",
+                                                           "DBLP":  "journals/corr/abs-2310-06625",
+                                                           "DOI":  "10.48550/arXiv.2310.06625",
+                                                           "CorpusId":  263830644
+                                                       },
+                                       "title":  "iTransformer: Inverted Transformers Are Effective for Time Series Forecasting",
+                                       "venue":  "International Conference on Learning Representations",
+                                       "year":  2023,
+                                       "citationCount":  2676,
+                                       "influentialCitationCount":  313
+                                   },
+                                   {
+                                       "paperId":  "3df16d5c56bbb4939935351090479b3c0a65e4af",
+                                       "externalIds":  {
+                                                           "DBLP":  "conf/nips/Lin0HWMZ24",
+                                                           "ArXiv":  "2409.18479",
+                                                           "DOI":  "10.48550/arXiv.2409.18479",
+                                                           "CorpusId":  272968913
+                                                       },
+                                       "title":  "CycleNet: Enhancing Time Series Forecasting through Modeling Periodic Patterns",
+                                       "venue":  "Neural Information Processing Systems",
+                                       "year":  2024,
+                                       "citationCount":  233,
+                                       "influentialCitationCount":  25
+                                   }
+                               ],
+                     "Count":  8
+                 }
+}

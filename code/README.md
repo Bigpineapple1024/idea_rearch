@@ -132,10 +132,11 @@ Git 为 PortableGit 2.56.0.3（`D:\6CJNM007\git`），Miniforge 26.7.2-1 装在 
 - 装完“再装”一列后又核对了三点：torch 没有被替换，关键包都能导入，`pip check` 没有冲突（sparsevlm 的 transformers 提示除外）。
 - 各环境的完整 `pip freeze`、安装脚本和日志在 `D:\6CJNM007\backup\env_setup_2026-10-23\`。
 
-### 原生 Windows 上的已知差异（来自代码核查，尚未在 Windows 上运行）
+### 原生 Windows 上的已知差异（视觉方向已在 EXP-0002 中实际运行；时序方向来自代码核查）
 
 - **DataLoader 子进程**：Windows 用 spawn 启动 worker，子进程会重新导入主模块。
-  - LLaVA 的 `model_vqa_loader` 在 worker 中读取只在 `__main__` 里定义的 `args`，worker 数大于 0 时会报 NameError。本项目的 `run_eval.py` 在 Windows 上已把 worker 设为 0；SparseVLM 自带的评测脚本没有这个处理，需要用包装脚本运行（候选做法：在 `sparsevlm` 环境里用 `run_eval.py --method vanilla`，待验证）。
+  - LLaVA 的 `model_vqa_loader` 在 worker 中读取只在 `__main__` 里定义的 `args`，worker 数大于 0 时会报 NameError。本项目的 `run_eval.py` 换用自己的 DataLoader（数据集、collate_fn 和顺序与 LLaVA 相同），在每个 worker 启动时把 `args` 传进去，默认 4 个 worker（`--num-workers` 可改）。答案与 0 个 worker 时逐条相同（EXP-0002-R05 对 R02、R34 对 R04），每题快约 7%。
+  - SparseVLM 不用它自带的评测脚本，而是在 `sparsevlm` 环境里运行 `run_eval.py --method sparsevlm`：它调用 SparseVLM 自己的 `model_vqa_loader`（剪枝在 SparseVLM 的模型代码里按 `retained_tokens` 执行），DataLoader 的处理同上（EXP-0002-R36～R41）。
   - TQNet 的 run.py 没有 `__main__` 保护，worker 数大于 0 时子进程会重新执行训练。时序方向的命令统一加 `--num_workers 0`（不影响结果，数据顺序由主进程决定）。
 - **flash-attn** 没有官方 Windows 版本，不装。LLaVA 推理评测不需要它。
   - **SparseVLM 需要它（更正，2026-10-24）**：之前按“`llava/train/` 以外没有 `flash_attn` 导入”判断评测不需要，这是错的。

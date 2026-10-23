@@ -1,6 +1,6 @@
 # 项目文档索引
 
-状态（2026-10-23，DEC-0012～0014）：视觉 token 剪枝与时序预测两条方向并行，各处于“复现 baseline”阶段：FastV 待在 GPU 上复现（EXP-0002）；时序主 baseline 改为 iTransformer，待在实验室 GPU 上复现，三篇对照（DUET、TQNet、WPMixer）已在 CPU 上运行（EXP-0003）。六篇论文已有原文笔记与源码核验补充。实验室电脑是原生 Windows，文件只放在 D:\6CJNM007。流程规范为[研究流程 v2.0](研究流程.md)。新增、移动或归档文档时同步本索引。
+状态（2026-10-24，DEC-0012～0014）：视觉 token 剪枝与时序预测两条方向并行。视觉方向已完成 GPU 复现（EXP-0002，含 squeeze），进入“制造意外实验”阶段；时序主 baseline 改为 iTransformer，待在实验室 GPU 上复现，三篇对照（DUET、TQNet、WPMixer）已在 CPU 上运行（EXP-0003）。七篇论文已有原文笔记与源码核验补充。实验室电脑是原生 Windows，文件只放在 D:\6CJNM007。流程规范为[研究流程 v2.0](研究流程.md)。新增、移动或归档文档时同步本索引。
 
 ## 当前工作入口
 
@@ -13,6 +13,7 @@
 | 问题—现象—机制矩阵（两份，待 deep-read 合并） | [视觉Token压缩_ModeC](视觉Token压缩_ModeC.md)（原文）、[MODE_C-0001](MODE_C-0001_视觉token剪枝.md)（源码与探针） |
 | 候选方案（待 baseline 复现与组合实验后重新排序） | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
 | baseline 复现代码与步骤 | [code/token_pruning](../code/token_pruning/README.md) |
+| 视觉方向 GPU 复现记录与深挖 | [EXP-0002](实验报告/EXP-0002_record.md)、[SQZ-EXP-0002](实验报告/EXP-0002_squeeze.md) |
 | 时序预测：baseline（iTransformer，DEC-0012）、三篇对照对比与组合实验候选 | [时序预测_DUET_TQNet_WPMixer对比](专题分析/时序预测_DUET_TQNet_WPMixer对比.md) |
 | 每篇论文的原文笔记与源码核验补充 | [论文笔记](论文笔记/README.md) |
 | 时序方向复现记录与代码 | [EXP-0003](实验报告/EXP-0003_record.md)、[code/ts_forecasting](../code/ts_forecasting/README.md) |
@@ -43,6 +44,8 @@
 | [PAPER-0004_FastV](论文笔记/PAPER-0004_FastV.md) | 注意力剪枝与实现差异 |
 | [PAPER-0005_SparseVLM](论文笔记/PAPER-0005_SparseVLM.md) | 文本raters、回收与阶段预算 |
 | [PAPER-0006_VisionZip](论文笔记/PAPER-0006_VisionZip.md) | dominant/contextual压缩及边界 |
+| [PAPER-0007_iTransformer](论文笔记/PAPER-0007_iTransformer.md) | 变量 token 与倒置 Transformer；ETT 上的报告值与限制 |
+| [analysis/论文笔记/PAPER-0007_iTransformer_源码核验.md](../analysis/论文笔记/PAPER-0007_iTransformer_源码核验.md) | 源码核验补充：iTransformer（日历特征 token、脚本超参数与论文网格的出入） |
 | [.claude/README.md](../.claude/README.md) | Claude Code 运行时支持 |
 | [AGENTS.md](../AGENTS.md) | 研究工作区协作规则 |
 | [analysis/archied/README.md](../analysis/archied/README.md) | 归档方案 |
@@ -67,12 +70,16 @@
 | [analysis/论文笔记/PAPER-0005_SparseVLM_源码核验.md](../analysis/论文笔记/PAPER-0005_SparseVLM_源码核验.md) | 源码核验补充：SparseVLM / SparseVLM+ |
 | [analysis/论文笔记/PAPER-0006_VisionZip_源码核验.md](../analysis/论文笔记/PAPER-0006_VisionZip_源码核验.md) | 源码核验补充：VisionZip |
 | [analysis/实验报告/EXP-0001_record.md](../analysis/实验报告/EXP-0001_record.md) | EXPERIMENT_RECORD：三个仓库的代码级核验（CPU） |
+| [analysis/实验报告/EXP-0001_squeeze.md](../analysis/实验报告/EXP-0001_squeeze.md) | SQUEEZE_REPORT：EXP-0001 的跨平台复验与预算口径 |
+| [analysis/实验报告/EXP-0002_record.md](../analysis/实验报告/EXP-0002_record.md) | EXPERIMENT_RECORD：视觉 token 剪枝 GPU 复现（LLaVA-1.5-7B，POPE、MME，49 次运行） |
+| [analysis/实验报告/EXP-0002_squeeze.md](../analysis/实验报告/EXP-0002_squeeze.md) | SQUEEZE_REPORT：EXP-0002（随机优于 FastV、“no”偏置、SparseVLM 实测 token） |
 | [code/token_pruning/README.md](../code/token_pruning/README.md) | 视觉 token 剪枝 baseline 复现与代码级核验 |
 | [analysis/论文笔记/PAPER-0001_DUET_源码核验.md](../analysis/论文笔记/PAPER-0001_DUET_源码核验.md) | 源码核验补充：DUET |
 | [analysis/论文笔记/PAPER-0002_TQNet_源码核验.md](../analysis/论文笔记/PAPER-0002_TQNet_源码核验.md) | 源码核验补充：TQNet |
 | [analysis/论文笔记/PAPER-0003_WPMixer_源码核验.md](../analysis/论文笔记/PAPER-0003_WPMixer_源码核验.md) | 源码核验补充：WPMixer |
 | [analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md](../analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md) | 时序预测三篇论文对比：DUET、TQNet、WPMixer |
 | [analysis/实验报告/EXP-0003_record.md](../analysis/实验报告/EXP-0003_record.md) | EXPERIMENT_RECORD：DUET/TQNet/WPMixer 在 ETTh1 上的 CPU 复现 |
+| [analysis/实验报告/EXP-0003_squeeze.md](../analysis/实验报告/EXP-0003_squeeze.md) | SQUEEZE_REPORT：EXP-0003（drop_last 去掉最难的末尾窗口） |
 | [code/ts_forecasting/README.md](../code/ts_forecasting/README.md) | 多变量长期时序预测 baseline 复现与评测核验 |
 | [analysis/专题分析/baseline骨架的全景图.md](../analysis/专题分析/baseline骨架的全景图.md) | baseline骨架的全景图 |
 | [analysis/专题分析/外部工具应用现状.md](../analysis/专题分析/外部工具应用现状.md) | 外部工具应用现状 |
@@ -112,4 +119,5 @@
 - [.claude/skills/manifest.json](../.claude/skills/manifest.json) 保存上传包来源、协议版本与六份原文件的校验和。
 - data/、checkpoints/、papers/、code/output/ 不跟踪；在对应笔记或实验记录中登记来源、校验和及可恢复位置。
 - [论文来源清单](论文笔记/sources-20261023.json) 保存 PDF 来源、版本、校验和与源码 commit；PDF 在被忽略的 papers/，临时源码核验副本未纳入项目。
-- 外部代码（LLaVA、FastV、SparseVLM、VisionZip、iTransformer、DUET、TQNet、WPMixer 等）只登记来源与 commit（见 [source/README](../source/README.md)），不纳入仓库。真实实验数据只有 EXP-0003 的 CPU 运行（原始日志未保留，关键数字已抄录）；尚无归档方案以外的归档。
+- [引用量](论文笔记/citations-20261023.json)：8 篇论文（含 CycleNet）的 Semantic Scholar 引用量原始返回，2026-10-23 查询。
+- 外部代码（LLaVA、FastV、SparseVLM、VisionZip、iTransformer、DUET、TQNet、WPMixer 等）只登记来源与 commit（见 [source/README](../source/README.md)），不纳入仓库。真实实验数据：EXP-0002 的 GPU 运行在 code/output/EXP-0002/（不跟踪；每个运行有 SHA256SUMS，备份在 D:\6CJNM007\backup\EXP-0002\）；EXP-0003 的 CPU 运行原始日志未保留，关键数字已抄录。尚无归档方案以外的归档。

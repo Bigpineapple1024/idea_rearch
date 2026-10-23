@@ -118,7 +118,7 @@ next_routes: [squeeze-experiment（EXP-0002_squeeze）, deep-read Mode C（合�
 | 运行 ID | 组别 / 种子 | 开始 / 结束 | 状态 / 退出码 | 实际配置 | 样本量 | 原始输出 / 校验和 / 备份 | 异常与偏差 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | EXP-0002-R01 | vanilla × MME | 10-23 19:28 / 19:28 | failed（评测退出码 1） | commit 9bbc249，tp 环境 | 0 | `code/output/EXP-0002/EXP-0002-R01/`，SHA256SUMS 的 sha256 d80f67d2…；备份同名目录 | LLaVA 的 LlamaTokenizer（legacy=False）需要 protobuf，LLaVA 依赖清单里没有；在 tp、sparsevlm 装 protobuf 4.25.3 后重跑为 R02 |
-| EXP-0002-R02 | vanilla × MME | 10-23 19:30 / 19:42 | completed | commit e20b1d1，sdpa 注意力（transformers 4.37.2 默认） | 2374 | 同上目录规则，sha256 626c24bf… | MME-P 1507.63，比官方低 3.07，超出计划的 1 分门槛 |
+| EXP-0002-R02 | vanilla × MME | 10-23 19:30 / 19:42 | completed | commit 9bbc249，sdpa 注意力（transformers 4.37.2 默认） | 2374 | 同上目录规则，sha256 626c24bf… | MME-P 1507.63，比官方低 3.07，超出计划的 1 分门槛 |
 | EXP-0002-R03 | vanilla（eager 注意力）× MME | 10-23 19:43 / 19:55 | completed | commit c467c24，`--attn-implementation eager` | 2374 | sha256 58499555… | 门槛诊断（环境排查）：只换注意力实现 |
 | EXP-0002-R04 | vanilla × POPE | 10-23 19:56 / 20:38 | completed | commit c467c24，sdpa，DataLoader worker 0 | 8910 | sha256 18ff3da6… | F1 均值 85.899，与官方 85.9 一致；评测 2492.7 秒（0.280 秒/题） |
 | EXP-0002-R05 | vanilla × MME（4 个 DataLoader worker） | 10-23 20:39 / 20:50 | completed | commit 109134d | 2374 | sha256 184c9e8f… | 加载方式核验：2374 个答案与 R02 逐条相同（题号、提示、答案文本）；MME-P 1507.63；0.265 秒/题，比 R02 的 0.286 快约 7% |

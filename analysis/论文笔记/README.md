@@ -14,10 +14,11 @@
 | PAPER-0004 | FastV / ECCV2024 | arXiv 2403.06764v3；代码 pkunlp-icler/FastV@d1659729 | [AP-FastV](PAPER-0004_FastV.md) | [FastV 源码核验](PAPER-0004_FastV_源码核验.md) | 原文+源码；CPU 随机权重核验（EXP-0001），GPU 复现待执行 |
 | PAPER-0005 | SparseVLM / ICML2025 | arXiv 2410.04417v4；代码 Gumpest/SparseVLMs v1.5@734d9003、main@a9e71427 | [AP-SparseVLM](PAPER-0005_SparseVLM.md) | [SparseVLM 源码核验](PAPER-0005_SparseVLM_源码核验.md) | 原文+源码（核验补充含 SparseVLM+）；GPU 复现待执行 |
 | PAPER-0006 | VisionZip / CVPR2025 | 正式论文+补充；代码 dvlab-research/VisionZip@8f86b55c | [AP-VisionZip](PAPER-0006_VisionZip.md) | [VisionZip 源码核验](PAPER-0006_VisionZip_源码核验.md) | 原文+源码；GPU 复现待执行 |
+| PAPER-0007 | iTransformer / ICLR2024 | arXiv 2310.06625v4；代码 thuml/iTransformer@c2426e68 | [AP-iTransformer](PAPER-0007_iTransformer.md) | [iTransformer 源码核验](PAPER-0007_iTransformer_源码核验.md) | 原文+源码（实验室会话按 analyze-paper 写成）；GPU 复现见 EXP-0004 |
 
 两类笔记的分工：
 
-- **原文笔记**（`PAPER-xxxx_<名称>.md`）：用户在另一会话中读 PDF 原文写成，证据 ID 形如 E-FV-1。
+- **原文笔记**（`PAPER-xxxx_<名称>.md`）：PAPER-0001～0006 由用户在另一会话中读 PDF 原文写成；PAPER-0007 由实验室电脑上的会话按 analyze-paper 读 PDF 写成。证据 ID 形如 E-FV-1。
 - **源码核验补充**（`PAPER-xxxx_<名称>_源码核验.md`）：本项目读官方源码、做 CPU 探针和复现得到，证据 ID 带 C 前缀（如 E-FV-C01）。两份内容冲突时，以能追溯到原文页码或源码行号的一方为准，并在两份笔记中都注明。
 
-来源、稳定链接和校验和见 [sources-20261023.json](sources-20261023.json)，综合入口见[六篇总结](../六篇论文总结与视觉Token压缩趋势.md)和[视觉 Mode C](../视觉Token压缩_ModeC.md)。原文笔记用 pdftotext/PyMuPDF 提取核对，非 MinerU；PDF 全文未提交。论文结果不进入自有实验台账。新增笔记后同步本表与 [index](../index.md)。
+来源、稳定链接和校验和见 [sources-20261023.json](sources-20261023.json)；引用量见 [citations-20261023.json](citations-20261023.json)（Semantic Scholar，2026-10-23 查询）；综合入口见[六篇总结](../六篇论文总结与视觉Token压缩趋势.md)和[视觉 Mode C](../视觉Token压缩_ModeC.md)。原文笔记用 pdftotext/PyMuPDF 提取核对，非 MinerU；PDF 全文未提交。论文结果不进入自有实验台账。新增笔记后同步本表与 [index](../index.md)。
