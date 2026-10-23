@@ -8,7 +8,7 @@
 
 | 文件 | 作用 | 已验证范围 |
 | --- | --- | --- |
-| fastv_llava.py | 用于官方 LLaVA 的 FastV（KV cache，K 与保留数可调）；给定 `seed` 时改为同数量的均匀随机选择 | 与 FastV 官方 lmms-eval 实现在随机小模型上逐步输出一致（相对误差 ≤3e-7），且不重复写入 KV cache；EXP-0002 |
+| fastv_llava.py | 用于官方 LLaVA 的 FastV（KV cache，K 与保留数可调）；给定 `seed` 时改为同数量的均匀随机选择。诊断选项：`schedule` 多段剪枝（EXP-0007）、`score_prior` 分数除以位置曲线（EXP-0008）、`stratify` 把排序分到 n×n 个图像块里轮流取（EXP-0010）；都不设置时计算与原来相同 | 与 FastV 官方 lmms-eval 实现在随机小模型上逐步输出一致（相对误差 ≤3e-7），且不重复写入 KV cache；EXP-0002 |
 | run_eval.py | 在 LLaVA 的 model_vqa_loader 评测里切换 vanilla / FastV / VisionZip / 随机 / SparseVLM；Windows 上的 DataLoader worker；`--layer-token-log` 记录每层输入的 token 数 | EXP-0002 |
 | exp0002.py | EXP-0002 的运行器：每次运行写 cmd、config、git、seed、env、gpu、stdout、答案、metrics、status 和 SHA256SUMS，复制到备份并核对校验和，追加到 runs.tsv；拒绝复用已有的 run ID | EXP-0002 的 49 次运行 |
 | sparsevlm_sdpa.py | Windows 上把 SparseVLM 的 FlashAttention-2 调用换成 PyTorch SDPA（运行时替换，不改仓库文件） | 自检：与显式 softmax 注意力的差 ≤2.1e-07；EXP-0002-R36～R41 |

@@ -62,6 +62,8 @@ def parse():
                       help="diagnostic, fastv only: save FastV's attention score of every image patch per prefill (.npy)")
     ours.add_argument("--fastv-score-prior", default=None,
                       help="diagnostic, fastv only: .npy with one value per image patch; scores are divided by it")
+    ours.add_argument("--fastv-stratify", type=int, default=None,
+                      help="diagnostic, fastv only: take the ranking in turns from an n x n grid of image blocks")
     argv = sys.argv[1:]
     split = argv.index("--") if "--" in argv else len(argv)
     method_args = ours.parse_args(argv[:split])
@@ -84,8 +86,8 @@ def parse():
         ours.error("--method random needs --seed")
     if method_args.kept_token_log and method_args.method not in ("fastv", "random"):
         ours.error("--kept-token-log needs --method fastv or random")
-    if (method_args.score_log or method_args.fastv_score_prior) and method_args.method != "fastv":
-        ours.error("--score-log and --fastv-score-prior need --method fastv")
+    if (method_args.score_log or method_args.fastv_score_prior or method_args.fastv_stratify) and method_args.method != "fastv":
+        ours.error("--score-log, --fastv-score-prior and --fastv-stratify need --method fastv")
     if method_args.method == "sparsevlm":
         if method_args.retained_tokens is None:
             ours.error("--method sparsevlm needs --retained-tokens")
@@ -100,7 +102,8 @@ def apply_method(model, m):
     if m.method == "fastv":
         prior_path = getattr(m, "fastv_score_prior", None)
         prior = torch.from_numpy(np.load(prior_path)) if prior_path else None
-        return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule, score_prior=prior)
+        return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule, score_prior=prior,
+                           stratify=getattr(m, "fastv_stratify", None))
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "visionzip":

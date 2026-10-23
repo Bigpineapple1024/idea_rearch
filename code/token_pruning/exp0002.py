@@ -73,6 +73,11 @@ for b in (192, 128, 64):
 SCORE_PRIOR = f"{REPO}/code/output/EXP-0008/analysis/position_prior.npy"
 for b in (192, 128, 64):
     CONFIGS[f"fastv{b}_prior"] = ("tp", CONFIGS[f"fastv{b}"][1] + ["--fastv-score-prior", SCORE_PRIOR])
+# EXP-0010: the ranking taken in turns from a 6x6 grid of 4x4-patch blocks (the blocks of the coverage statistic),
+# on the raw scores (coverage without removing the position term) and after dividing out the position curve
+for b in (192, 128, 64):
+    CONFIGS[f"fastv{b}_strat"] = ("tp", CONFIGS[f"fastv{b}"][1] + ["--fastv-stratify", "6"])
+    CONFIGS[f"fastv{b}_prior_strat"] = ("tp", CONFIGS[f"fastv{b}_prior"][1] + ["--fastv-stratify", "6"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
