@@ -1,10 +1,11 @@
-"""Run EXP-0002 evaluations with the per-run records the research process requires.
+"""Run the vision-direction evaluations (EXP-0002 onwards) with the per-run records the research process requires.
 
   python exp0002.py EXP-0002-R01:vanilla:pope EXP-0002-R02:vanilla:mme ...    # in the tp env, sequentially
 
-Each run gets code/output/EXP-0002/<run>/ with cmd.txt, config.json, git.txt (this repo + external commits +
-model revisions), seed.txt, env.txt, gpu.txt, stdout.log, answers.jsonl(+.meta.json), score.log, metrics.json,
-status.json and SHA256SUMS, and is copied to D:/6CJNM007/backup/EXP-0002/<run>/ (checksums re-verified).
+The experiment is the run ID without its -Rnn suffix. Each run gets code/output/<EXP>/<run>/ with cmd.txt,
+config.json, git.txt (this repo + external commits + model revisions), seed.txt, env.txt, gpu.txt, stdout.log,
+answers.jsonl(+.meta.json), score.log, metrics.json, status.json and SHA256SUMS, and is copied to
+D:/6CJNM007/backup/<EXP>/<run>/ (checksums re-verified); code/output/<EXP>/runs.tsv gets one row per run.
 A run ID is never reused: a failed run keeps its folder and the retry gets a new ID.
 """
 import datetime
@@ -24,8 +25,7 @@ ENV_SH = "/d/6CJNM007/idea_rearch/code/env/windows_env.sh"
 GIT = "D:/6CJNM007/git/cmd/git.exe"
 HF_HUB = "D:/6CJNM007/cache/huggingface/hub"
 DATA = "D:/6CJNM007/data"
-OUT = f"{REPO}/code/output/EXP-0002"
-BACKUP = "D:/6CJNM007/backup/EXP-0002"
+BACKUP = "D:/6CJNM007/backup"
 MODEL = "liuhaotian/llava-v1.5-7b"
 
 BENCHES = {
@@ -36,6 +36,9 @@ BENCHES = {
     # diagnostic only: 50 POPE questions spread evenly over the file (17/16/17 per split), not scored
     "pope50": {"question_file": f"{DATA}/llava_eval/pope/llava_pope_test_sub50.jsonl",
                "image_folder": f"{DATA}/coco/val2014", "annotations": [], "score": False},
+    # diagnostic only: every question (all three splits) about 20 images, from make_pope_subset.py; not scored
+    "pope_img20": {"question_file": f"{DATA}/llava_eval/pope/llava_pope_test_img20.jsonl",
+                   "image_folder": f"{DATA}/coco/val2014", "annotations": [], "score": False},
 }
 # Budgets are 32-layer averages of visual tokens (code/token_pruning/README.md, "预算的口径").
 FASTV_KEEP = {192: 166, 128: 98, 64: 30}
@@ -53,6 +56,13 @@ for b in (192, 128, 64):
                                                 str(FASTV_KEEP[b]), "--seed", str(seed)])
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
 CONFIGS.update({f"{name}_layers": spec for name, spec in list(CONFIGS.items())})
+# "<config>_kept": FastV or random selection with --kept-token-log, for the kept-patch position diagnostic
+CONFIGS.update({f"{name}_kept": spec for name, spec in list(CONFIGS.items())
+                if name.startswith(("fastv", "random")) and not name.endswith("_layers")})
+
+
+def experiment(run_id):
+    return run_id.rsplit("-R", 1)[0]
 
 
 def sh(cmd, cwd=None):
@@ -92,13 +102,16 @@ def git_record():
 def run_one(run_id, config, bench):
     env, method_args = CONFIGS[config]
     b = BENCHES[bench]
-    run_dir = f"{OUT}/{run_id}"
+    out = f"{REPO}/code/output/{experiment(run_id)}"
+    run_dir = f"{out}/{run_id}"
     if os.path.exists(run_dir):
         raise SystemExit(f"{run_id} already exists; give the retry a new run ID")
     os.makedirs(run_dir)
     answers = f"{run_dir}/answers.jsonl"
     if config.endswith("_layers"):
         method_args = method_args + ["--layer-token-log", f"{run_dir}/layer_tokens.json"]
+    if config.endswith("_kept"):
+        method_args = method_args + ["--kept-token-log", f"{run_dir}/kept_tokens.json"]
     eval_cmd = ("cd {here} && HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TQDM_MININTERVAL=30 VISIONZIP_ROOT={vz} "
                 "python run_eval.py {margs} -- --model-path {model} --question-file {q} --image-folder {img} "
                 "--answers-file {ans} --temperature 0 --conv-mode vicuna_v1").format(
@@ -141,6 +154,16 @@ def run_one(run_id, config, bench):
                        "mean_visual_per_layer": layers["mean_visual_per_layer"], "n_prefills": layers["n_prefills"],
                        "n_complete": layers.get("n_complete"), "n_layers": layers.get("n_layers")}, f, indent=2)
         status["score_exit"] = 0 if layers.get("n_complete") == layers["n_prefills"] else 1
+    elif status["eval_exit"] == 0 and os.path.exists(f"{run_dir}/kept_tokens.json"):
+        with open(f"{run_dir}/kept_tokens.json") as f:                 # unscored diagnostic: one kept set per question
+            kept = json.load(f)
+        with open(b["question_file"]) as f:
+            n_questions = sum(1 for _ in f)
+        with open(f"{run_dir}/metrics.json", "w") as f:
+            json.dump({"benchmark": bench, "headline": "n_prefills", "n_prefills": kept["n_prefills"],
+                       "n_questions": n_questions, "keep": kept["keep"], "n_image_tokens": kept["n_image_tokens"],
+                       "all_sets_full": all(len(s) == kept["keep"] for s in kept["kept"])}, f, indent=2)
+        status["score_exit"] = 0 if kept["n_prefills"] == n_questions else 1
     status["end"] = now()
     status["status"] = "completed" if status.get("score_exit") == 0 else "failed"
     with open(f"{run_dir}/status.json", "w") as f:
@@ -151,8 +174,9 @@ def run_one(run_id, config, bench):
     sums = {p: sha256(f"{run_dir}/{p}") for p in files}
     with open(f"{run_dir}/SHA256SUMS", "w") as f:
         f.writelines(f"{h}  {p}\n" for p, h in sums.items())
-    shutil.copytree(run_dir, f"{BACKUP}/{run_id}")
-    if any(sha256(f"{BACKUP}/{run_id}/{p}") != h for p, h in sums.items()):
+    backup = f"{BACKUP}/{experiment(run_id)}/{run_id}"
+    shutil.copytree(run_dir, backup)
+    if any(sha256(f"{backup}/{p}") != h for p, h in sums.items()):
         raise SystemExit(f"backup of {run_id} does not match its checksums")
 
     metrics, meta = {}, {}
@@ -165,8 +189,8 @@ def run_one(run_id, config, bench):
     row = [run_id, config, bench, status["status"], str(headline), str(meta.get("eval_seconds", "NA")),
            str(meta.get("seconds_per_answer", "NA")), str(meta.get("eval_peak_gpu_mem_gib", "NA")),
            status["start"], status["end"], sha256(f"{run_dir}/SHA256SUMS")]
-    new = not os.path.exists(f"{OUT}/runs.tsv")
-    with open(f"{OUT}/runs.tsv", "a") as f:
+    new = not os.path.exists(f"{out}/runs.tsv")
+    with open(f"{out}/runs.tsv", "a") as f:
         if new:
             f.write("run_id\tconfig\tbench\tstatus\theadline\teval_s\ts_per_answer\tpeak_gib\tstart\tend\tsha256sums_sha256\n")
         f.write("\t".join(row) + "\n")

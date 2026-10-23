@@ -46,6 +46,8 @@ def parse():
                       help="DataLoader workers (LLaVA's default 4; 0 loads images in this process)")
     ours.add_argument("--layer-token-log", default=None,
                       help="diagnostic: write the tokens entering each LLM layer during every prefill (JSON)")
+    ours.add_argument("--kept-token-log", default=None,
+                      help="diagnostic, fastv/random only: write the image-patch indices kept in every prefill (JSON)")
     argv = sys.argv[1:]
     split = argv.index("--") if "--" in argv else len(argv)
     method_args = ours.parse_args(argv[:split])
@@ -66,6 +68,8 @@ def parse():
     llava_args = llava.parse_args(argv[split + 1:])
     if method_args.method == "random" and method_args.seed is None:
         ours.error("--method random needs --seed")
+    if method_args.kept_token_log and method_args.method not in ("fastv", "random"):
+        ours.error("--kept-token-log needs --method fastv or random")
     if method_args.method == "sparsevlm":
         if method_args.retained_tokens is None:
             ours.error("--method sparsevlm needs --retained-tokens")
@@ -118,6 +122,22 @@ def _write_layer_tokens(path, n_layers):
                    "mean_visual_over_layers": sum(per_layer) / len(per_layer) if per_layer else None}, f, indent=1)
 
 
+_KEPT = []                   # one list per prefill: indices (0..n_img-1, row-major patch order) of the kept image tokens
+_KEPT_N_IMG = set()          # image-token count of each prefill (576 for LLaVA-1.5 at 336 px)
+
+
+def _record_kept(module, args, kwargs, output):
+    embeds = kwargs.get("inputs_embeds")
+    if embeds is not None and embeds.shape[1] > 1:      # prefill only: generate() decodes from input_ids
+        _KEPT.append(module.fastv_kept_image_positions.tolist())
+        _KEPT_N_IMG.add(int(module.fastv_image_span[1]))
+
+
+def _write_kept(path, keep):
+    with open(path, "w") as f:
+        json.dump({"n_prefills": len(_KEPT), "keep": keep, "n_image_tokens": sorted(_KEPT_N_IMG), "kept": _KEPT}, f)
+
+
 def main():
     method_args, llava_args = parse()
     original_load = loader.load_pretrained_model
@@ -132,6 +152,8 @@ def main():
             times["n_layers"] = len(model.get_model().layers)
             for i, layer in enumerate(model.get_model().layers):
                 layer.register_forward_pre_hook(functools.partial(_record_layer_tokens, i), with_kwargs=True)
+        if method_args.kept_token_log:
+            model.get_model().register_forward_hook(_record_kept, with_kwargs=True)
         torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
         times["loaded"] = time.time()                # evaluation timing starts after loading
@@ -168,6 +190,8 @@ def main():
         json.dump(meta, f, indent=2)
     if method_args.layer_token_log:
         _write_layer_tokens(method_args.layer_token_log, times["n_layers"])
+    if method_args.kept_token_log:
+        _write_kept(method_args.kept_token_log, method_args.fastv_keep)
 
 
 if __name__ == "__main__":
