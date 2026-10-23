@@ -10,11 +10,15 @@
 | --- | --- |
 | exp_ts.py | 实验室 GPU 上的运行器（EXP-0004 起）：每次运行一个目录（仓库自己的 checkpoints/、results/ 也在其中），写 cmd、config、git、seed、env、gpu、stdout、metrics、status 和 SHA256SUMS，复制到备份并核对，追加到 runs.tsv；拒绝复用已有的 run ID |
 | itransformer_seed.py | 用其他种子运行 iTransformer 官方 run.py：在内存中只替换 `fix_seed = 2023` 这一行后执行，不修改官方文件；种子 2023 时执行的代码与 run.py 字节相同 |
+| itransformer_val.py | 不训练：官方 run.py 以 `--is_training 0` 载入 ./checkpoints/ 下的检查点，本脚本把交给 `exp.test()` 的数据换成验证集（加载方式与测试集相同：按顺序、batch 1），因此保存的 pred.npy、true.npy、metrics.npy 都是验证期的。exp_ts.py 的 `itransformer_val` 方法复制 EXP-0004 同数据集、同预测长度、同种子运行的检查点后调用它。CPU 冒烟测试：同一检查点走官方测试路径，预测与原运行保存的逐位相同 |
 | tqnet_save_pred.py | 运行 TQNet 官方 run.py，在本进程内替换 `metric`，先保存测试集的 pred.npy、true.npy 再返回原指标（官方保存语句被注释掉了） |
 | prepare_tfb_data.py | 从 TFB 的 forecasting.zip 只解压 ETTh1.csv 与 FORECAST_META.csv 到 `D:\6CJNM007\data\tfb\`，并写 SHA256SUMS |
 | compare_tfb_ett.py | 核对 DUET（TFB 数据）与 iTransformer 等（ETDataset CSV）是否在同一批测试窗口上计分：原始值逐值比较，标准化后的测试窗口逐值比较 |
 | analyze_exp0004.py | EXP-0004 的表格：各数据集 × 预测长度的直接运行、包装脚本各种子、均值 ± 标准差，以及与论文 Table 10 的复现判据 |
 | analyze_ts_windows.py | 逐窗口误差：每个测试窗口的 MSE、末 97/113 个窗口与其余窗口的对比、按十分位的 MSE，以及窗口数相同的方法之间逐窗口比较 |
+| analyze_exp0005.py | EXP-0005 的表格：DUET、TQNet、WPMixer 与 iTransformer 在同一协议下的各种子 MSE、均值 ± 标准差，WPMixer 另列官方 drop_last 计分 |
+| analyze_hard_windows.py | SQZ-EXP-0005 补充分析：从 CSV 重建 ETTh1-96 测试窗口，逐窗口平均误差与水平差、目标段波动、输入偏离训练期的 Spearman 相关 |
+| analyze_level_shape.py | F-TS8 的 1a–2b 分析：每个窗口的 MSE 精确拆成水平部分与形状部分；预测水平变化与真实水平变化的斜率；把预测的水平换成输入段均值等简单水平时的误差；各变量的有符号水平误差与各时期数据自身的平均漂移。可选数据集与验证期（EXP-0009 的 itransformer_val 运行） |
 | wpmixer_droplast.py | 运行 WPMixer 官方 run_LTF.py，同一个 checkpoint 在测试集上分别按官方 `drop_last=True` 和全部窗口打分；另把全部窗口的预测与真值存为 pred_all_windows.npy、true_all_windows.npy（存到启动时的目录） |
 | duet_test_stochasticity.py | 运行 DUET 官方 TFB 入口，并在测试时用另外 `--resamples` 个随机种子重新采样通道 mask，测量分数波动；`--save-pred` 时保存官方预测与标准化后的真值 |
 | probe_duet_mask.py | 代码级探针：随机权重下 DUET 在 eval 模式对同一输入两次前向输出是否相同 |

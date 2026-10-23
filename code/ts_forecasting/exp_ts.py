@@ -3,6 +3,8 @@
   python exp_ts.py <EXP> <run_id>:<method>:<dataset>:<pred_len>:<seed>[:direct] ...     # sequentially
 
   itransformer  official run.py as is (":direct", seed 2023 only) or through itransformer_seed.py (any seed)
+  itransformer_val  no training: the checkpoint of the EXP-0004 iTransformer run with the same dataset, length and
+                seed, scored on the validation split through itransformer_val.py (metrics.json describes validation)
   tqnet         official run.py through tqnet_save_pred.py (scripts/TQNet/etth1.sh arguments)
   wpmixer       official run_LTF.py through wpmixer_droplast.py (scripts/Unified/ETTh1_Unified_setup.sh arguments)
   duet          official TFB entry through duet_test_stochasticity.py (DUET_unified_seq_len_96.sh, ETTh1-96, TFB data)
@@ -80,6 +82,36 @@ def itransformer(dataset, pred_len, seed, direct, run_dir):
             "iTransformer", data)
 
 
+def trained_run(exp, method, dataset, pred_len, seed):
+    """The first completed run of <exp> with this method, dataset, length and seed (runs.tsv order)."""
+    with open(f"{REPO}/code/output/{exp}/runs.tsv") as f:
+        rows = [line.rstrip("\n").split("\t") for line in f][1:]
+    for r in rows:
+        if r[1:5] == [method, dataset, str(pred_len), str(seed)] and r[6] == "completed":
+            return f"{REPO}/code/output/{exp}/{r[0]}"
+    raise SystemExit(f"no completed {method} run of {exp} for {dataset}-{pred_len}, seed {seed}")
+
+
+def itransformer_val(dataset, pred_len, seed, direct, run_dir):
+    """The trained EXP-0004 run's checkpoint, copied into ./checkpoints/<setting>/, scored on the validation split."""
+    if direct:
+        raise SystemExit("itransformer_val has no direct entry")
+    source = trained_run("EXP-0004", "itransformer", dataset, pred_len, seed)
+    found = glob.glob(f"{source}/checkpoints/*/checkpoint.pth")
+    if len(found) != 1:
+        raise SystemExit(f"expected one checkpoint in {source}, found {len(found)}")
+    setting = os.path.basename(os.path.dirname(found[0]))
+    os.makedirs(f"{run_dir}/checkpoints/{setting}")
+    shutil.copyfile(found[0], f"{run_dir}/checkpoints/{setting}/checkpoint.pth")
+    with open(f"{run_dir}/source_run.txt", "w") as f:
+        f.write(f"{os.path.basename(source)}\n{found[0]}\n")
+    _, cmd, repo, data = itransformer(dataset, pred_len, seed, False, run_dir)
+    args = cmd[cmd.index("--") + 1:]
+    args[args.index("--is_training") + 1] = "0"
+    return ("itrans", ["python", f"{HERE}/itransformer_val.py", f"{SRC}/iTransformer", "--", *args], repo,
+            [*data, f"{run_dir}/checkpoints/{setting}/checkpoint.pth"])
+
+
 def tqnet(dataset, pred_len, seed, direct, run_dir):
     """scripts/TQNet/etth1.sh arguments with --random_seed <seed>, plus --num_workers 0."""
     if dataset != "ETTh1" or direct:
@@ -127,7 +159,8 @@ def duet(dataset, pred_len, seed, direct, run_dir):
                      "--", *args], "DUET", [f"{root}/dataset/forecasting/ETTh1.csv"])
 
 
-METHODS = {"itransformer": itransformer, "tqnet": tqnet, "wpmixer": wpmixer, "duet": duet}
+METHODS = {"itransformer": itransformer, "itransformer_val": itransformer_val, "tqnet": tqnet, "wpmixer": wpmixer,
+           "duet": duet}
 
 
 def tslib_metrics(run_dir):
@@ -156,7 +189,7 @@ def saved_scores(run_dir, pred_name, true_name):
 
 
 def metrics_of(method, run_dir):
-    if method == "itransformer":
+    if method in ("itransformer", "itransformer_val"):
         return tslib_metrics(run_dir)
     if method == "tqnet":                       # official result.txt line "mse:<x>, mae:<y>" and the saved arrays
         with open(f"{run_dir}/result.txt") as f:
