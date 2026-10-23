@@ -44,6 +44,8 @@ def parse():
                       help="load the LLM with this attention kernel (default: transformers' choice, sdpa in 4.37)")
     ours.add_argument("--num-workers", type=int, default=4,
                       help="DataLoader workers (LLaVA's default 4; 0 loads images in this process)")
+    ours.add_argument("--layer-token-log", default=None,
+                      help="diagnostic: write the tokens entering each LLM layer during every prefill (JSON)")
     argv = sys.argv[1:]
     split = argv.index("--") if "--" in argv else len(argv)
     method_args = ours.parse_args(argv[:split])
@@ -91,6 +93,27 @@ def _give_worker_args(llava_args, worker_id):
     loader.args = llava_args
 
 
+_LAYER_TOKENS = []           # one list per prefill: sequence length entering each LLM layer
+
+
+def _record_layer_tokens(index, module, args):
+    if args and args[0].shape[1] > 1:                   # prefill only; a decode step carries one token
+        if index == 0:
+            _LAYER_TOKENS.append([])
+        _LAYER_TOKENS[-1].append(int(args[0].shape[1]))
+
+
+def _write_layer_tokens(path):
+    # Visual tokens per layer = length - text tokens, with text = layer-0 length - 576: valid for methods that give
+    # layer 0 all 576 patches (vanilla, FastV, random, SparseVLM), not for VisionZip, which shrinks them before the LLM.
+    visual = [[n - (row[0] - 576) for n in row] for row in _LAYER_TOKENS]
+    per_layer = [sum(col) / len(col) for col in zip(*visual)] if visual else []
+    with open(path, "w") as f:
+        json.dump({"n_prefills": len(_LAYER_TOKENS), "tokens_per_layer": _LAYER_TOKENS,
+                   "mean_visual_per_layer": per_layer,
+                   "mean_visual_over_layers": sum(per_layer) / len(per_layer) if per_layer else None}, f, indent=1)
+
+
 def main():
     method_args, llava_args = parse()
     original_load = loader.load_pretrained_model
@@ -101,6 +124,9 @@ def main():
             kw["attn_implementation"] = method_args.attn_implementation   # LLaVA's builder forwards kwargs
         tokenizer, model, image_processor, context_len = original_load(*a, **kw)
         model = apply_method(model, method_args)
+        if method_args.layer_token_log:
+            for i, layer in enumerate(model.get_model().layers):
+                layer.register_forward_pre_hook(functools.partial(_record_layer_tokens, i))
         torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
         times["loaded"] = time.time()                # evaluation timing starts after loading
@@ -135,6 +161,8 @@ def main():
             "flash_attention_stand_in": "sdpa" if method_args.method == "sparsevlm" and os.name == "nt" else None}
     with open(answers_file + ".meta.json", "w") as f:
         json.dump(meta, f, indent=2)
+    if method_args.layer_token_log:
+        _write_layer_tokens(method_args.layer_token_log)
 
 
 if __name__ == "__main__":

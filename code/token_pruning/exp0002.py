@@ -33,6 +33,9 @@ BENCHES = {
              "annotations": [f"{DATA}/llava_eval/pope/coco/coco_pope_{s}.json" for s in ("adversarial", "popular", "random")]},
     "mme": {"question_file": f"{DATA}/llava_eval/MME/llava_mme.jsonl",
             "image_folder": f"{DATA}/llava_eval/MME/MME_Benchmark_release_version", "annotations": []},
+    # diagnostic only: 50 POPE questions spread evenly over the file (17/16/17 per split), not scored
+    "pope50": {"question_file": f"{DATA}/llava_eval/pope/llava_pope_test_sub50.jsonl",
+               "image_folder": f"{DATA}/coco/val2014", "annotations": [], "score": False},
 }
 # Budgets are 32-layer averages of visual tokens (code/token_pruning/README.md, "预算的口径").
 FASTV_KEEP = {192: 166, 128: 98, 64: 30}
@@ -48,6 +51,8 @@ for b in (192, 128, 64):
     for seed in (2021, 2022, 2023):
         CONFIGS[f"random{b}_s{seed}"] = ("tp", ["--method", "random", "--fastv-k", "2", "--fastv-keep",
                                                 str(FASTV_KEEP[b]), "--seed", str(seed)])
+# "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
+CONFIGS.update({f"{name}_layers": spec for name, spec in list(CONFIGS.items())})
 
 
 def sh(cmd, cwd=None):
@@ -92,6 +97,8 @@ def run_one(run_id, config, bench):
         raise SystemExit(f"{run_id} already exists; give the retry a new run ID")
     os.makedirs(run_dir)
     answers = f"{run_dir}/answers.jsonl"
+    if config.endswith("_layers"):
+        method_args = method_args + ["--layer-token-log", f"{run_dir}/layer_tokens.json"]
     eval_cmd = ("cd {here} && HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TQDM_MININTERVAL=30 VISIONZIP_ROOT={vz} "
                 "python run_eval.py {margs} -- --model-path {model} --question-file {q} --image-folder {img} "
                 "--answers-file {ans} --temperature 0 --conv-mode vicuna_v1").format(
@@ -99,7 +106,8 @@ def run_one(run_id, config, bench):
         q=b["question_file"], img=b["image_folder"], ans=answers)
     score_cmd = [sys.executable, f"{HERE}/score_pope_mme.py", bench, answers, run_dir, "--tag", run_id]
     with open(f"{run_dir}/cmd.txt", "w") as f:
-        f.write(f"# env: {env}\n{shlex.join(in_env(env, eval_cmd))}\n# scoring (tp env)\n{shlex.join(score_cmd)}\n")
+        scoring = f"# scoring (tp env)\n{shlex.join(score_cmd)}\n" if b.get("score", True) else "# not scored (diagnostic)\n"
+        f.write(f"# env: {env}\n{shlex.join(in_env(env, eval_cmd))}\n{scoring}")
     config_rec = {"experiment": "EXP-0002", "run_id": run_id, "config": config, "bench": bench, "env": env,
                   "method_args": method_args, "model": MODEL, "decoding": "greedy (temperature 0), conv vicuna_v1",
                   "question_file": b["question_file"], "question_file_sha256": sha256(b["question_file"]),
@@ -121,9 +129,18 @@ def run_one(run_id, config, bench):
     status = {"run_id": run_id, "start": now()}
     with open(f"{run_dir}/stdout.log", "w") as log:
         status["eval_exit"] = subprocess.run(in_env(env, eval_cmd), stdout=log, stderr=subprocess.STDOUT).returncode
-    if status["eval_exit"] == 0:
+    if status["eval_exit"] == 0 and b.get("score", True):
         with open(f"{run_dir}/stdout.log", "a") as log:
             status["score_exit"] = subprocess.run(score_cmd, stdout=log, stderr=subprocess.STDOUT).returncode
+    elif status["eval_exit"] == 0 and os.path.exists(f"{run_dir}/layer_tokens.json"):
+        with open(f"{run_dir}/layer_tokens.json") as f:                # unscored diagnostic: the token counts
+            layers = json.load(f)
+        with open(f"{run_dir}/metrics.json", "w") as f:
+            json.dump({"benchmark": bench, "headline": "mean_visual_over_layers",
+                       "mean_visual_over_layers": layers["mean_visual_over_layers"],
+                       "mean_visual_per_layer": layers["mean_visual_per_layer"], "n_prefills": layers["n_prefills"]},
+                      f, indent=2)
+        status["score_exit"] = 0
     status["end"] = now()
     status["status"] = "completed" if status.get("score_exit") == 0 else "failed"
     with open(f"{run_dir}/status.json", "w") as f:
