@@ -10,6 +10,9 @@ Differences from that file, all deliberate:
 - Layer K-1 runs once (with output_attentions) instead of twice, so its KV cache is not duplicated.
 - Rotary embeddings are not truncated to the pruned length (FastV README, lmms-eval step 5).
 Batch size 1 without padding only, as in all three reference implementations.
+
+With a seed, the kept image tokens are drawn uniformly at random instead (same K, same count), so the
+attention ranking can be compared with chance at an identical budget; layer K-1 then skips its attention map.
 """
 import types
 
@@ -56,7 +59,11 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
     for idx, layer in enumerate(self.layers):
         if prefill and idx == k:
             start, n_img = self.fastv_image_span
-            score = attn.mean(dim=1)[0, -1, start:start + n_img]
+            if self.fastv_generator is None:
+                score = attn.mean(dim=1)[0, -1, start:start + n_img]
+            else:
+                score = torch.rand(n_img, generator=self.fastv_generator, device=self.fastv_generator.device)
+                score = score.to(hidden.device)
             top = score.topk(min(keep, n_img)).indices + start
             keep_idx = torch.cat((torch.arange(start, device=hidden.device), top,
                                   torch.arange(start + n_img, hidden.shape[1], device=hidden.device))).sort().values
@@ -64,7 +71,7 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             position_ids = position_ids[:, keep_idx]
             self.fastv_kept_image_positions = top.sort().values - start
         mask = _causal_mask(hidden) if prefill else None
-        need_attn = prefill and idx == k - 1
+        need_attn = prefill and idx == k - 1 and self.fastv_generator is None
         out = layer(hidden, attention_mask=mask, position_ids=position_ids, past_key_value=cache,
                     output_attentions=need_attn, use_cache=use_cache)
         hidden = out[0]
@@ -94,18 +101,25 @@ def _record_image_span(model):
     model.prepare_inputs_labels_for_multimodal = wrapped
 
 
-def bind_fastv(llama_model, k, keep):
-    """Turn a transformers LlamaModel into FastV in place (image span set by the caller)."""
+def bind_fastv(llama_model, k, keep, seed=None):
+    """Turn a transformers LlamaModel into FastV in place (image span set by the caller).
+
+    seed=None keeps FastV's attention ranking; an integer selects random image tokens from that seed.
+    """
     if k < 1:
         raise ValueError("K must be >= 1: the scores come from layer K-1")
     modeling_llama.LlamaRotaryEmbedding.forward = _full_rotary_forward
     llama_model.fastv_k, llama_model.fastv_keep = k, keep
+    llama_model.fastv_generator = None
+    if seed is not None:
+        device = llama_model.embed_tokens.weight.device
+        llama_model.fastv_generator = torch.Generator(device=device).manual_seed(seed)
     llama_model.forward = types.MethodType(fastv_forward, llama_model)
     return llama_model
 
 
-def apply_fastv(model, k=2, keep=288):
-    """Enable FastV on a loaded LlavaLlamaForCausalLM."""
-    bind_fastv(model.get_model(), k, keep)
+def apply_fastv(model, k=2, keep=288, seed=None):
+    """Enable FastV (or its random-selection control when seed is given) on a loaded LlavaLlamaForCausalLM."""
+    bind_fastv(model.get_model(), k, keep, seed)
     _record_image_span(model)
     return model

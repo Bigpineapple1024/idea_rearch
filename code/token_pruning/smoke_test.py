@@ -23,6 +23,7 @@ METHODS = {
     "fastv_k2_keep288": {"method": "fastv", "fastv_k": 2, "fastv_keep": 288},
     "fastv_k2_keep30": {"method": "fastv", "fastv_k": 2, "fastv_keep": 30},
     "visionzip_54_10": {"method": "visionzip", "dominant": 54, "contextual": 10},
+    "random_k2_keep30_seed0": {"method": "random", "fastv_k": 2, "fastv_keep": 30, "seed": 0},
 }
 
 
@@ -57,8 +58,8 @@ def run_one(name, workdir):
     if spec:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from run_eval import apply_method
-        model = apply_method(model, argparse.Namespace(**{"fastv_k": 2, "fastv_keep": 288, "dominant": 54,
-                                                          "contextual": 10, **spec}))
+        model = apply_method(model, argparse.Namespace(**{"fastv_k": 2, "fastv_keep": 288, "seed": None,
+                                                          "dominant": 54, "contextual": 10, **spec}))
     from llava.constants import IMAGE_TOKEN_INDEX
 
     seen = []
