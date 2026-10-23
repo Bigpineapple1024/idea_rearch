@@ -26,11 +26,11 @@ measurements_and_analysis: TFB 的 mse_norm、mae_norm 等（在训练集标准�
 results_with_uncertainty: 单次运行；无方差
 claim_evidence_implementation_map: 见 E 表
 limitations_biases_and_ethics: 测试时通道 mask 随机；依赖栈重
-reproducibility_and_transferability: 评测框架公平（训练集拟合 scaler、不丢测试窗口）；ETTh1 复现见 E-DU-10
+reproducibility_and_transferability: 评测框架公平（训练集拟合 scaler、不丢测试窗口）；ETTh1-96 CPU 复现 MSE 0.3898，比报告值 0.377 高 0.013（E-DU-10）
 candidate_P: [P-TS1 评测协议差异, P-TS5 推理时的随机性, P-TS6 路由依据]
 candidate_F: [F-TS5 测试时 mask 随机采样, F-TS6 路由在未做实例归一化的输入上计算]
-evidence_index: E-DU-01..E-DU-11
-unresolved_questions: [测试随机性在真实训练后对分数的影响大小（EXP-0003）, 回看窗口的选择依据]
+evidence_index: E-DU-01..E-DU-12
+unresolved_questions: [CPU 复现比报告值高 0.013 的原因, 回看窗口的选择依据]
 ```
 
 ## 来源
@@ -58,7 +58,8 @@ unresolved_questions: [测试随机性在真实训练后对分数的影响大小
 | E-DU-07 | DE | TFB 评测：标准化器只在训练段拟合；测试按步长 1 滚动、所有窗口计分（不丢样本）；指标在训练集标准化尺度上计算；ETTh1 按元信息长度 14400 划分为 8640/2880/2880 | deep_forecasting_model_base.py L400；rolling_forecast.py L183-223、L388-420；config/rolling_forecast_config.json | ETT | — |
 | E-DU-08 | DE | 数据需从 Google Drive / 百度网盘下载 TFB 预处理版；本项目用 ETDataset 原始 CSV 截取前 14400 行转换（code/ts_forecasting/to_tfb_format.py） | README；EXP-0003 | — | 与官方预处理文件是否逐值一致未核对 |
 | E-DU-09 | DE | 依赖栈重：requirements 含 darts、salesforce-merlion、ray、dash、lightgbm 等；官方只在 Python 3.8 下测试；ETTh1 按预测长度使用不同的回看窗口与超参数（ETTh1_script/DUET.sh 中回看为 512/336） | requirements.txt；scripts/multivariate_forecast/ETTh1_script/DUET.sh | — | — |
-| E-DU-10 | DE | 本项目 CPU 复现（统一设置 ETTh1-96）：结果见 EXP-0003 | EXP-0003 | ETTh1-96 | 单次训练 |
+| E-DU-10 | DE | 本项目 CPU 复现（统一设置 ETTh1-96，TFB 种子 2021，12 个 epoch 后早停）：mse_norm 0.3898 / mae_norm 0.3990（TFB 自身报告与本项目计算一致），报告值 0.377 / 0.393，MSE 高 0.013；另一种子见 EXP-0003 | EXP-0003 R12；TFB test_report | ETTh1-96，CPU fp32，torch 2.1.2 | 差距可能来自环境、数据预处理（未与官方预处理文件比对）或种子 |
+| E-DU-12 | DE | 训练好的模型在测试时只重新采样通道 mask（10 个种子）：MSE 0.3894～0.3905，标准差 0.0003；即测试随机性真实存在，但对分数的影响很小 | EXP-0003 R12 | ETTh1-96 | 其他数据集、通道更多时可能更大 |
 | E-DU-11 | SC | README 致谢中说明曾有用户发现代码 bug，已修复并重新测试所有结果 | README Acknowledgement | — | 修复前后差异未知 |
 
 ## 研究判断
@@ -68,12 +69,13 @@ unresolved_questions: [测试随机性在真实训练后对分数的影响大小
   - 模型由两个可以分开消融的模块组成，研究空间大。
   - KDD 2025，引用量高。
 - **缺点**：
-  - 测试时通道 mask 随机，单次分数带有采样噪声。
+  - 测试时通道 mask 随机；在 ETTh1-96 上实测影响很小（MSE 标准差 0.0003），但报告时仍应注明。
+  - 本项目 CPU 复现比报告值高 0.013（MSE），原因尚未定位。
   - 路由器用未做实例归一化的输入，“按分布聚类”可能部分是“按水平/尺度聚类”（推断）。
   - 依赖栈重、训练慢（CPU 上每个 epoch 数分钟）。
   - 主结果的回看窗口选择依据不明。
 - **与自身实验的关系**：推荐作为主要对照方法，并用它的 TFB 框架做统一评测；是否作为主 baseline 见 [时序三篇对比](../专题分析/时序预测_DUET_TQNet_WPMixer对比.md)。
-- **核心总结**：DUET 的价值在“双聚类”的问题设定和 TFB 的公平评测；测试随机性和路由输入是本项目发现、可单变量检验的切入点。
+- **核心总结**：DUET 的价值在“双聚类”的问题设定和 TFB 的公平评测。本项目发现的测试随机性经实测影响很小，不值得作为改进方向；路由输入（E-DU-04）仍待回查论文。
 
 ## 交接 Deep Read
 
