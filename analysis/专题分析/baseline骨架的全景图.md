@@ -1,6 +1,6 @@
 # baseline骨架的全景图
 
-状态：partial，2026-10-23。材料范围：LLaVA-1.5-7B 官方代码 haotian-liu/LLaVA@c121f0432da27facab705978f83c4ada465e46fd（transformers 4.37.2）与 PAPER-0001～0003 的改造位置。已知与未知分开记录；“已知证据”只覆盖代码层面，真实权重下的行为尚未测量。
+状态：partial，2026-10-23。材料范围：LLaVA-1.5-7B 官方代码 haotian-liu/LLaVA@c121f0432da27facab705978f83c4ada465e46fd（transformers 4.37.2）与 PAPER-0004～0006 的改造位置。已知与未知分开记录；“已知证据”只覆盖代码层面，真实权重下的行为尚未测量。
 
 目的：记录模块、数据流、目标函数和运算机制，明确已知、假设与未知。
 
@@ -15,11 +15,11 @@
 
 | 模块 ID | 代码位置 / 版本 | 输入输出及连接 | 运算 / 目标 | 已知证据 | 假设与未知 | 文献改造 / 下一步 |
 | --- | --- | --- | --- | --- | --- | --- |
-| B1 | llava/model/multimodal_encoder/clip_encoder.py（select_layer=-2，select_feature='patch' 去掉 CLS） | 图像 → 577 个 token → 576 个 patch 特征 | 冻结的 CLIP 视觉编码器 | 代码 L36-38 | CLIP 内部注意力集中于少数 token（VisionZip 主张，SC） | VisionZip 在此处压缩到 64；CLS 被重新送入 LLM（E-VZ-08） |
+| B1 | llava/model/multimodal_encoder/clip_encoder.py（select_layer=-2，select_feature='patch' 去掉 CLS） | 图像 → 577 个 token → 576 个 patch 特征 | 冻结的 CLIP 视觉编码器 | 代码 L36-38 | CLIP 内部注意力集中于少数 token（VisionZip 主张，SC） | VisionZip 在此处压缩到 64；CLS 被重新送入 LLM（E-VZ-C08） |
 | B2 | llava/model/multimodal_projector/builder.py | 576×1024 → 576×4096 | 两层 MLP | 代码 | 视觉 token 范数远大于文本嵌入（ICLR 2026 “Unseen Bias”，SC） | 压缩后 token 的幅值是否仍在投影层训练分布内（P5） |
-| B3 | llava/model/llava_arch.py prepare_inputs_labels_for_multimodal | 文本嵌入与视觉嵌入拼接；position_ids 默认按顺序编号 | — | 代码 | — | VisionZip 压缩后的位置是连续编号（E-VZ-09） |
-| B4 | transformers 4.37.2 LlamaModel（LLaVA 子类 LlavaLlamaModel） | 32 层 decoder，RoPE 相对位置 | 自回归语言建模 | 代码 | 深层对视觉 token 注意力很低（FastV 主张，SC）；RoPE 使远处 token 注意力衰减（SparseVLM+ 的校正依据，DE 计算见 E-SV-08） | FastV 在第 K 层剪；SparseVLM 在第 2/6/15 层剪 |
-| B5 | transformers DynamicCache | 每层 K/V | — | 代码 | 剪枝后各层 cache 长度不同 | FastV KV-cache 版第 K-1 层重复写入（E-FV-08） |
+| B3 | llava/model/llava_arch.py prepare_inputs_labels_for_multimodal | 文本嵌入与视觉嵌入拼接；position_ids 默认按顺序编号 | — | 代码 | — | VisionZip 压缩后的位置是连续编号（E-VZ-C09） |
+| B4 | transformers 4.37.2 LlamaModel（LLaVA 子类 LlavaLlamaModel） | 32 层 decoder，RoPE 相对位置 | 自回归语言建模 | 代码 | 深层对视觉 token 注意力很低（FastV 主张，SC）；RoPE 使远处 token 注意力衰减（SparseVLM+ 的校正依据，DE 计算见 E-SV-C08） | FastV 在第 K 层剪；SparseVLM 在第 2/6/15 层剪 |
+| B5 | transformers DynamicCache | 每层 K/V | — | 代码 | 剪枝后各层 cache 长度不同 | FastV KV-cache 版第 K-1 层重复写入（E-FV-C08） |
 
 交叉结论（证据范围：三篇论文代码 + LLaVA 代码）：
 

@@ -11,7 +11,7 @@ package_version: research-pipeline-contract v1.0
 package_id: EXP-0001
 experiment_id: EXP-0001
 created_at: 2026-10-23
-source_ids: [PAPER-0001, PAPER-0002, PAPER-0003]
+source_ids: [PAPER-0004, PAPER-0005, PAPER-0006]
 evidence_status: verified
 evidence_locations: [code/token_pruning/probes/, code/token_pruning/check_fastv_equivalence.py, code/token_pruning/smoke_test.py, 本文“原始输出”节]
 missing_evidence:
@@ -107,9 +107,9 @@ visionzip_54_10   [64]*6                          ok
 ## 分层记录
 
 - **观察事实（E，已登记到各论文笔记）**：
-  - FastV KV 版：eager 下崩溃；不打 rotary 补丁会 IndexError；第 K-1 层 cache 重复写入，但输出与不重复的实现一致（E-FV-08）。
-  - SparseVLM：batch=2 出错（E-SV-11）；“64”是层平均口径（E-SV-06）；v2 的 RoPE 除数为正值、随距离减小（E-SV-08）。
-  - VisionZip：CLS 被送入 LLM（E-VZ-08）；合并 token 在相同输入下是原值的 2 倍（E-VZ-07）。
+  - FastV KV 版：eager 下崩溃；不打 rotary 补丁会 IndexError；第 K-1 层 cache 重复写入，但输出与不重复的实现一致（E-FV-C08）。
+  - SparseVLM：batch=2 出错（E-SV-C11）；“64”是层平均口径（E-SV-C06）；v2 的 RoPE 除数为正值、随距离减小（E-SV-C08）。
+  - VisionZip：CLS 被送入 LLM（E-VZ-C08）；合并 token 在相同输入下是原值的 2 倍（E-VZ-C07）。
   - 在同一平均预算下，三者的理论 FLOPs 相同，但每层的视觉 token 分布不同（R4、R6）。
 - **当前解释（推断）**：VisionZip 在低预算下表现更好，可能部分来自深层保留更多视觉 token，而不完全是选择规则更好。
 - **待复验假设**：VisionZip 的 CLS 注入、合并幅值和位置压缩会影响真实模型的输出（见 MODE_C-0001 的 C 点）。

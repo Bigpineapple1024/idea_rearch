@@ -11,7 +11,7 @@ package_version: research-pipeline-contract v1.0
 package_id: EXP-0003
 experiment_id: EXP-0003
 created_at: 2026-10-23
-source_ids: [PAPER-0004, PAPER-0005, PAPER-0006]
+source_ids: [PAPER-0001, PAPER-0002, PAPER-0003]
 evidence_status: partial
 evidence_locations: [本文“全部运行”“原始结果”, code/ts_forecasting/]
 missing_evidence:
@@ -95,7 +95,7 @@ drop_last 的影响汇总（WPMixer 统一设置，同一 checkpoint，全部窗
   - DUET 两个种子相差 0.011，报告值落在两者附近。
 - **当前解释（推断）**：
   - 96 档、单种子时，计分方式足以让 WPMixer 与 TQNet 的排名互换（0.3696 < 0.3703 < 0.3727），但差距小于 TQNet 的种子标准差，不能据此判断谁更好。
-  - 336、720 档在全部窗口计分下，WPMixer（0.4735、0.4615）仍低于 TQNet（0.4754、0.4849）。也就是说，在长预测上 WPMixer 的优势并非完全来自 drop_last；但它的超参数是在测试集上选的（E-WP-04），这部分影响本次无法分离。
+  - 336、720 档在全部窗口计分下，WPMixer（0.4735、0.4615）仍低于 TQNet（0.4754、0.4849）。也就是说，在长预测上 WPMixer 的优势并非完全来自 drop_last；但它的超参数是在测试集上选的（E-WP-C04），这部分影响本次无法分离。
 - **待复验**：多种子、多数据集下 drop_last 与测试集调参对 WPMixer 报告优势的贡献。
 - **不能得出的结论**：任何方法在其他数据集上的表现；方法之间的优劣。
 

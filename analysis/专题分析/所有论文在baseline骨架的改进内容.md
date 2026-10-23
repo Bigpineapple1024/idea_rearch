@@ -1,21 +1,21 @@
 # 所有论文在baseline骨架的改进内容
 
-状态：partial，2026-10-23。材料范围：PAPER-0001 FastV、PAPER-0002 SparseVLM、PAPER-0003 VisionZip 的代码（固定 commit 见各论文笔记）与检索摘要；论文全文未读。代码层面的核验见 [EXP-0001](../实验报告/EXP-0001_record.md)。
+状态：partial，2026-10-23。材料范围：PAPER-0004 FastV、PAPER-0005 SparseVLM、PAPER-0006 VisionZip 的代码（固定 commit 见各论文笔记）与检索摘要；论文全文未读。代码层面的核验见 [EXP-0001](../实验报告/EXP-0001_record.md)。
 
 目的：将文献改造映射到 baseline 的具体位置，与[骨架全景图](baseline骨架的全景图.md)交叉阅读。
 
 | 论文 ID | baseline 版本 | 模块 / 代码定位 | 改了什么 | 为何改 | 收益与代价 | 证据 / 条件 |
 | --- | --- | --- | --- | --- | --- | --- |
-| PAPER-0001 FastV | LLaVA-1.5，transformers 修改版 | B4 第 K 层前（fastv_kvcache.py） | 按第 K-1 层最后一个 token 的注意力保留前 R 个视觉 token，保留原始位置 | 深层对视觉注意力很低（SC） | FLOPs 降低；前 K 层不省；打分层不能用 FlashAttention | E-FV-01～10 |
-| PAPER-0002 SparseVLM | LLaVA-1.5 分叉，transformers 4.37.0 + flash_attn 2.3.3 | B4 第 2/6/15 层（modelling_sparse_llama.py） | 文本评分者打分，分阶段保留固定数；v1 回收被剪 token；v2 做 RoPE 校正、保留原始位置、取消回收 | 应由问题引导剪枝（SC） | 文本相关；前 2 层不省；只支持 batch 1 | E-SV-01～12 |
-| PAPER-0003 VisionZip | 官方 LLaVA，猴子补丁 | B1 CLIP 第 22 层（clip_encoder.py） | CLS 注意力选 dominant + key 相似度合并 contextual，送入 LLM 前完成压缩 | 视觉 token 大量冗余（SC） | 所有 LLM 层都变短，多轮可复用；不看问题；CLS 注入、合并幅值翻倍、位置压缩 | E-VZ-01～12 |
+| PAPER-0004 FastV | LLaVA-1.5，transformers 修改版 | B4 第 K 层前（fastv_kvcache.py） | 按第 K-1 层最后一个 token 的注意力保留前 R 个视觉 token，保留原始位置 | 深层对视觉注意力很低（SC） | FLOPs 降低；前 K 层不省；打分层不能用 FlashAttention | E-FV-C01～10 |
+| PAPER-0005 SparseVLM | LLaVA-1.5 分叉，transformers 4.37.0 + flash_attn 2.3.3 | B4 第 2/6/15 层（modelling_sparse_llama.py） | 文本评分者打分，分阶段保留固定数；v1 回收被剪 token；v2 做 RoPE 校正、保留原始位置、取消回收 | 应由问题引导剪枝（SC） | 文本相关；前 2 层不省；只支持 batch 1 | E-SV-C01～12 |
+| PAPER-0006 VisionZip | 官方 LLaVA，猴子补丁 | B1 CLIP 第 22 层（clip_encoder.py） | CLS 注意力选 dominant + key 相似度合并 contextual，送入 LLM 前完成压缩 | 视觉 token 大量冗余（SC） | 所有 LLM 层都变短，多轮可复用；不看问题；CLS 注入、合并幅值翻倍、位置压缩 | E-VZ-C01～12 |
 
 ## 共性
 
 1. **都不需要训练**，都插在 LLaVA-1.5 官方推理流程中，都用 LLaVA-1.5 的评测集，都只支持 batch size 1 且无 padding。
 2. **都把注意力当作“重要性”**：FastV 用最后一个文本 token → 图像 token 的注意力，SparseVLM 用评分者文本 → 图像，VisionZip 用 CLS → patch。这个共同假设恰恰被 2025 年的工作质疑：注意力有位置偏差，随机选择有时更好（MODE_C S-04、S-05）。
 3. **都需要显式注意力矩阵**：打分那一层无法使用融合注意力内核。
-4. **都是硬选择 + 预设预算**：发布的代码中没有按样本自适应的预算（SparseVLM 论文说有，代码中没有，E-SV-05）。
+4. **都是硬选择 + 预设预算**：发布的代码中没有按样本自适应的预算（SparseVLM 论文说有，代码中没有，E-SV-C05）。
 5. **都改变了 LLM 看到的输入分布**（被删 token、合并 token、CLS、位置编号），但都没有显式处理这种变化（推断，待回查论文）。
 
 ## 差异
@@ -36,7 +36,7 @@
 
 ## baseline 选择
 
-2026-10-23 按[研究流程 v2.0](../研究流程.md) 第 ① 步修订（DEC-0009）。旧版按自设评分表选了 VisionZip，与用户方法论不符，已改正。
+2026-10-23 按[研究流程 v2.0](../研究流程.md) 第 ① 步修订（DEC-0011）。旧版按自设评分表选了 VisionZip，与用户方法论不符，已改正。
 
 | 用途 | 选择 | 理由 |
 | --- | --- | --- |
@@ -48,7 +48,7 @@
 注意事项：
 
 - FastV 仓库根目录没有 LICENSE 文件。本项目使用的是自己的重新实现（fastv_llava.py），发表前仍需确认引用与许可。
-- 低预算下 FastV 的报告结果弱于 VisionZip（E-VZ-02，SC）。这正好说明它的骨架上还有可改进、可制造意外的地方，不影响它作为 baseline。
+- 低预算下 FastV 的报告结果弱于 VisionZip（E-VZ-C02，SC）。这正好说明它的骨架上还有可改进、可制造意外的地方，不影响它作为 baseline。
 
 交叉结论：三篇论文的差异是同一问题在“剪枝位置、打分 query、丢弃信息处理、位置编号、预算口径”五个维度上的不同取值。
 

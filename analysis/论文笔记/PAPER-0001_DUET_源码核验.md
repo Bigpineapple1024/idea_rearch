@@ -1,14 +1,14 @@
 # ANALYSIS_PACKAGE：DUET: Dual Clustering Enhanced Multivariate Time Series Forecasting
 
-状态：partial（代码已核验，ETTh1 已在 CPU 上真实运行；论文全文未读）。paper_id PAPER-0004 / 2026-10-23 / 分析者 Claude Code 会话 / 输入：代码 decisionintelligence/DUET@dcc6e6780a9138731b64b9b5398a94a1d97033f0、README、figures/DUET_unified_seq_len_96.png、论文检索摘要、EXP-0003。
+状态：partial（代码已核验，ETTh1 已在 CPU 上真实运行；论文全文未读）。paper_id PAPER-0001 / 2026-10-23 / 分析者 Claude Code 会话 / 输入：代码 decisionintelligence/DUET@dcc6e6780a9138731b64b9b5398a94a1d97033f0、README、figures/DUET_unified_seq_len_96.png、论文检索摘要、EXP-0003。
 
 ## 结构化交接包
 
 ```yaml
 package_type: ANALYSIS_PACKAGE
 package_version: research-pipeline-contract v1.0
-package_id: PAPER-0004
-analysis_id: PAPER-0004
+package_id: PAPER-0001
+analysis_id: PAPER-0001
 created_at: 2026-10-23
 source_ids: [arXiv:2412.10859, github:decisionintelligence/DUET@dcc6e6780a9138731b64b9b5398a94a1d97033f0, EXP-0003]
 evidence_status: partial
@@ -26,10 +26,10 @@ measurements_and_analysis: TFB 的 mse_norm、mae_norm 等（在训练集标准�
 results_with_uncertainty: 单次运行；无方差
 claim_evidence_implementation_map: 见 E 表
 limitations_biases_and_ethics: 测试时通道 mask 随机；依赖栈重
-reproducibility_and_transferability: 评测框架公平（训练集拟合 scaler、不丢测试窗口）；ETTh1-96 两个种子 MSE 0.3898、0.3790，报告值 0.377 在种子波动范围内（E-DU-10）
+reproducibility_and_transferability: 评测框架公平（训练集拟合 scaler、不丢测试窗口）；ETTh1-96 两个种子 MSE 0.3898、0.3790，报告值 0.377 在种子波动范围内（E-DU-C10）
 candidate_P: [P-TS1 评测协议差异, P-TS5 推理时的随机性, P-TS6 路由依据]
 candidate_F: [F-TS5 测试时 mask 随机采样, F-TS6 路由在未做实例归一化的输入上计算]
-evidence_index: E-DU-01..E-DU-12
+evidence_index: E-DU-C01..E-DU-C12
 unresolved_questions: [更多种子下的均值与方差, 回看窗口的选择依据]
 ```
 
@@ -49,18 +49,18 @@ unresolved_questions: [更多种子下的均值与方差, 回看窗口的选择�
 
 | E ID | 类型 | 内容 | 定位 | 支持范围 | 未知 / 替代解释 |
 | --- | --- | --- | --- | --- | --- |
-| E-DU-01 | SC | 时间聚类处理分布异质性，通道软聚类在频域用度量学习刻画变量关系并稀疏化以抑制噪声通道；25 个数据集上最好 | 论文摘要 | — | 第三方摘要称平均 MSE 降 7.1%，未回查 |
-| E-DU-02 | SC | 回看固定 96 的统一结果：ETTh1-96 MSE 0.377 / MAE 0.393，四个长度平均 0.443 / 0.436 | figures/DUET_unified_seq_len_96.png | 单次 | — |
-| E-DU-03 | SC | 主结果在 {96, 336, 512} 中“报告最好结果”；README 称遵循 TFB、不使用 drop last | README Results 节 | — | 若按测试集选回看窗口，会偏乐观；选择依据待回查 |
-| E-DU-04 | DE | 路由器在未做实例归一化的输入上计算门控，RevIN 只作用于专家输入 | linear_extractor_cluster.py L267-284；distributional_router_encoder.py | CI=1 | 可能是有意让路由利用窗口的水平和尺度；作者意图未知 |
-| E-DU-05 | DE | 专家为 DLinear 式线性层（输出维度 d_model）；噪声 top-k 门控 + 负载均衡损失 | linear_pattern_extractor.py；linear_extractor_cluster.py | — | — |
-| E-DU-06 | DE | 通道 mask 在 **eval 模式下也是随机采样**（`gumbel_softmax(hard=True)` 无训练/推理区分）。随机权重探针：同一输入两次前向输出最大差 0.186，196 个 mask 元素中 36 个不同；只有固定 torch 种子才能复现 | masked_attention.py L182-207；EXP-0003 probe_duet_mask.py | 随机权重 | 训练后对分数的影响见 E-DU-10 |
-| E-DU-07 | DE | TFB 评测：标准化器只在训练段拟合；测试按步长 1 滚动、所有窗口计分（不丢样本）；指标在训练集标准化尺度上计算；ETTh1 按元信息长度 14400 划分为 8640/2880/2880 | deep_forecasting_model_base.py L400；rolling_forecast.py L183-223、L388-420；config/rolling_forecast_config.json | ETT | — |
-| E-DU-08 | DE | 数据需从 Google Drive / 百度网盘下载 TFB 预处理版；本项目用 ETDataset 原始 CSV 截取前 14400 行转换（code/ts_forecasting/to_tfb_format.py） | README；EXP-0003 | — | 与官方预处理文件是否逐值一致未核对 |
-| E-DU-09 | DE | 依赖栈重：requirements 含 darts、salesforce-merlion、ray、dash、lightgbm 等；官方只在 Python 3.8 下测试；ETTh1 按预测长度使用不同的回看窗口与超参数（ETTh1_script/DUET.sh 中回看为 512/336） | requirements.txt；scripts/multivariate_forecast/ETTh1_script/DUET.sh | — | — |
-| E-DU-10 | DE | 本项目 CPU 复现（统一设置 ETTh1-96）：种子 2021 得 mse_norm 0.3898 / mae_norm 0.3990（TFB 自身报告与本项目计算一致），种子 2022 得 0.3790 / 0.3960；报告值 0.377 / 0.393。两个种子均值 0.3844，相差 0.011，大于 TQNet 四个种子的极差 0.0068 | EXP-0003 R12、R14；TFB test_report | ETTh1-96，CPU fp32，torch 2.1.2 | 能在种子波动范围内复现；但单种子结果不稳定 |
-| E-DU-12 | DE | 训练好的模型在测试时只重新采样通道 mask（10 个种子）：MSE 0.3894～0.3905，标准差 0.0003；即测试随机性真实存在，但对分数的影响很小 | EXP-0003 R12 | ETTh1-96 | 其他数据集、通道更多时可能更大 |
-| E-DU-11 | SC | README 致谢中说明曾有用户发现代码 bug，已修复并重新测试所有结果 | README Acknowledgement | — | 修复前后差异未知 |
+| E-DU-C01 | SC | 时间聚类处理分布异质性，通道软聚类在频域用度量学习刻画变量关系并稀疏化以抑制噪声通道；25 个数据集上最好 | 论文摘要 | — | 第三方摘要称平均 MSE 降 7.1%，未回查 |
+| E-DU-C02 | SC | 回看固定 96 的统一结果：ETTh1-96 MSE 0.377 / MAE 0.393，四个长度平均 0.443 / 0.436 | figures/DUET_unified_seq_len_96.png | 单次 | — |
+| E-DU-C03 | SC | 主结果在 {96, 336, 512} 中“报告最好结果”；README 称遵循 TFB、不使用 drop last | README Results 节 | — | 若按测试集选回看窗口，会偏乐观；选择依据待回查 |
+| E-DU-C04 | DE | 路由器在未做实例归一化的输入上计算门控，RevIN 只作用于专家输入 | linear_extractor_cluster.py L267-284；distributional_router_encoder.py | CI=1 | 可能是有意让路由利用窗口的水平和尺度；作者意图未知 |
+| E-DU-C05 | DE | 专家为 DLinear 式线性层（输出维度 d_model）；噪声 top-k 门控 + 负载均衡损失 | linear_pattern_extractor.py；linear_extractor_cluster.py | — | — |
+| E-DU-C06 | DE | 通道 mask 在 **eval 模式下也是随机采样**（`gumbel_softmax(hard=True)` 无训练/推理区分）。随机权重探针：同一输入两次前向输出最大差 0.186，196 个 mask 元素中 36 个不同；只有固定 torch 种子才能复现 | masked_attention.py L182-207；EXP-0003 probe_duet_mask.py | 随机权重 | 训练后对分数的影响见 E-DU-C10 |
+| E-DU-C07 | DE | TFB 评测：标准化器只在训练段拟合；测试按步长 1 滚动、所有窗口计分（不丢样本）；指标在训练集标准化尺度上计算；ETTh1 按元信息长度 14400 划分为 8640/2880/2880 | deep_forecasting_model_base.py L400；rolling_forecast.py L183-223、L388-420；config/rolling_forecast_config.json | ETT | — |
+| E-DU-C08 | DE | 数据需从 Google Drive / 百度网盘下载 TFB 预处理版；本项目用 ETDataset 原始 CSV 截取前 14400 行转换（code/ts_forecasting/to_tfb_format.py） | README；EXP-0003 | — | 与官方预处理文件是否逐值一致未核对 |
+| E-DU-C09 | DE | 依赖栈重：requirements 含 darts、salesforce-merlion、ray、dash、lightgbm 等；官方只在 Python 3.8 下测试；ETTh1 按预测长度使用不同的回看窗口与超参数（ETTh1_script/DUET.sh 中回看为 512/336） | requirements.txt；scripts/multivariate_forecast/ETTh1_script/DUET.sh | — | — |
+| E-DU-C10 | DE | 本项目 CPU 复现（统一设置 ETTh1-96）：种子 2021 得 mse_norm 0.3898 / mae_norm 0.3990（TFB 自身报告与本项目计算一致），种子 2022 得 0.3790 / 0.3960；报告值 0.377 / 0.393。两个种子均值 0.3844，相差 0.011，大于 TQNet 四个种子的极差 0.0068 | EXP-0003 R12、R14；TFB test_report | ETTh1-96，CPU fp32，torch 2.1.2 | 能在种子波动范围内复现；但单种子结果不稳定 |
+| E-DU-C12 | DE | 训练好的模型在测试时只重新采样通道 mask（10 个种子）：MSE 0.3894～0.3905，标准差 0.0003；即测试随机性真实存在，但对分数的影响很小 | EXP-0003 R12 | ETTh1-96 | 其他数据集、通道更多时可能更大 |
+| E-DU-C11 | SC | README 致谢中说明曾有用户发现代码 bug，已修复并重新测试所有结果 | README Acknowledgement | — | 修复前后差异未知 |
 
 ## 研究判断
 
@@ -74,9 +74,9 @@ unresolved_questions: [更多种子下的均值与方差, 回看窗口的选择�
   - 路由器用未做实例归一化的输入，“按分布聚类”可能部分是“按水平/尺度聚类”（推断）。
   - 依赖栈重、训练慢（CPU 上每个 epoch 数分钟）。
   - 主结果的回看窗口选择依据不明。
-- **与自身实验的关系**：**时序预测方向的主 baseline**（DEC-0009，按研究流程第 ① 步选择，第 ② 步复现门槛已在 ETTh1-96 上初步通过），并用它的 TFB 框架做统一评测；详见 [时序三篇对比](../专题分析/时序预测_DUET_TQNet_WPMixer对比.md)。
-- **核心总结**：DUET 的价值在“双聚类”的问题设定和 TFB 的公平评测。本项目发现的测试随机性经实测影响很小，不值得作为改进方向；路由输入（E-DU-04）仍待回查论文。
+- **与自身实验的关系**：**时序预测方向的主 baseline**（DEC-0011，按研究流程第 ① 步选择，第 ② 步复现门槛已在 ETTh1-96 上初步通过），并用它的 TFB 框架做统一评测；详见 [时序三篇对比](../专题分析/时序预测_DUET_TQNet_WPMixer对比.md)。
+- **核心总结**：DUET 的价值在“双聚类”的问题设定和 TFB 的公平评测。本项目发现的测试随机性经实测影响很小，不值得作为改进方向；路由输入（E-DU-C04）仍待回查论文。
 
 ## 交接 Deep Read
 
-候选 P-TS1 ← E-DU-03、E-DU-07；P-TS5（推理随机性）← E-DU-06；P-TS6（路由依据）← E-DU-04。F-TS5 ← E-DU-06、E-DU-10；F-TS6 ← E-DU-04。
+候选 P-TS1 ← E-DU-C03、E-DU-C07；P-TS5（推理随机性）← E-DU-C06；P-TS6（路由依据）← E-DU-C04。F-TS5 ← E-DU-C06、E-DU-C10；F-TS6 ← E-DU-C04。
