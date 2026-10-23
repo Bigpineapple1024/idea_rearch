@@ -10,11 +10,13 @@
 
 ## 环境（实验室电脑：原生 Windows，DEC-0014）
 
-**所有文件只放在 `D:\6CJNM007`**（DEC-0013）。用户选择方案 B：原生 Windows，不用 WSL。Claude Code 在 Windows 上通过 Git Bash 执行命令。
+**所有文件只放在 `D:\6CJNM007`**（DEC-0013），软件、git 配置和 SSH 密钥也一样，不在 C 盘安装软件、不写 C 盘用户目录。用户选择方案 B：原生 Windows，不用 WSL。Claude Code 在 Windows 上通过 Git Bash 执行命令。
 
 ```text
 D:\6CJNM007\
 ├── idea_rearch\      本仓库；外部仓库克隆到 idea_rearch\source\（不提交）
+├── git\              Git for Windows 便携版（PortableGit），不在 PATH 上
+├── .ssh\             GitHub deploy key 与 known_hosts（只有本人和 SYSTEM 可读）
 ├── miniforge3\       conda（Miniforge），各环境在 miniforge3\envs\
 ├── cache\            huggingface\、torch\、pip\、conda_pkgs\、matplotlib\
 ├── data\             LLaVA eval、COCO val2014、MME、ETT 与 TFB 数据
@@ -26,20 +28,49 @@ D:\6CJNM007\
 
 ### 一次性安装
 
-1. **conda 用 Miniforge**（github.com/conda-forge/miniforge 的 `Miniforge3-Windows-x86_64.exe`），不用 Miniconda：Anaconda 默认频道对 200 人以上的机构有付费条款，conda-forge 没有这一限制。在 cmd 中静默安装到该文件夹，不改 PATH、不注册为系统 Python：
+1. **Git 用便携版**（github.com/git-for-windows/git 的 `PortableGit-<版本>-64-bit.7z.exe`），不用安装版：安装版会写进 C 盘的用户目录、PATH 和右键菜单。解压到该文件夹，再运行一次 `post-install.bat`（只改 git 文件夹内部）：
+
+   ```bat
+   PortableGit-<版本>-64-bit.7z.exe -o"D:\6CJNM007\git" -y
+   cmd /c D:\6CJNM007\git\post-install.bat
+   ```
+
+   Git Bash 是 `D:\6CJNM007\git\bin\bash.exe`，PowerShell 里用 `D:\6CJNM007\git\cmd\git.exe`。在终端里启动 `claude` 前先执行 `$env:CLAUDE_CODE_GIT_BASH_PATH = "D:\6CJNM007\git\bin\bash.exe"`。不要用 `git config --global`，它写 C 盘的 `~/.gitconfig`。
+2. **conda 用 Miniforge**（github.com/conda-forge/miniforge 的 `Miniforge3-Windows-x86_64.exe`），不用 Miniconda：Anaconda 默认频道对 200 人以上的机构有付费条款，conda-forge 没有这一限制。在 cmd 中静默安装到该文件夹，不改 PATH、不注册为系统 Python：
 
    ```bat
    start /wait "" Miniforge3-Windows-x86_64.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /S /D=D:\6CJNM007\miniforge3
    ```
 
-   不要运行 `conda init`，它会修改用户目录（C 盘）里的 shell 配置；改用下面的环境脚本激活。
-2. **克隆时关闭换行符转换**，否则 .sh 脚本会被转成 CRLF，在 Git Bash 里报 `$'\r': command not found`。本仓库已用 `.gitattributes` 固定 `*.sh` 为 LF，外部仓库没有，所以一律这样克隆：
+   - 不要运行 `conda init`，它会修改用户目录（C 盘）里的 shell 配置；改用下面的环境脚本激活。
+   - 在 `D:\6CJNM007\miniforge3\.condarc` 末尾加 `register_envs: false` 和 `number_channel_notices: 0`，否则 conda 会往 `C:\Users\<用户>\.conda\environments.txt` 和 AppData 写文件。
+   - 安装程序会在 C 盘建开始菜单快捷方式、在 HKCU 写卸载登记，装完删掉；卸载时直接删除 `miniforge3` 文件夹。
+3. **克隆时关闭换行符转换**，否则 .sh 脚本会被转成 CRLF，在 Git Bash 里报 `$'\r': command not found`。本仓库已用 `.gitattributes` 固定 `*.sh` 为 LF，外部仓库没有，所以一律这样克隆：
 
    ```bash
    git clone -c core.autocrlf=false https://github.com/Bigpineapple1024/idea_rearch /d/6CJNM007/idea_rearch
    ```
 
    本仓库若已按默认设置克隆过，不必重新克隆：拉取后执行 `rm code/token_pruning/run_pope_mme.sh && git checkout -- code/token_pruning/run_pope_mme.sh`，让这个脚本按 `.gitattributes` 重新以 LF 检出。
+4. **推送用 SSH deploy key**（只能访问本仓库）。`D:\6CJNM007` 继承了 D 盘根目录的权限，本机所有登录用户都可读写，所以密钥文件夹要去掉继承权限。密钥不设口令，因为 Claude Code 推送时无法输入口令。在 PowerShell 中：
+
+   ```powershell
+   $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+   mkdir D:\6CJNM007\.ssh
+   icacls D:\6CJNM007\.ssh /inheritance:r /grant:r "*${sid}:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F"
+   D:\6CJNM007\git\usr\bin\ssh-keygen.exe -t ed25519 -N '""' -C idea_rearch-deploy-key -f D:/6CJNM007/.ssh/id_ed25519_idea_rearch
+   ```
+
+   - `known_hosts` 用 api.github.com/meta 里的 `ssh_keys`，每行前加 `github.com `，再用 `ssh-keygen -lf` 与 GitHub 公布的指纹核对。
+   - 公钥 `id_ed25519_idea_rearch.pub` 加到仓库的 Settings → Deploy keys，勾选 Allow write access。
+   - 实验室网络封了 22 端口，所以走 `ssh.github.com:443`。在仓库里设置（只写 `.git/config`）：
+
+   ```bash
+   git config user.name Bigpineapple1024
+   git config user.email 102575093+Bigpineapple1024@users.noreply.github.com
+   git config core.sshCommand "D:/6CJNM007/git/usr/bin/ssh.exe -F /dev/null -i D:/6CJNM007/.ssh/id_ed25519_idea_rearch -o IdentitiesOnly=yes -o UserKnownHostsFile=D:/6CJNM007/.ssh/known_hosts -o StrictHostKeyChecking=yes -o BatchMode=yes -o HostName=ssh.github.com -o Port=443 -o HostKeyAlias=github.com"
+   git remote set-url origin git@github.com:Bigpineapple1024/idea_rearch.git
+   ```
 
 ### 每条命令先加载环境脚本
 
@@ -82,7 +113,7 @@ source /d/6CJNM007/idea_rearch/code/env/windows_env.sh tp && cd /d/6CJNM007/idea
 
 #### 实验室电脑上的安装结果（2026-10-23）
 
-Miniforge 26.7.2-1 装在 `D:\6CJNM007\miniforge3`。它的 `.condarc` 加了 `register_envs: false` 和 `number_channel_notices: 0`，否则 conda 会往 `C:\Users\<用户>\.conda\environments.txt` 和 AppData 写文件。
+Git 为 PortableGit 2.56.0.3（`D:\6CJNM007\git`），Miniforge 26.7.2-1 装在 `D:\6CJNM007\miniforge3`（`.condarc` 已按上文修改）。
 
 | 环境 | Python | torch | CUDA | `torch.cuda.is_available()` | 备注 |
 | --- | --- | --- | --- | --- | --- |
