@@ -44,6 +44,33 @@
   - 环境：`tp`、`sparsevlm`（见 code/README 的安装结果）；RTX 3090，驱动 595.95。
 - **留存**：每次运行在 `code/output/EXP-0002/<RUN>/`，按研究流程保存全部文件和 SHA256SUMS，并复制到 `D:\6CJNM007\backup\EXP-0002\<RUN>\`（复制后重新核对校验和）。
 
+## 计划 v1.1：论文对照值（2026-10-23，阶段 B 开始前补入）
+
+来源是与论文笔记相同版本的 PDF（sha256 与 `analysis/论文笔记/sources-20261023.json` 一致），放在 `papers/`（不提交），用 PyMuPDF 取出表格文字：
+
+- VisionZip：CVPR 2025 正式版，第 5 页 Table 1；
+- SparseVLM：arXiv:2410.04417v4（ICML 2025，对应 v1.5 分支），第 6 页 Table 1。
+
+两篇的 MME 都是 Perception + Cognition 总分（vanilla 分别为 1862、1864），所以本实验同时报告 Perception（与 LLaVA 官方 1510.7 比）和 P+C 总分（与两篇论文比）。POPE 的 vanilla 都是 85.9，与 LLaVA 官方一致。
+
+| 预算 | 方法 | VisionZip 表（MME P+C / POPE） | SparseVLM v4 表（MME P+C / POPE） |
+| --- | --- | --- | --- |
+| 576 | vanilla | 1862 / 85.9 | 1864 / 85.9 |
+| 192 | FastV | 1612 / 64.8 | 1605 / 64.8 |
+| 192 | SparseVLM | 1721 / 83.6（引用的 2024.10 版） | 1787 / 85.3 |
+| 192 | VisionZip | 1782.6 / 85.3 | — |
+| 128 | FastV | 1490 / 59.6 | 1490 / 53.4 |
+| 128 | SparseVLM | 1696 / 80.5（同上） | 1746 / 85.0 |
+| 128 | VisionZip | 1761.7 / 83.2 | — |
+| 64 | FastV | 1256 / 48.0 | 1255 / 38.2 |
+| 64 | SparseVLM | 1505 / 75.1（同上） | 1589 / 77.5 |
+| 64 | VisionZip | 1690 / 77.0 | — |
+
+判断标准：
+
+- VisionZip 与它自己的表比较，SparseVLM 与 v4 表比较；相差超过 1 个点（POPE）就记录并排查口径。
+- 两篇论文中的 FastV 行彼此不一致（例如 128 预算的 POPE 为 59.6 与 53.4），而且都没写明 K 和保留数。本实验的 FastV 按“32 层平均相等”取 K=2、keep 166/98/30（code/token_pruning/README.md），所以 FastV 只报告，不设复现门槛。
+
 ## 全部运行
 
 | 运行 ID | 组别 / 种子 | 开始 / 结束 | 状态 / 退出码 | 实际配置 | 样本量 | 原始输出 / 校验和 / 备份 | 异常与偏差 |
