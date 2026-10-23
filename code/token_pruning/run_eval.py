@@ -37,6 +37,8 @@ def parse():
     ours.add_argument("--dominant", type=int, default=54)
     ours.add_argument("--contextual", type=int, default=10)
     ours.add_argument("--retained-tokens", type=int, default=None, help="sparsevlm: 32-layer average budget")
+    ours.add_argument("--attn-implementation", choices=["eager", "sdpa"], default=None,
+                      help="load the LLM with this attention kernel (default: transformers' choice, sdpa in 4.37)")
     argv = sys.argv[1:]
     split = argv.index("--") if "--" in argv else len(argv)
     method_args = ours.parse_args(argv[:split])
@@ -86,6 +88,8 @@ def main():
     times = {"start": time.time()}
 
     def load_and_patch(*a, **kw):
+        if method_args.attn_implementation:
+            kw["attn_implementation"] = method_args.attn_implementation   # LLaVA's builder forwards kwargs
         tokenizer, model, image_processor, context_len = original_load(*a, **kw)
         model = apply_method(model, method_args)
         torch.cuda.synchronize()

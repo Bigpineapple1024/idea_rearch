@@ -37,7 +37,9 @@ BENCHES = {
 # Budgets are 32-layer averages of visual tokens (code/token_pruning/README.md, "预算的口径").
 FASTV_KEEP = {192: 166, 128: 98, 64: 30}
 VISIONZIP = {192: (162, 30), 128: (108, 20), 64: (54, 10)}
-CONFIGS = {"vanilla": ("tp", ["--method", "vanilla"])}
+CONFIGS = {"vanilla": ("tp", ["--method", "vanilla"]),
+           # gate diagnostic: LLaVA's MODEL_ZOO numbers predate transformers' sdpa default
+           "vanilla_eager": ("tp", ["--method", "vanilla", "--attn-implementation", "eager"])}
 for b in (192, 128, 64):
     CONFIGS[f"fastv{b}"] = ("tp", ["--method", "fastv", "--fastv-k", "2", "--fastv-keep", str(FASTV_KEEP[b])])
     CONFIGS[f"visionzip{b}"] = ("tp", ["--method", "visionzip", "--dominant", str(VISIONZIP[b][0]),
