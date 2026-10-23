@@ -93,23 +93,27 @@ def _give_worker_args(llava_args, worker_id):
     loader.args = llava_args
 
 
-_LAYER_TOKENS = []           # one list per prefill: sequence length entering each LLM layer
+_LAYER_TOKENS = []           # one dict per prefill: layer index -> sequence length entering that LLM layer
 
 
-def _record_layer_tokens(index, module, args):
-    if args and args[0].shape[1] > 1:                   # prefill only; a decode step carries one token
+def _record_layer_tokens(index, module, args, kwargs):
+    # SparseVLM passes hidden_states by keyword to its pruning layers (2, 6, 15) and positionally to the others
+    hidden = args[0] if args else kwargs.get("hidden_states")
+    if hidden is not None and hidden.shape[1] > 1:      # prefill only; a decode step carries one token
         if index == 0:
-            _LAYER_TOKENS.append([])
-        _LAYER_TOKENS[-1].append(int(args[0].shape[1]))
+            _LAYER_TOKENS.append({})
+        _LAYER_TOKENS[-1][index] = int(hidden.shape[1])
 
 
-def _write_layer_tokens(path):
+def _write_layer_tokens(path, n_layers):
     # Visual tokens per layer = length - text tokens, with text = layer-0 length - 576: valid for methods that give
     # layer 0 all 576 patches (vanilla, FastV, random, SparseVLM), not for VisionZip, which shrinks them before the LLM.
-    visual = [[n - (row[0] - 576) for n in row] for row in _LAYER_TOKENS]
+    complete = [row for row in _LAYER_TOKENS if sorted(row) == list(range(n_layers))]
+    visual = [[row[i] - (row[0] - 576) for i in range(n_layers)] for row in complete]
     per_layer = [sum(col) / len(col) for col in zip(*visual)] if visual else []
     with open(path, "w") as f:
-        json.dump({"n_prefills": len(_LAYER_TOKENS), "tokens_per_layer": _LAYER_TOKENS,
+        json.dump({"n_prefills": len(_LAYER_TOKENS), "n_complete": len(complete), "n_layers": n_layers,
+                   "tokens_per_layer": [[row.get(i) for i in range(n_layers)] for row in _LAYER_TOKENS],
                    "mean_visual_per_layer": per_layer,
                    "mean_visual_over_layers": sum(per_layer) / len(per_layer) if per_layer else None}, f, indent=1)
 
@@ -125,8 +129,9 @@ def main():
         tokenizer, model, image_processor, context_len = original_load(*a, **kw)
         model = apply_method(model, method_args)
         if method_args.layer_token_log:
+            times["n_layers"] = len(model.get_model().layers)
             for i, layer in enumerate(model.get_model().layers):
-                layer.register_forward_pre_hook(functools.partial(_record_layer_tokens, i))
+                layer.register_forward_pre_hook(functools.partial(_record_layer_tokens, i), with_kwargs=True)
         torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
         times["loaded"] = time.time()                # evaluation timing starts after loading
@@ -162,7 +167,7 @@ def main():
     with open(answers_file + ".meta.json", "w") as f:
         json.dump(meta, f, indent=2)
     if method_args.layer_token_log:
-        _write_layer_tokens(method_args.layer_token_log)
+        _write_layer_tokens(method_args.layer_token_log, times["n_layers"])
 
 
 if __name__ == "__main__":

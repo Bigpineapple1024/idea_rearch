@@ -138,9 +138,9 @@ def run_one(run_id, config, bench):
         with open(f"{run_dir}/metrics.json", "w") as f:
             json.dump({"benchmark": bench, "headline": "mean_visual_over_layers",
                        "mean_visual_over_layers": layers["mean_visual_over_layers"],
-                       "mean_visual_per_layer": layers["mean_visual_per_layer"], "n_prefills": layers["n_prefills"]},
-                      f, indent=2)
-        status["score_exit"] = 0
+                       "mean_visual_per_layer": layers["mean_visual_per_layer"], "n_prefills": layers["n_prefills"],
+                       "n_complete": layers.get("n_complete"), "n_layers": layers.get("n_layers")}, f, indent=2)
+        status["score_exit"] = 0 if layers.get("n_complete") == layers["n_prefills"] else 1
     status["end"] = now()
     status["status"] = "completed" if status.get("score_exit") == 0 else "failed"
     with open(f"{run_dir}/status.json", "w") as f:
