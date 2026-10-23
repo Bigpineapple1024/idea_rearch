@@ -4,6 +4,10 @@
 /papers/
 /code/output/
 
+# 外部仓库按 source/README.md 登记的 commit 克隆，只跟踪登记表
+/source/*
+!/source/README.md
+
 # 本地会话存档，只跟踪说明
 /sessions/*
 !/sessions/README.md

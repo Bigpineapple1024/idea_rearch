@@ -3,7 +3,7 @@
 | 目录 | 方向 | 实验分支 | 状态 |
 | --- | --- | --- | --- |
 | [token_pruning/](token_pruning/README.md) | 视觉 token 剪枝（主 baseline FastV） | code/token-pruning | CPU 随机权重核验完成（EXP-0001），GPU 复现待执行 |
-| [env/](env/windows_env.sh) | 实验室电脑（原生 Windows）的环境脚本 | 所有分支 | 2026-10-23 在实验室电脑上运行通过；六个环境已装好 CUDA 版 torch（“再装”一列待 source/ 克隆后进行） |
+| [env/](env/windows_env.sh) | 实验室电脑（原生 Windows）的环境脚本 | 所有分支 | 2026-10-23 在实验室电脑上运行通过；六个环境（含“再装”一列）已装好并核对 |
 | [ts_forecasting/](ts_forecasting/README.md) | 时序预测（主 baseline iTransformer） | code/ts-forecasting | 对照 DUET/TQNet/WPMixer 已在 CPU 上运行 ETTh1（EXP-0003）；iTransformer 待复现 |
 
 外部仓库（LLaVA、FastV、SparseVLM、VisionZip、iTransformer、DUET、TQNet、WPMixer）不放进本仓库，按 [source/README](../source/README.md) 登记的 commit 克隆到 `source/` 下（只读）；本目录只放本项目自己的代码。
@@ -110,29 +110,35 @@ source /d/6CJNM007/idea_rearch/code/env/windows_env.sh tp && cd /d/6CJNM007/idea
 - 每装完一批依赖都再查一次 torch 版本，确认没有被换成 CPU 版或别的版本；若被换掉，重装 CUDA 版并记录是哪个包引起的。
 - 若官方版本与本机驱动不兼容，记录实际使用的版本和原因。
 - **numpy**：从 CUDA 源装 torchvision 0.16.2 时会顺带装上 numpy 2.x，而 torch 2.1.2 按 NumPy 1.x 编译，`torch.from_numpy` 会报 “Numpy is not available”。`tp`、`sparsevlm` 装完 torch 后再执行 `pip install numpy==1.26.4`。
+- **装“再装”一列时用约束文件固定 torch**：LLaVA 的 peft、bitsandbytes 等不固定版本，新版可能要求更高的 torch，pip 就会从 PyPI 换成 CPU 版。每个环境用 `pip install -c <约束文件> ...`，约束文件写已装的 `torch==<版本>+cu<版本>`；`tp`、`sparsevlm` 再加 `torchvision==0.16.2+cu121` 和 `numpy==1.26.4`。
+- **peft**：LLaVA 不固定 peft，最新版要用新版 accelerate 的 `clear_device_cache`，与 LLaVA 固定的 accelerate 0.21.0 不兼容，`import peft` 报 ImportError。`tp`、`sparsevlm` 装 `peft==0.10.0`（2024-03，与 LLaVA 固定的 commit 同期）。LLaVA 只在加载 LoRA 权重时用 peft，llava-v1.5-7b 本身不受影响。
+- **setuptools**：`wpmixer` 环境没有 `pkg_resources`，WPMixer 内置的 `pytorch_wavelets/dtcwt` 需要它，装 `setuptools==69.5.1`。外部仓库里只有这一处用到 `pkg_resources`。
+- **sparsevlm 的 transformers**：按 SparseVLM 官方要求装 4.37.0 后，`pip check` 会提示 llava 要求 4.37.2，这是预期的。
 
 #### 实验室电脑上的安装结果（2026-10-23）
 
-Git 为 PortableGit 2.56.0.3（`D:\6CJNM007\git`），Miniforge 26.7.2-1 装在 `D:\6CJNM007\miniforge3`（`.condarc` 已按上文修改）。
+Git 为 PortableGit 2.56.0.3（`D:\6CJNM007\git`），Miniforge 26.7.2-1 装在 `D:\6CJNM007\miniforge3`（`.condarc` 已按上文修改）。外部仓库按 [source/README](../source/README.md) 的 commit 克隆在 `source/`（不提交）。
 
-| 环境 | Python | torch | CUDA | `torch.cuda.is_available()` | 备注 |
+| 环境 | Python | torch | CUDA | GPU 可用 | “再装”后的关键版本 |
 | --- | --- | --- | --- | --- | --- |
-| `tp` | 3.10.22 | 2.1.2+cu121（torchvision 0.16.2+cu121） | 12.1 | True | numpy 改为 1.26.4 |
-| `sparsevlm` | 3.10.22 | 2.1.2+cu121（torchvision 0.16.2+cu121） | 12.1 | True | numpy 改为 1.26.4 |
-| `itrans` | 3.10.22 | 2.0.0+cu118 | 11.8 | True | numpy 由 requirements 安装 |
-| `wpmixer` | 3.10.22 | 2.0.1+cu118 | 11.8 | True | numpy 由 requirements 安装 |
-| `duet` | 3.8.20 | 2.4.1+cu121 | 12.1 | True | numpy 由 requirements 安装 |
-| `tqnet` | 3.8.20 | 2.4.1+cu121 | 12.1 | True | numpy 由 requirements 安装 |
+| `tp` | 3.10.22 | 2.1.2+cu121（torchvision 0.16.2+cu121） | 12.1 | True | llava 1.2.2.post1（`source/LLaVA`，可编辑安装）、transformers 4.37.2、tokenizers 0.15.1、accelerate 0.21.0、timm 0.6.13、peft 0.10.0、bitsandbytes 0.45.5、numpy 1.26.4 |
+| `sparsevlm` | 3.10.22 | 2.1.2+cu121（torchvision 0.16.2+cu121） | 12.1 | True | llava 1.2.2.post1（`source/SparseVLMs` v1.5，可编辑安装）、transformers 4.37.0、tokenizers 0.15.1、accelerate 0.21.0、peft 0.10.0、bitsandbytes 0.45.5、numpy 1.26.4 |
+| `itrans` | 3.10.22 | 2.0.0+cu118 | 11.8 | True | numpy 1.23.5、pandas 1.5.3、scikit-learn 1.2.2、matplotlib 3.7.0、reformer-pytorch 1.4.4 |
+| `wpmixer` | 3.10.22 | 2.0.1+cu118 | 11.8 | True | numpy 1.25.2、pandas 1.5.3、scikit-learn 1.3.0、optuna 3.6.1、PyWavelets 1.6.0、setuptools 69.5.1 |
+| `duet` | 3.8.20 | 2.4.1+cu121 | 12.1 | True | numpy 1.24.4、pandas 1.5.3、darts 0.25.0、salesforce-merlion 2.0.2、ray 2.10.0、pytorch-lightning 2.4.0、lightgbm 4.1.0 |
+| `tqnet` | 3.8.20 | 2.4.1+cu121 | 12.1 | True | requirements 不固定版本，装到的是 numpy 1.24.4、pandas 2.0.3、scikit-learn 1.3.2、matplotlib 3.7.5 |
 
-每个环境都在 RTX 3090 上做过一次矩阵乘法。“再装”一列需要先把外部仓库克隆到 `source/`，尚未进行。
+- 每个环境都在 RTX 3090 上做过一次矩阵乘法。
+- 装完“再装”一列后又核对了三点：torch 没有被替换，关键包都能导入，`pip check` 没有冲突（sparsevlm 的 transformers 提示除外）。
+- 各环境的完整 `pip freeze`、安装脚本和日志在 `D:\6CJNM007\backup\env_setup_2026-10-23\`。
 
 ### 原生 Windows 上的已知差异（来自代码核查，尚未在 Windows 上运行）
 
 - **DataLoader 子进程**：Windows 用 spawn 启动 worker，子进程会重新导入主模块。
   - LLaVA 的 `model_vqa_loader` 在 worker 中读取只在 `__main__` 里定义的 `args`，worker 数大于 0 时会报 NameError。本项目的 `run_eval.py` 在 Windows 上已把 worker 设为 0；SparseVLM 自带的评测脚本没有这个处理，需要用包装脚本运行（候选做法：在 `sparsevlm` 环境里用 `run_eval.py --method vanilla`，待验证）。
   - TQNet 的 run.py 没有 `__main__` 保护，worker 数大于 0 时子进程会重新执行训练。时序方向的命令统一加 `--num_workers 0`（不影响结果，数据顺序由主进程决定）。
-- **flash-attn** 没有官方 Windows 版本，不装。LLaVA 推理评测不需要它。SparseVLM（main 分支 a9e71427）只在 `llava/train/` 的训练补丁里导入 flash_attn；评测时 `use_flash_attn` 默认为 False，走 transformers 默认的 sdpa，而它的解码层本来就断言只支持 sdpa。v1.5 分支是否相同，克隆后先核对。
-- **DUET**：requirements 里的 ray 在导入 TFB 时就会被加载，需确认 Windows 上能装上；评测用默认的 sequential 后端，它在本进程内运行，`--timeout` 参数会被忽略。
+- **flash-attn** 没有官方 Windows 版本，不装。LLaVA 推理评测不需要它。SparseVLM（main 分支 a9e71427）只在 `llava/train/` 的训练补丁里导入 flash_attn；评测时 `use_flash_attn` 默认为 False，走 transformers 默认的 sdpa，而它的解码层本来就断言只支持 sdpa。v1.5 分支（734d9003）已于 2026-10-23 核对，结论相同：`llava/train/` 以外没有任何 `flash_attn` 导入，`load_pretrained_model` 的 `use_flash_attn` 默认为 False，`modelling_sparse_llama.py` 的解码层断言只支持 sdpa。
+- **DUET**：requirements 里的 ray 在导入 TFB 时就会被加载；ray 2.10.0 已在实验室电脑上安装并能导入（2026-10-23）。评测用默认的 sequential 后端，它在本进程内运行，`--timeout` 参数会被忽略。
 - **HF 缓存**：未开启 Windows 开发者模式时，Hugging Face 缓存用复制代替符号链接，占用空间会多一些。
 
 ### 开始前先检查
