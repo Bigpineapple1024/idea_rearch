@@ -1,6 +1,6 @@
 # 所有论文在baseline骨架的改进内容
 
-状态：partial，2026-10-23。材料范围：PAPER-0004 FastV、PAPER-0005 SparseVLM、PAPER-0006 VisionZip 的代码（固定 commit 见各论文笔记）与检索摘要；论文全文未读。代码层面的核验见 [EXP-0001](../实验报告/EXP-0001_record.md)。
+状态：partial，2026-10-23；2026-10-24 补入时序方向（文末）。材料范围：PAPER-0004 FastV、PAPER-0005 SparseVLM、PAPER-0006 VisionZip 的代码（固定 commit 见各论文笔记）与检索摘要；论文全文未读。代码层面的核验见 [EXP-0001](../实验报告/EXP-0001_record.md)。
 
 目的：将文献改造映射到 baseline 的具体位置，与[骨架全景图](baseline骨架的全景图.md)交叉阅读。
 
@@ -56,3 +56,23 @@
 
 - **作为论文方法主张**：直接把差异点拼起来（例如 VisionZip 压缩 + LLM 内文本引导剪枝）已有 VScan（ICML 2025）做过，新颖性低。
 - **作为第 ④ 步“制造意外实验”的组合实验**：仍然可以做，目的是观察有没有两篇论文都没发现的现象，见 [MODE_C-0001](../MODE_C-0001_视觉token剪枝.md)。
+
+# 时序方向：各论文在 iTransformer 骨架上的改造（2026-10-24）
+
+状态：partial。材料范围：PAPER-0007 iTransformer、PAPER-0001 DUET、PAPER-0002 TQNet、PAPER-0003 WPMixer 的原文笔记与源码核验（固定 commit 见 code/ts_forecasting/README.md）。模块编号 T1～T6 见[骨架全景图](baseline骨架的全景图.md)的时序一节。三篇对照不是在 iTransformer 上修改，而是各自的完整模型；这里按“相对于 iTransformer 骨架，它在哪个位置换了什么”来记录。
+
+| 论文 ID | 模块 | 改了什么（相对于 iTransformer） | 为何改（作者主张，SC） | 证据 / 代码位置 |
+| --- | --- | --- | --- | --- |
+| PAPER-0007 iTransformer（baseline 本身，相对于 Transformer） | T2、T3 | 每个变量的整段输入作为一个 token，注意力在变量之间而不是时间步之间；FFN 逐变量 | 时间步 token 混合了不同变量、感受野小 | model/iTransformer.py；layers/Embed.py 第 127～140 行 |
+| PAPER-0001 DUET | T3 | 频域距离 → 学习的稀疏通道 mask → 只在 mask 内做通道间注意力（测试时 mask 也随机采样） | 只让相关的通道互相影响 | E-DU-C06、E-DU-C12 |
+| PAPER-0001 DUET | T2 / T4 | 按窗口路由到若干 DLinear 式线性专家（时间聚类的混合专家），代替单一的嵌入与投影 | 不同时间模式用不同专家 | E-DU-C04（路由器的输入没有做实例归一化，与论文写的 X_norm 不同） |
+| PAPER-0002 TQNet | T3 | 按周期移位的可学习 query 与变量做一层注意力，代替变量 token 之间的自注意力 | 用周期先验刻画变量间的关系，更轻 | E-TQ-C04（周期长度需人为指定） |
+| PAPER-0002 TQNet | T2 / T4 | 线性投影 + 两层 MLP | 轻量 | models/TQNet.py |
+| PAPER-0003 WPMixer | T1 | 除整体的 RevIN 外，在每个小波分量上各做一次 RevIN | 不同频带的非平稳性不同 | models/decomposition.py 第 49、96～122 行 |
+| PAPER-0003 WPMixer | T2 / T3 | 小波多分辨率分解，每个分辨率一个 patch + MLP Mixer；没有变量间混合（通道独立） | 多尺度时间模式 | E-WP-C01 |
+| PAPER-0003 WPMixer | T5 / T6 | 超参数用 Optuna 以测试集损失为目标搜索；测试集 drop_last | — | E-WP-C04（Optuna 的目标）；E-WP-C03、E-WP-C07（drop_last，F-TS2） |
+| RevIN 系列（RevIN、Non-stationary Transformer、Dish-TS、SAN、FAN） | T1 | 归一化方式与“未来统计量”的估计 | 非平稳性 | **本项目尚未读（UN）**，第 ⑦ 步前按 analyze-paper 补读 |
+
+共性：四种方法都保留 T1 的实例归一化（iTransformer 第 43～69 行；TQNet models/TQNet.py 第 44～73 行；WPMixer models/wavelet_patch_mixer.py 第 74～106 行；DUET linear_extractor_cluster.py 第 135、277～280 行），都用线性或 MLP 头一次输出整个预测段；改造集中在 T3（变量间关系）和 T2（时间表示）。T4、T5、T6 很少被改，T1 在三篇对照里只有 WPMixer 做了扩展，但在专门研究非平稳性的文献里被大量改造。
+
+交叉结论：本项目测到的损失（F-TS10、F-TS11）落在三篇对照都没有改的位置（T1 的水平 + T4），而它们改得最多的 T3 在 ETTh1 上没有表现出差别（F-TS8）。这与视觉方向的情况相反：视觉方向的问题出在被改造最多的打分规则上。
