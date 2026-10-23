@@ -23,6 +23,7 @@
 | [.claude/README.md](../.claude/README.md) | Claude Code 运行时支持 |
 | [AGENTS.md](../AGENTS.md) | 研究工作区协作规则 |
 | [analysis/archied/README.md](../analysis/archied/README.md) | 归档方案 |
+| [analysis/baseline候选筛选.md](baseline候选筛选.md) | 3090 24GB 下的三篇候选、源码与许可核验、引用量待核实项 |
 | [analysis/experiment-results.md](../analysis/experiment-results.md) | Experiment Results：实验详细数据总表 |
 | [analysis/paper-plan.md](../analysis/paper-plan.md) | Paper Plan：实验到论文的宏观规划 |
 | [analysis/templates/1a-4b机制分析.md](../analysis/templates/1a-4b机制分析.md) | 1a–4b 机制分析：<问题> |
