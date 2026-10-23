@@ -10,8 +10,13 @@
 | --- | --- |
 | exp_ts.py | 实验室 GPU 上的运行器（EXP-0004 起）：每次运行一个目录（仓库自己的 checkpoints/、results/ 也在其中），写 cmd、config、git、seed、env、gpu、stdout、metrics、status 和 SHA256SUMS，复制到备份并核对，追加到 runs.tsv；拒绝复用已有的 run ID |
 | itransformer_seed.py | 用其他种子运行 iTransformer 官方 run.py：在内存中只替换 `fix_seed = 2023` 这一行后执行，不修改官方文件；种子 2023 时执行的代码与 run.py 字节相同 |
-| wpmixer_droplast.py | 运行 WPMixer 官方 run_LTF.py，同一个 checkpoint 在测试集上分别按官方 `drop_last=True` 和全部窗口打分 |
-| duet_test_stochasticity.py | 运行 DUET 官方 TFB 入口，并在测试时用另外 10 个随机种子重新采样通道 mask，测量分数波动 |
+| tqnet_save_pred.py | 运行 TQNet 官方 run.py，在本进程内替换 `metric`，先保存测试集的 pred.npy、true.npy 再返回原指标（官方保存语句被注释掉了） |
+| prepare_tfb_data.py | 从 TFB 的 forecasting.zip 只解压 ETTh1.csv 与 FORECAST_META.csv 到 `D:\6CJNM007\data\tfb\`，并写 SHA256SUMS |
+| compare_tfb_ett.py | 核对 DUET（TFB 数据）与 iTransformer 等（ETDataset CSV）是否在同一批测试窗口上计分：原始值逐值比较，标准化后的测试窗口逐值比较 |
+| analyze_exp0004.py | EXP-0004 的表格：各数据集 × 预测长度的直接运行、包装脚本各种子、均值 ± 标准差，以及与论文 Table 10 的复现判据 |
+| analyze_ts_windows.py | 逐窗口误差：每个测试窗口的 MSE、末 97/113 个窗口与其余窗口的对比、按十分位的 MSE，以及窗口数相同的方法之间逐窗口比较 |
+| wpmixer_droplast.py | 运行 WPMixer 官方 run_LTF.py，同一个 checkpoint 在测试集上分别按官方 `drop_last=True` 和全部窗口打分；另把全部窗口的预测与真值存为 pred_all_windows.npy、true_all_windows.npy（存到启动时的目录） |
+| duet_test_stochasticity.py | 运行 DUET 官方 TFB 入口，并在测试时用另外 `--resamples` 个随机种子重新采样通道 mask，测量分数波动；`--save-pred` 时保存官方预测与标准化后的真值 |
 | probe_duet_mask.py | 代码级探针：随机权重下 DUET 在 eval 模式对同一输入两次前向输出是否相同 |
 | to_tfb_format.py | 把 ETDataset 的宽表 CSV 转成 TFB/DUET 需要的长表与 FORECAST_META.csv（长度 14400 = 12/4/4 个月标准划分） |
 

@@ -5,10 +5,12 @@ DUET's Mahalanobis_mask draws a hard Gumbel sample in every forward pass, includ
 This script leaves the official prediction untouched (same RNG stream as a normal run) and, for
 each test batch, also predicts with --resamples other torch seeds, restoring the RNG afterwards.
 
-  python duet_test_stochasticity.py <DUET checkout> --resamples 10 -- <run_benchmark.py arguments>
+  python duet_test_stochasticity.py <DUET checkout> --resamples 10 [--save-pred <folder>] -- <run_benchmark.py arguments>
 
 Prints one JSON line with the official mse_norm/mae_norm and the spread over the resampled masks.
 Scores are computed on the training-set StandardScaler scale, as TFB's *_norm metrics are.
+With --save-pred, the official predictions and the targets on that scale are saved there as pred.npy and true.npy
+(windows x horizon x variables).
 """
 import argparse
 import json
@@ -22,12 +24,14 @@ import torch
 p = argparse.ArgumentParser()
 p.add_argument("root")
 p.add_argument("--resamples", type=int, default=10)
+p.add_argument("--save-pred", default=None)
 argv = sys.argv[1:]
 split = argv.index("--")
 a = p.parse_args(argv[:split])
 bench_args = argv[split + 1:]
 
 root = os.path.abspath(a.root)
+save_pred = os.path.abspath(a.save_pred) if a.save_pred else None
 os.chdir(root)
 sys.path.insert(0, root)
 
@@ -76,17 +80,25 @@ sys.argv = ["run_benchmark.py"] + bench_args
 runpy.run_path(os.path.join(root, "scripts", "run_benchmark.py"), run_name="__main__")
 
 
-def scores(pred_norm_batches):
+def aligned(pred_norm_batches):
     pred = np.concatenate(pred_norm_batches, axis=0)
     tgt = np.asarray(state["targets"])
     tgt_norm = state["scaler"].transform(tgt.reshape(-1, tgt.shape[-1])).reshape(tgt.shape)
-    pred = pred[:, -tgt.shape[1]:, :tgt.shape[2]]
+    return pred[:, -tgt.shape[1]:, :tgt.shape[2]], tgt_norm
+
+
+def scores(pred_norm_batches):
+    pred, tgt_norm = aligned(pred_norm_batches)
     return float(((pred - tgt_norm) ** 2).mean()), float(np.abs(pred - tgt_norm).mean())
 
 
 official = scores(state["official"])
 resampled = [scores(r) for r in state["resampled"]]
 mse = np.array([r[0] for r in resampled])
+if save_pred:
+    pred, tgt_norm = aligned(state["official"])
+    np.save(os.path.join(save_pred, "pred.npy"), pred)
+    np.save(os.path.join(save_pred, "true.npy"), tgt_norm)
 print("STOCHASTICITY_RESULT " + json.dumps({
     "windows": int(len(state["targets"])),
     "official": {"mse_norm": official[0], "mae_norm": official[1]},
