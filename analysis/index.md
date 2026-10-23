@@ -20,6 +20,7 @@
 | 时序预测：baseline（iTransformer，DEC-0012）、三篇对照对比与组合实验候选 | [时序预测_DUET_TQNet_WPMixer对比](专题分析/时序预测_DUET_TQNet_WPMixer对比.md) |
 | 时序方向 GPU 复现与对照重评 | EXP-0004（阶段 A 完成，记录在 code/ts-forecasting 分支）；[EXP-0005](实验报告/EXP-0005_record.md)、[SQZ-EXP-0005](实验报告/EXP-0005_squeeze.md) |
 | 时序方向第 ⑤ 步：深挖意外现象 | [1a-4b_四种架构在同一批窗口上出错](1a-4b_四种架构在同一批窗口上出错.md)；[EXP-0009](实验报告/EXP-0009_record.md)（计划） |
+| 时序方向的问题—现象—机制矩阵 | [MODE_C-0003](MODE_C-0003_时序预测.md) |
 | 每篇论文的原文笔记与源码核验补充 | [论文笔记](论文笔记/README.md) |
 | 时序方向复现记录与代码 | [EXP-0003](实验报告/EXP-0003_record.md)、[code/ts_forecasting](../code/ts_forecasting/README.md) |
 
