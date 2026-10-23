@@ -1,17 +1,18 @@
 # 项目文档索引
 
-状态：方向 T1（视觉 token 剪枝）已选定；3 篇论文完成代码级分析（PAPER-0001～0003），EXP-0001 完成 CPU 代码核验，MODE_C-0001 与 IDEA-0001 已设计；GPU 复现（EXP-0002）尚未执行，暂无准确率结果。新增、移动或归档文档时同步本索引。
+状态（2026-10-23，DEC-0009）：视觉 token 剪枝与时序预测两条方向并行，各处于“复现 baseline”阶段：FastV 待在 GPU 上复现（EXP-0002）；DUET 已在 CPU 上初步复现（EXP-0003）。流程规范为[研究流程 v2.0](研究流程.md)。新增、移动或归档文档时同步本索引。
 
 ## 当前工作入口
 
 | 内容 | 入口 |
 | --- | --- |
-| 从论文到融合方案的 SOP | [SOP_从论文到融合方案](SOP_从论文到融合方案.md) |
-| 三篇论文的共性、差异与 baseline 选择 | [所有论文在baseline骨架的改进内容](专题分析/所有论文在baseline骨架的改进内容.md) |
+| **流程规范（唯一）** | [研究流程 v2.0](研究流程.md) |
+| 实验室电脑新会话的交接 | [实验室会话交接](实验室会话交接.md) |
+| 视觉 token 剪枝：三篇共性、差异与 baseline（FastV） | [所有论文在baseline骨架的改进内容](专题分析/所有论文在baseline骨架的改进内容.md) |
 | 问题—现象—机制矩阵 | [MODE_C-0001](MODE_C-0001_视觉token剪枝.md) |
-| 融合路线（按成功可能性排序）与 C1 方案 | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
+| 候选方案（待 baseline 复现与组合实验后重新排序） | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
 | baseline 复现代码与步骤 | [code/token_pruning](../code/token_pruning/README.md) |
-| 时序方向（用户提供的三篇）：对比、baseline 建议与切入点 | [时序预测_DUET_TQNet_WPMixer对比](专题分析/时序预测_DUET_TQNet_WPMixer对比.md) |
+| 时序预测：三篇对比、baseline（DUET）与组合实验候选 | [时序预测_DUET_TQNet_WPMixer对比](专题分析/时序预测_DUET_TQNet_WPMixer对比.md) |
 | 时序方向复现记录与代码 | [EXP-0003](实验报告/EXP-0003_record.md)、[code/ts_forecasting](../code/ts_forecasting/README.md) |
 
 ## 必需文档定位
@@ -47,7 +48,8 @@
 | [analysis/templates/跨领域迁移方案.md](../analysis/templates/跨领域迁移方案.md) | 跨领域迁移方案：<方法> |
 | [analysis/version-evolution.md](../analysis/version-evolution.md) | Version Evolution：关键决策与方向调整 |
 | [analysis/毕业选题候选.md](../analysis/毕业选题候选.md) | 毕业选题候选：约束、候选方向与下一步 |
-| [analysis/SOP_从论文到融合方案.md](../analysis/SOP_从论文到融合方案.md) | SOP：从分析新论文到输出融合方案 |
+| [analysis/archied/2026-10-23_SOP-v1_从论文到融合方案.md](../analysis/archied/2026-10-23_SOP-v1_从论文到融合方案.md) | 已归档：SOP v1（被研究流程 v2.0 取代） |
+| [analysis/实验室会话交接.md](../analysis/实验室会话交接.md) | 实验室电脑新会话的交接说明 |
 | [analysis/MODE_C-0001_视觉token剪枝.md](../analysis/MODE_C-0001_视觉token剪枝.md) | MODE_C_PACKAGE：多模态大模型视觉 token 剪枝 |
 | [analysis/IDEA-0001_编码器侧压缩的位置编号.md](../analysis/IDEA-0001_编码器侧压缩的位置编号.md) | IDEA_PACKAGE：编码器侧压缩的位置编号（融合路线候选，deferred） |
 | [analysis/论文笔记/PAPER-0001_FastV.md](../analysis/论文笔记/PAPER-0001_FastV.md) | ANALYSIS_PACKAGE：FastV |
@@ -72,7 +74,7 @@
 | [analysis/实验报告/README.md](../analysis/实验报告/README.md) | 单次实验报告 |
 | [analysis/已发现的实验现象.md](../analysis/已发现的实验现象.md) | 已发现的实验现象 |
 | [analysis/最新实验分析报告.md](../analysis/最新实验分析报告.md) | 最新实验分析报告 |
-| [analysis/研究流程.md](../analysis/研究流程.md) | 从证据到发现、再回到证据 |
+| [analysis/研究流程.md](../analysis/研究流程.md) | 研究流程 v2.0：从论文到 idea，再从 idea 到实现（唯一流程规范） |
 | [analysis/论文笔记/README.md](../analysis/论文笔记/README.md) | 论文笔记 |
 | [analysis/论文素材库.md](../analysis/论文素材库.md) | 论文素材库 |
 | [CLAUDE.md](../CLAUDE.md) | Claude Code 项目入口 |

@@ -68,7 +68,7 @@ unresolved_questions: [论文是否对比随机选择, 最后一个 token 作为
   - 前 K 层仍处理全部 576 个 token，prefill 显存峰值不下降。
   - 打分那一层需要显式注意力矩阵，不能用 FlashAttention。
 - **可能的混杂**：README 中 lmms-eval 的数字是单次运行，K 与论文默认值不同，而且 token mask 版和真正删除 token 的版本可能给出不同分数。
-- **与自身实验的关系**：作为“开山”对照方法必须出现在对比表中，但不建议在它的代码上做开发（无许可证、依赖修改版 transformers、写死常量）。本项目用 `code/token_pruning/fastv_llava.py` 复现，已证明与官方实现输出一致。
+- **与自身实验的关系**：**视觉 token 剪枝方向的主 baseline**（DEC-0009，按研究流程第 ① 步：近两年高引用、有源码、衍生工作最多）。官方代码有无许可证、依赖修改版 transformers、写死常量等问题，因此本项目在自己的重新实现 `code/token_pruning/fastv_llava.py` 上开展实验；该实现已证明与官方实现输出一致。
 - **核心总结**：FastV 提出了“LLM 内部按注意力剪视觉 token”的范式；它的观察（F1）比它的选择规则更有价值。
 
 ## 交接 Deep Read
