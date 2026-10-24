@@ -1,6 +1,6 @@
 # 项目文档索引
 
-状态（2026-10-24，DEC-0012～0023）：视觉 token 剪枝方向在第 ⑧ 步第 3 轮（EXP-0013，压误报），之后按研究流程进入第 ⑨～⑫ 步（DEC-0023）；时序预测方向在第 ⑦ 步后暂停（DEC-0020、DEC-0021）。七篇论文已有原文笔记与源码核验补充。实验室电脑是原生 Windows，文件只放在 D:\6CJNM007。流程规范为[研究流程 v2.1](研究流程.md)。新增、移动或归档文档时同步本索引。（此前这一行停在 DEC-0014 时的状态，2026-10-24 的跑偏检查中更新。）
+状态（2026-10-24，DEC-0012～0024）：视觉 token 剪枝方向完成第 ⑧ 步第 3 轮（EXP-0013，压误报，没有修正通过），进入第 ⑨ 步（DEC-0024）；时序预测方向在第 ⑦ 步后暂停（DEC-0020、DEC-0021）。七篇论文已有原文笔记与源码核验补充。实验室电脑是原生 Windows，文件只放在 D:\6CJNM007。流程规范为[研究流程 v2.1](研究流程.md)。新增、移动或归档文档时同步本索引。（此前这一行停在 DEC-0014 时的状态，2026-10-24 的跑偏检查中更新。）
 
 ## 当前工作入口
 
@@ -17,7 +17,7 @@
 | 视觉方向 GPU 复现记录与深挖 | [EXP-0002](实验报告/EXP-0002_record.md)、[SQZ-EXP-0002](实验报告/EXP-0002_squeeze.md) |
 | 视觉方向第 ⑤ 步：深挖意外现象 | [1a-4b_FastV不如随机选择](1a-4b_FastV不如随机选择.md)；[EXP-0006](实验报告/EXP-0006_record.md)、[SQZ-EXP-0006](实验报告/EXP-0006_squeeze.md)；[EXP-0008](实验报告/EXP-0008_record.md)、[SQZ-EXP-0008](实验报告/EXP-0008_squeeze.md)；[EXP-0007](实验报告/EXP-0007_record.md)、[SQZ-EXP-0007](实验报告/EXP-0007_squeeze.md)（层分布与选择规则）；[EXP-0010](实验报告/EXP-0010_record.md)、[SQZ-EXP-0010](实验报告/EXP-0010_squeeze.md)（覆盖对照） |
 | **第 ⑦ 步：改进方向排序**（视觉：用户已选候选 1，DEC-0016；时序：候选 1 的 CPU 诊断完成，按规则升为高，时序方向暂停中，DEC-0019～DEC-0021） | [第7步_改进方向排序](第7步_改进方向排序.md)；[EXP-0012](实验报告/EXP-0012_record.md)、[SQZ-EXP-0012](实验报告/EXP-0012_squeeze.md)（时序候选 1 的诊断，F-TS15） |
-| **视觉方向第 ⑧ 步：深挖到算子级（候选 1，第 2 轮完成，DEC-0022；第 3 轮误报进行中，DEC-0023）** | [1a-4b_选择与题目无关漏掉被问的小物体](1a-4b_选择与题目无关漏掉被问的小物体.md)（1A4B-0003；COCO 物体框分析在 code/output/EXP-0002/deepdive3，RePOPE 重算在 deepdive4）；[EXP-0011](实验报告/EXP-0011_record.md)、[SQZ-EXP-0011](实验报告/EXP-0011_squeeze.md)（D2、D2b、D3：输入层物体名余弦让 POPE +18.97，F28～F30）；[EXP-0013](实验报告/EXP-0013_record.md)（第 3 轮：误报的来源与同预算修正） |
+| **视觉方向第 ⑧ 步：深挖到算子级（候选 1，第 2 轮 DEC-0022；第 3 轮误报 DEC-0024，完成）** | [1a-4b_选择与题目无关漏掉被问的小物体](1a-4b_选择与题目无关漏掉被问的小物体.md)（1A4B-0003；COCO 物体框分析在 code/output/EXP-0002/deepdive3，RePOPE 重算在 deepdive4）；[EXP-0011](实验报告/EXP-0011_record.md)、[SQZ-EXP-0011](实验报告/EXP-0011_squeeze.md)（D2、D2b、D3：输入层物体名余弦让 POPE +18.97，F28～F30）；[EXP-0013](实验报告/EXP-0013_record.md)、[SQZ-EXP-0013](实验报告/EXP-0013_squeeze.md)（第 3 轮：误报伴随区分力下降，同预算修正都未通过，F31～F33） |
 | 第 ⑥ 步：骨架全景图 × 改进内容交叉分析（视觉与时序） | [baseline骨架的全景图](专题分析/baseline骨架的全景图.md)、[所有论文在baseline骨架的改进内容](专题分析/所有论文在baseline骨架的改进内容.md) |
 | 时序预测：baseline（iTransformer，DEC-0012）、三篇对照对比与组合实验候选 | [时序预测_DUET_TQNet_WPMixer对比](专题分析/时序预测_DUET_TQNet_WPMixer对比.md) |
 | 时序方向 GPU 复现与对照重评 | [EXP-0004](实验报告/EXP-0004_record.md)、[SQZ-EXP-0004](实验报告/EXP-0004_squeeze.md)（复现记为偏差，DEC-0018）；[EXP-0005](实验报告/EXP-0005_record.md)、[SQZ-EXP-0005](实验报告/EXP-0005_squeeze.md) |
@@ -97,6 +97,7 @@
 | [analysis/实验报告/EXP-0012_record.md](../analysis/实验报告/EXP-0012_record.md) | EXPERIMENT_RECORD：96 步输入下未来窗口的水平能否用简单统计量预测（时序候选 1 的 CPU 诊断） |
 | [analysis/实验报告/EXP-0012_squeeze.md](../analysis/实验报告/EXP-0012_squeeze.md) | SQUEEZE_REPORT：EXP-0012（收益与风险都来自向训练期均值回归，F-TS15） |
 | [analysis/实验报告/EXP-0013_record.md](../analysis/实验报告/EXP-0013_record.md) | EXPERIMENT_RECORD：题目相关的选择为什么多出误报，能否在同一预算下压下去（第 ⑧ 步第 3 轮） |
+| [analysis/实验报告/EXP-0013_squeeze.md](../analysis/实验报告/EXP-0013_squeeze.md) | SQUEEZE_REPORT：EXP-0013（选择丢掉“没有”的证据 F31；F1 下最优阈值偏向 yes F32；对比打分 F33） |
 | [analysis/1a-4b_FastV不如随机选择.md](../analysis/1a-4b_FastV不如随机选择.md) | 1a–4b 机制分析：同预算下 FastV 为什么不如随机选择（第 1 轮，到 2b） |
 | [analysis/1a-4b_选择与题目无关漏掉被问的小物体.md](../analysis/1a-4b_选择与题目无关漏掉被问的小物体.md) | 1a–4b 机制分析（第 ⑧ 步，候选 1）：选择与题目无关时，被问的小物体为什么被删掉（第 1 轮，到 2b；COCO 物体框） |
 | [analysis/1a-4b_四种架构在同一批窗口上出错.md](../analysis/1a-4b_四种架构在同一批窗口上出错.md) | 1a–4b 机制分析：时序四种架构为什么在同一批窗口上出错（第 1 轮，到 2b；误差的水平/形状拆分） |
