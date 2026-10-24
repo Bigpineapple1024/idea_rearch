@@ -20,9 +20,14 @@ so the kept tokens cover as many blocks as the count allows; without it the comp
 With log_text_rows (diagnostic, FastV ranking only), the first stage also keeps the head-averaged attention rows of
 every text token after the image over the image tokens (the last of them is FastV's score row) and the ids of those
 tokens; nothing in the computation changes.
+With score_kind="object_cos" (EXP-0011 D3, POPE-style questions), the ranking is instead the cosine similarity of each
+image token's input embedding to the mean input embedding of the object name's tokens (object_span maps the ids after
+the image to their indices); no attention map is needed. With exclude_padding, patches lying wholly in the padding of
+LLaVA's centred square image (expand2square) are never kept. Without either option the computation is as before.
 """
 import types
 
+import numpy as np
 import torch
 from transformers.cache_utils import Cache, DynamicCache
 from transformers.modeling_outputs import BaseModelOutputWithPast
@@ -57,6 +62,19 @@ def _stratified_top(score, k, patches, side, blocks):
     return torch.tensor(chosen, device=score.device)
 
 
+def _padding_mask(width, height, side):
+    """Patches of the side x side grid lying wholly in the padding that expand2square adds around a width x height image
+    (the same geometry as analyze_object_boxes.padding_patches)."""
+    s = max(width, height)
+    ox = (s - width) // 2 if height > width else 0
+    oy = (s - height) // 2 if width > height else 0
+    p = s / side
+    edges = np.arange(side + 1) * p
+    cx = np.clip(np.minimum(edges[1:], ox + width) - np.maximum(edges[:-1], ox), 0, None) / p
+    cy = np.clip(np.minimum(edges[1:], oy + height) - np.maximum(edges[:-1], oy), 0, None) / p
+    return torch.from_numpy(np.outer(cy, cx).ravel() <= 1e-9)
+
+
 def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, past_key_values=None,
                   inputs_embeds=None, use_cache=None, output_attentions=None, output_hidden_states=None,
                   return_dict=None):
@@ -78,13 +96,25 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
     prefill = q_len > 1
     hidden = inputs_embeds
     attn = None
+    object_cos = self.fastv_score_kind == "object_cos"
     if prefill:
         start, n_img = self.fastv_image_span
         kept = torch.arange(n_img, device=hidden.device)       # original patch index of each image token still present
+        if object_cos:                                         # question-aware score from the input embeddings
+            obj = [start + n_img + i for i in self.fastv_object_span(self.fastv_text_after_ids)]
+            h = inputs_embeds[0].float()
+            self.fastv_object_cos = torch.nn.functional.cosine_similarity(
+                h[start:start + n_img], h[obj].mean(0, keepdim=True), dim=-1)
+        allowed = torch.ones(n_img, dtype=torch.bool, device=hidden.device)
+        if self.fastv_exclude_padding:
+            allowed = ~_padding_mask(*self.fastv_image_size, round(n_img ** 0.5)).to(hidden.device)
     for idx, layer in enumerate(self.layers):
         if prefill and idx in stages:
             n_cur = kept.numel()
-            if self.fastv_generator is None:
+            if self.fastv_generator is None and object_cos:
+                score = self.fastv_object_cos[kept]
+                self.fastv_last_scores = score
+            elif self.fastv_generator is None:
                 score = attn.mean(dim=1)[0, -1, start:start + n_cur]
                 self.fastv_last_scores = score                  # before any prior, for the score-log diagnostic
                 if self.fastv_log_text_rows and idx == min(stages):     # diagnostic: rows of the text after the image
@@ -94,13 +124,15 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             else:
                 score = torch.rand(n_cur, generator=self.fastv_generator, device=self.fastv_generator.device)
                 score = score.to(hidden.device)
+            pos = allowed[kept].nonzero().squeeze(1)           # positions among the present image tokens that may stay
+            count = min(stages[idx], pos.numel())
             if self.fastv_stratify is None:
-                top = score.topk(min(stages[idx], n_cur)).indices.sort().values
+                top = pos[score[pos].topk(count).indices].sort().values
             else:
                 side = round(n_img ** 0.5)
                 if side * side != n_img:
                     raise ValueError(f"stratify needs a square patch grid, got {n_img} image tokens")
-                top = _stratified_top(score, min(stages[idx], n_cur), kept, side, self.fastv_stratify).sort().values
+                top = pos[_stratified_top(score[pos], count, kept[pos], side, self.fastv_stratify)].sort().values
             keep_idx = torch.cat((torch.arange(start, device=hidden.device), top + start,
                                   torch.arange(start + n_cur, hidden.shape[1], device=hidden.device)))
             hidden = hidden[:, keep_idx]
@@ -108,7 +140,7 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             kept = kept[top]
             self.fastv_kept_image_positions = kept
         mask = _causal_mask(hidden) if prefill else None
-        need_attn = prefill and idx + 1 in stages and self.fastv_generator is None
+        need_attn = prefill and idx + 1 in stages and self.fastv_generator is None and not object_cos
         out = layer(hidden, attention_mask=mask, position_ids=position_ids, past_key_value=cache,
                     output_attentions=need_attn, use_cache=use_cache)
         hidden = out[0]
@@ -134,12 +166,14 @@ def _record_image_span(model):
             embeds = result[4]
             lm.fastv_image_span = (int(hits[0, 0]), embeds.shape[1] - (input_ids.shape[1] - 1))
             lm.fastv_text_after_ids = input_ids[0, int(hits[0, 0]) + 1:].tolist()
+            lm.fastv_image_size = tuple(image_sizes[0]) if image_sizes is not None else None     # (width, height)
         return result
 
     model.prepare_inputs_labels_for_multimodal = wrapped
 
 
-def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False):
+def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
+               score_kind="last", object_span=None, exclude_padding=False):
     """Turn a transformers LlamaModel into FastV in place (image span set by the caller).
 
     seed=None keeps FastV's attention ranking; an integer selects random image tokens from that seed.
@@ -149,7 +183,16 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
     (diagnostic: a position curve measured on blank images).
     stratify, an int n, takes the ranking in turns from an n x n grid of image blocks (diagnostic: coverage control).
     log_text_rows keeps the first stage's attention rows of the text after the image (diagnostic, FastV ranking only).
+    score_kind "object_cos" ranks by the input-embedding cosine to the object name, whose token indices among the ids
+    after the image object_span returns; exclude_padding never keeps patches lying wholly in the square's padding.
     """
+    if score_kind not in ("last", "object_cos"):
+        raise ValueError(f"unknown score_kind {score_kind!r}")
+    if score_kind == "object_cos" and (object_span is None or seed is not None or score_prior is not None or log_text_rows):
+        raise ValueError("object_cos needs object_span and takes no seed, position prior or attention-row log")
+    llama_model.fastv_score_kind = score_kind
+    llama_model.fastv_object_span = object_span
+    llama_model.fastv_exclude_padding = exclude_padding
     llama_model.fastv_score_prior = None if score_prior is None else score_prior.float()
     llama_model.fastv_stratify = stratify
     llama_model.fastv_last_scores = None
@@ -169,8 +212,10 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
     return llama_model
 
 
-def apply_fastv(model, k=2, keep=288, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False):
+def apply_fastv(model, k=2, keep=288, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
+                score_kind="last", object_span=None, exclude_padding=False):
     """Enable FastV (or its random-selection control when seed is given) on a loaded LlavaLlamaForCausalLM."""
-    bind_fastv(model.get_model(), k, keep, seed, schedule, score_prior, stratify, log_text_rows)
+    bind_fastv(model.get_model(), k, keep, seed, schedule, score_prior, stratify, log_text_rows, score_kind, object_span,
+               exclude_padding)
     _record_image_span(model)
     return model

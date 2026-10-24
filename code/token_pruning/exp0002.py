@@ -82,6 +82,12 @@ for b in (192, 128, 64):
 for b in (192, 128, 64):
     CONFIGS[f"fastv{b}_strat"] = ("tp", CONFIGS[f"fastv{b}"][1] + ["--fastv-stratify", "6"])
     CONFIGS[f"fastv{b}_prior_strat"] = ("tp", CONFIGS[f"fastv{b}_prior"][1] + ["--fastv-stratify", "6"])
+# EXP-0011 D3 (plan v1.2): rank by the cosine of each image token's input embedding to the object name's (POPE-style
+# questions only), in blocks, padding never kept; and the padding-exclusion control on the strong baseline
+for b in (192, 128, 64):
+    CONFIGS[f"fastv{b}_objcos_strat_nopad"] = ("tp", CONFIGS[f"fastv{b}"][1] + [
+        "--fastv-stratify", "6", "--fastv-score", "object_cos", "--fastv-exclude-padding"])
+    CONFIGS[f"fastv{b}_prior_strat_nopad"] = ("tp", CONFIGS[f"fastv{b}_prior_strat"][1] + ["--fastv-exclude-padding"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic

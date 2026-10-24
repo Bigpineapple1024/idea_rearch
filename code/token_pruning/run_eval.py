@@ -77,6 +77,11 @@ def parse():
                       help="diagnostic, fastv only: .npy with one value per image patch; scores are divided by it")
     ours.add_argument("--fastv-stratify", type=int, default=None,
                       help="diagnostic, fastv only: take the ranking in turns from an n x n grid of image blocks")
+    ours.add_argument("--fastv-score", choices=["last", "object_cos"], default="last",
+                      help="fastv: rank by the last token's attention at layer K-1 (FastV), or, for POPE-style questions, "
+                           "by the cosine of each image token's input embedding to the object name's (EXP-0011 D3)")
+    ours.add_argument("--fastv-exclude-padding", action="store_true",
+                      help="fastv: never keep patches lying wholly in the padding of LLaVA's square image (EXP-0011 D3)")
     argv = sys.argv[1:]
     split = argv.index("--") if "--" in argv else len(argv)
     method_args = ours.parse_args(argv[:split])
@@ -106,6 +111,10 @@ def parse():
         ours.error("--answer-logit-log is not wired for SparseVLM's generate()")
     if method_args.layer_rows_log and method_args.method != "vanilla":
         ours.error("--layer-rows-log needs --method vanilla")
+    if (method_args.fastv_score != "last" or method_args.fastv_exclude_padding) and method_args.method != "fastv":
+        ours.error("--fastv-score and --fastv-exclude-padding need --method fastv")
+    if method_args.fastv_score == "object_cos" and (method_args.text_rows_log or method_args.fastv_score_prior):
+        ours.error("--fastv-score object_cos has no attention rows to log and takes no position prior")
     if method_args.method == "sparsevlm":
         if method_args.retained_tokens is None:
             ours.error("--method sparsevlm needs --retained-tokens")
@@ -115,14 +124,17 @@ def parse():
     return method_args, llava_args
 
 
-def apply_method(model, m):
+def apply_method(model, m, tokenizer=None):
     schedule = getattr(m, "fastv_schedule", None)
     if m.method == "fastv":
         prior_path = getattr(m, "fastv_score_prior", None)
         prior = torch.from_numpy(np.load(prior_path)) if prior_path else None
+        score_kind = getattr(m, "fastv_score", "last")
+        span = (lambda ids: question_spans(tokenizer, ids)[1]) if score_kind == "object_cos" else None
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule, score_prior=prior,
                            stratify=getattr(m, "fastv_stratify", None),
-                           log_text_rows=bool(getattr(m, "text_rows_log", None)))
+                           log_text_rows=bool(getattr(m, "text_rows_log", None)), score_kind=score_kind,
+                           object_span=span, exclude_padding=bool(getattr(m, "fastv_exclude_padding", False)))
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "visionzip":
@@ -292,7 +304,7 @@ def main():
         if method_args.attn_implementation:
             kw["attn_implementation"] = method_args.attn_implementation   # LLaVA's builder forwards kwargs
         tokenizer, model, image_processor, context_len = original_load(*a, **kw)
-        model = apply_method(model, method_args)
+        model = apply_method(model, method_args, tokenizer)
         if method_args.layer_token_log:
             times["n_layers"] = len(model.get_model().layers)
             for i, layer in enumerate(model.get_model().layers):
