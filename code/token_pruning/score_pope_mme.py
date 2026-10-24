@@ -65,9 +65,36 @@ def score_mme(answers, out_dir, tag, log):
     return result
 
 
+def score_vqav2(answers, out_dir, split, log):
+    """VQA accuracy with LLaVA's m4c evaluator (EvalAI answer normalisation, min(1, matches / 3) averaged over the ten
+    leave-one-out subsets of the human answers); per-question scores go to <out_dir>/vqa_scores.jsonl."""
+    sys.path.insert(0, LLAVA_ROOT)
+    from llava.eval.m4c_evaluator import TextVQAAccuracyEvaluator
+    ev = TextVQAAccuracyEvaluator()
+    gts = {}
+    for line in open(f"{EVAL_DATA}/vqav2_val/llava_vqav2_val_{split}_annotations.jsonl"):
+        a = json.loads(line)
+        gts[a["question_id"]] = a
+    preds = [json.loads(line) for line in open(answers)]
+    if sorted(p["question_id"] for p in preds) != sorted(gts):
+        raise SystemExit("answers do not cover the question set exactly")
+    by_type, rows = {}, []
+    with open(f"{out_dir}/vqa_scores.jsonl", "w") as f:
+        for p in preds:
+            g = gts[p["question_id"]]
+            s = ev._compute_answer_scores(g["answers"]).get(ev.answer_processor(p["text"]), 0.0)
+            by_type.setdefault(g["answer_type"], []).append(s)
+            rows.append(s)
+            f.write(json.dumps({"question_id": p["question_id"], "image": g["image"], "answer_type": g["answer_type"],
+                                "score": s}) + "\n")
+    log.write(f"VQAv2 val {split}: {len(rows)} questions scored with llava.eval.m4c_evaluator.TextVQAAccuracyEvaluator\n")
+    return {"benchmark": f"vqav2_{split}", "headline": "accuracy", "accuracy": 100 * sum(rows) / len(rows),
+            "n_scored": len(rows), "by_answer_type": {t: {"n": len(v), "accuracy": 100 * sum(v) / len(v)} for t, v in by_type.items()}}
+
+
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("bench", choices=["pope", "mme"])
+    p.add_argument("bench", choices=["pope", "mme", "vqav2_test", "vqav2_dev"])
     p.add_argument("answers")
     p.add_argument("out_dir")
     p.add_argument("--tag", help="MME working name (default: the out_dir name)")
@@ -79,6 +106,8 @@ def main():
     with open(f"{a.out_dir}/score.log", "w") as log:
         if a.bench == "pope":
             metrics = score_pope(answers, log)
+        elif a.bench.startswith("vqav2_"):
+            metrics = score_vqav2(answers, a.out_dir, a.bench.split("_", 1)[1], log)
         else:
             metrics = score_mme(answers, a.out_dir, a.tag or os.path.basename(os.path.abspath(a.out_dir)), log)
     metrics["n_answers"] = n_answers

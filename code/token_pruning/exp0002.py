@@ -50,6 +50,13 @@ BENCHES = {
     # (make_coco_dev3.py); scored offline by analyze_fp.py, not by score_pope_mme.py
     "coco_dev3": {"question_file": f"{DATA}/llava_eval/pope/llava_coco_dev3.jsonl",
                   "image_folder": f"{DATA}/coco/val2014", "annotations": [], "score": False},
+    # EXP-0018: VQAv2 val subsets on local COCO val2014 images (make_vqav2_sets.py), scored by score_pope_mme.py
+    "vqav2_test": {"question_file": f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test.jsonl",
+                   "image_folder": f"{DATA}/coco/val2014",
+                   "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test_annotations.jsonl"]},
+    "vqav2_dev": {"question_file": f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_dev.jsonl",
+                  "image_folder": f"{DATA}/coco/val2014",
+                  "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_dev_annotations.jsonl"]},
 }
 # Budgets are 32-layer averages of visual tokens (code/token_pruning/README.md, "预算的口径").
 FASTV_KEEP = {192: 166, 128: 98, 64: 30}
