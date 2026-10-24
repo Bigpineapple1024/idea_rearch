@@ -43,10 +43,10 @@
 
 ## 4. 解释与不确定性
 
-- **最支持的解释（AI，M16）**：题目点名的物体是题目的“焦点”，不一定是答案所在。
-  - 答案就是焦点本身（在不在、有几个）时，按题目词选 token 等于直接取证据，POPE 与“is there”“how many”都受益。
-  - 答案是焦点的属性、动作、位置或旁边的东西时（“what is the man holding”），把块里第 2 层注意力最高的 token 换成“最像 man 的 token”，丢掉了模型自己按整句选出的相关内容。
-  - 这与经典问答系统区分“题目焦点”和“期望的答案类型”一致（第 ⑨ 步的领域 B，待核对原文）。
+- **最支持的解释（AI，M16）**：题目点名的物体是题目的话题，不一定是答案所在（术语按文献检索修正：经典问答里的 focus 指答案所指的部分，被点名的物体是题目的话题）。
+  - 答案就是被点名物体本身（在不在、有几个）时，按题目词选 token 等于直接取证据，POPE 与“is there”“how many”都受益。
+  - 答案是被点名物体的属性、动作、位置或旁边的东西时（“what is the man holding”），把块里第 2 层注意力最高的 token 换成“最像 man 的 token”，丢掉了第 2 层注意力最高的 token：这一排序几乎不随题目变化（F15、F28），可能带着开放式题需要的整体内容。
+  - 经典问答系统在题目分析时先确定答案类型，再决定找什么证据（第 ⑨ 步的领域 B，检索摘要级）；VQA 中 GVQA（CVPR 2018）已按是非题 / 非是非题把题目送进不同模块。
 - **替代解释**：
   - ①第 2 层注意力最高的 token 本来就携带整幅图的汇总信息，与题目无关；换掉它们对开放式题目普遍有害。这条解释没有说明点名物体的 other 题为什么受损更多（S3）。
   - ②词表匹配与框的误差。
@@ -58,7 +58,7 @@
   - F38：答案类型上的相反效应，总差接近 0；
   - F39：损失集中在点名可见物体、问其属性或关系的开放式题目，且查询选得越“准”损失越大；
   - F40：一般题目上 FastV 一族整体低于 VisionZip，POPE 上相反。
-- **新问题**：P11，题目焦点 ≠ 答案所在。按题目词选 token 只在答案依赖焦点本身时有用。
+- **新问题**：P11，题目点名的物体（题目的话题）≠ 答案所在。按题目词选 token 只在答案依赖被点名物体本身时有用。
 - **新限制**：128 档上一般题目无收益。
 - **已回答**：H-forced（不成立）；Q1、Q2（差异不显著）。
 - **更新位置**：已发现的实验现象（F38～F40）、MODE_C-0002 回流 9、结果总表、DEC-0031。
@@ -84,9 +84,9 @@ process_dynamics: 无（推理）
 mechanism_and_intermediate_findings: H-forced 不成立；查询选的 token 落在被点名物体内时 other 损失更大；同一块里“最像题目词的 token”替换了“第 2 层注意力最高的 token”
 errors_heterogeneity_and_boundary_conditions: is there / how many 受益，what is the man / where is the / what is the 受损；128 档无收益
 robustness_sensitivity_and_alternative_explanations: 题型分组多重比较未校正；第 2 层注意力 token 携带全局信息的替代解释
-new_P: [P11：题目焦点 ≠ 答案所在]
+new_P: [P11：题目点名的物体（话题）≠ 答案所在]
 new_F: [F38, F39, F40]
-new_M: [M16：答案依赖焦点本身时按题目词选 token 有用，答案依赖焦点的属性或关系时有害（AI，S1、S3、S4 支持）]
+new_M: [M16：答案依赖被点名物体本身时按题目词选 token 有用，答案依赖它的属性或关系时有害（AI，S1、S3、S4 支持）]
 evidence_index: [code/output/EXP-0018/analysis/0018.md, EXP-0018/squeeze/squeeze_0018.md, EXP-0018/squeeze_boxes/boxes.md]
 open_questions: [按句式路由在新数据上的效果, 128 档为什么无收益, 能否让开放式题目也受益]
 next_routes: [EXP-0020（新数据上的预注册确认）]
