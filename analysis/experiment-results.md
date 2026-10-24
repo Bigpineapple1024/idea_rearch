@@ -1,6 +1,6 @@
 # Experiment Results：实验详细数据总表
 
-状态（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）和代码级核验（EXP-0001）；时序预测有 iTransformer 的 GPU 复现（EXP-0004 阶段 A，20 次运行）和 ETTh1 上的 CPU 复现（EXP-0003），对照的 GPU 重跑（EXP-0005）进行中。空表表示无数据，绝不表示数值为零。
+状态（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001）；时序预测有 iTransformer 的 GPU 复现（EXP-0004 阶段 A，20 次运行）和 ETTh1 上的 CPU 复现（EXP-0003），对照的 GPU 重跑（EXP-0005）进行中。空表表示无数据，绝不表示数值为零。
 
 ## 实验登记
 
@@ -12,10 +12,10 @@
 | EXP-0004 | none | 时序主 baseline iTransformer 在 ETT 上的 GPU 复现（论文 Table 10，3 个种子） | 分支 code/ts-forecasting 上的 EXP-0004_record（完成后同步） | 待做 | 进行中：阶段 A（ETTh1）完成，96/192/720 达标、336 未达标；阶段 B 待运行 |
 | EXP-0005 | none | DUET、TQNet、WPMixer 在统一协议下的 GPU 重跑（ETTh1，3 个种子）与 TFB 数据核对 | [EXP-0005_record](实验报告/EXP-0005_record.md) | [SQZ-EXP-0005](实验报告/EXP-0005_squeeze.md) | completed（WPMixer 12 次因缺包失败，已重跑） |
 | EXP-0006 | none | FastV 与随机选择保留了图像的哪些位置（F8 的机制诊断） | [EXP-0006_record](实验报告/EXP-0006_record.md) | [SQZ-EXP-0006](实验报告/EXP-0006_squeeze.md) | completed |
-| EXP-0007 | none | 层分布与选择规则的拆分（MODE_C-0002 的 C11） | 分支 code/token-pruning 上的 EXP-0007_record（计划已提交） | — | 运行中 |
+| EXP-0007 | none | 层分布与选择规则的拆分（MODE_C-0002 的 C11） | [EXP-0007_record](实验报告/EXP-0007_record.md) | [SQZ-EXP-0007](实验报告/EXP-0007_squeeze.md) | completed |
 | EXP-0008 | none | 去掉位置项后 FastV 的选择是否恢复（1A4B-0001 的 3a） | [EXP-0008_record](实验报告/EXP-0008_record.md) | [SQZ-EXP-0008](实验报告/EXP-0008_squeeze.md) | completed |
 | EXP-0009 | none | iTransformer 检查点在验证期上的预测（1A4B-0002 的 3a，不训练） | [EXP-0009_record](实验报告/EXP-0009_record.md)（计划 v1.1） | — | planned |
-| EXP-0010 | none | 位置校正的收益来自“去位置”还是“更分散”（1A4B-0001 的 3b，对 FEATHER 两个部件的独立复核） | [EXP-0010_record](实验报告/EXP-0010_record.md)（计划） | — | planned |
+| EXP-0010 | none | 位置校正的收益来自“去位置”还是“更分散”（1A4B-0001 的 3b，对 FEATHER 两个部件的独立复核） | [EXP-0010_record](实验报告/EXP-0010_record.md) | [SQZ-EXP-0010](实验报告/EXP-0010_squeeze.md) | completed |
 
 ## 全部运行
 
@@ -157,6 +157,22 @@
 | EXP-0008-R04 | fastv192_prior_kept × pope_img20 | 0ea34bd；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 166 --fastv-score-prior D:/6CJNM007/idea_rearch/code/output/EXP-0008/analysis/position_prior.npy --kept-token-log | pope_img20 358 题 | — | completed | 主指标 358 | 见实验记录 | 0.2069 秒/题，峰值 14.08 GiB | `code/output/EXP-0008/EXP-0008-R04/`，SHA256SUMS 的 sha256 d78bc437…；备份同名目录 |
 | EXP-0008-R05 | fastv64_prior × pope | 0ea34bd；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --fastv-score-prior D:/6CJNM007/idea_rearch/code/output/EXP-0008/analysis/position_prior.npy | POPE 8910 题 | — | completed | 主指标 57.41283792328229 | 见实验记录 | 0.1418 秒/题，峰值 13.94 GiB | `code/output/EXP-0008/EXP-0008-R05/`，SHA256SUMS 的 sha256 e14647d4…；备份同名目录 |
 | EXP-0008-R06 | fastv64_prior × mme | 0ea34bd；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --fastv-score-prior D:/6CJNM007/idea_rearch/code/output/EXP-0008/analysis/position_prior.npy | MME 2374 题 | — | completed | 主指标 1184.923369347739 | 见实验记录 | 0.1517 秒/题，峰值 13.96 GiB | `code/output/EXP-0008/EXP-0008-R06/`，SHA256SUMS 的 sha256 c2675305…；备份同名目录 |
+| EXP-0007-R01 | random_svp64_s2021_layers × pope50 | 0ea34bd；无未提交改动 | `tp`；--method random --fastv-schedule 3:82,7:32,16:18 --seed 2021 --layer-token-log | POPE 子集 50 题 | 2021 | completed | 主指标 82.25 | 见实验记录 | 0.443 秒/题，峰值 13.95 GiB | `code/output/EXP-0007/EXP-0007-R01/`，SHA256SUMS 的 sha256 bde58bf1…；备份同名目录 |
+| EXP-0007-R02 | fastv_svp64_layers × pope50 | 0ea34bd；无未提交改动 | `tp`；--method fastv --fastv-schedule 3:82,7:32,16:18 --layer-token-log | POPE 子集 50 题 | — | completed | 主指标 82.25 | 见实验记录 | 0.4508 秒/题，峰值 13.95 GiB | `code/output/EXP-0007/EXP-0007-R02/`，SHA256SUMS 的 sha256 f8e3d173…；备份同名目录 |
+| EXP-0007-R03 | random_svp64_s2021 × pope | 0ea34bd；无未提交改动 | `tp`；--method random --fastv-schedule 3:82,7:32,16:18 --seed 2021 | POPE 8910 题 | 2021 | completed | 主指标 62.18213077175731 | 见实验记录 | 0.1431 秒/题，峰值 13.95 GiB | `code/output/EXP-0007/EXP-0007-R03/`，SHA256SUMS 的 sha256 534b8ddc…；备份同名目录 |
+| EXP-0007-R04 | fastv_svp64 × pope | 0ea34bd；无未提交改动 | `tp`；--method fastv --fastv-schedule 3:82,7:32,16:18 | POPE 8910 题 | — | completed | 主指标 55.025289766544795 | 见实验记录 | 0.1415 秒/题，峰值 13.95 GiB | `code/output/EXP-0007/EXP-0007-R04/`，SHA256SUMS 的 sha256 e5779b6d…；备份同名目录 |
+| EXP-0007-R05 | random_flat64_s2021 × pope | 0ea34bd；无未提交改动 | `tp`；--method random --fastv-k 2 --fastv-keep 49 --seed 2021 | POPE 8910 题 | 2021 | completed | 主指标 67.73499651449566 | 见实验记录 | 0.1322 秒/题，峰值 13.95 GiB | `code/output/EXP-0007/EXP-0007-R05/`，SHA256SUMS 的 sha256 0e1d9390…；备份同名目录 |
+| EXP-0007-R06 | fastv_flat64 × pope | 0ea34bd；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 49 | POPE 8910 题 | — | completed | 主指标 53.48888160270344 | 见实验记录 | 0.1359 秒/题，峰值 13.95 GiB | `code/output/EXP-0007/EXP-0007-R06/`，SHA256SUMS 的 sha256 87791b6c…；备份同名目录 |
+| EXP-0007-R07 | random_svp64_s2021 × mme | 0ea34bd；无未提交改动 | `tp`；--method random --fastv-schedule 3:82,7:32,16:18 --seed 2021 | MME 2374 题 | 2021 | completed | 主指标 1179.7597038815527 | 见实验记录 | 0.1448 秒/题，峰值 13.98 GiB | `code/output/EXP-0007/EXP-0007-R07/`，SHA256SUMS 的 sha256 e71abc73…；备份同名目录 |
+| EXP-0007-R08 | fastv_svp64 × mme | 0ea34bd；无未提交改动 | `tp`；--method fastv --fastv-schedule 3:82,7:32,16:18 | MME 2374 题 | — | completed | 主指标 1087.4643857543017 | 见实验记录 | 0.1452 秒/题，峰值 13.98 GiB | `code/output/EXP-0007/EXP-0007-R08/`，SHA256SUMS 的 sha256 e90996cd…；备份同名目录 |
+| EXP-0007-R09 | random_flat64_s2021 × mme | 0ea34bd；无未提交改动 | `tp`；--method random --fastv-k 2 --fastv-keep 49 --seed 2021 | MME 2374 题 | 2021 | completed | 主指标 1242.7374949979992 | 见实验记录 | 0.1408 秒/题，峰值 13.99 GiB | `code/output/EXP-0007/EXP-0007-R09/`，SHA256SUMS 的 sha256 b7ae893b…；备份同名目录 |
+| EXP-0007-R10 | fastv_flat64 × mme | 0ea34bd；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 49 | MME 2374 题 | — | completed | 主指标 1174.889855942377 | 见实验记录 | 0.1391 秒/题，峰值 13.99 GiB | `code/output/EXP-0007/EXP-0007-R10/`，SHA256SUMS 的 sha256 4adef758…；备份同名目录 |
+| EXP-0010-R01 | fastv64_strat_kept × pope_img20 | 399b2d0；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --fastv-stratify 6 --kept-token-log | pope_img20 358 题 | — | completed | 主指标 358 | 见实验记录 | 0.1832 秒/题，峰值 13.94 GiB | `code/output/EXP-0010/EXP-0010-R01/`，SHA256SUMS 的 sha256 52c9e936…；备份同名目录 |
+| EXP-0010-R02 | fastv64_prior_strat_kept × pope_img20 | 399b2d0；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --fastv-score-prior D:/6CJNM007/idea_rearch/code/output/EXP-0008/analysis/position_prior.npy --fastv-stratify 6 --kept-token-log | pope_img20 358 题 | — | completed | 主指标 358 | 见实验记录 | 0.184 秒/题，峰值 13.94 GiB | `code/output/EXP-0010/EXP-0010-R02/`，SHA256SUMS 的 sha256 577875fe…；备份同名目录 |
+| EXP-0010-R03 | fastv64_strat × pope | 399b2d0；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --fastv-stratify 6 | POPE 8910 题 | — | completed | 主指标 61.47374426684411 | 见实验记录 | 0.1428 秒/题，峰值 13.94 GiB | `code/output/EXP-0010/EXP-0010-R03/`，SHA256SUMS 的 sha256 7f1ad59b…；备份同名目录 |
+| EXP-0010-R04 | fastv64_strat × mme | 399b2d0；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --fastv-stratify 6 | MME 2374 题 | — | completed | 主指标 1280.7306922769108 | 见实验记录 | 0.1439 秒/题，峰值 13.96 GiB | `code/output/EXP-0010/EXP-0010-R04/`，SHA256SUMS 的 sha256 83d1e896…；备份同名目录 |
+| EXP-0010-R05 | fastv64_prior_strat × pope | 399b2d0；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --fastv-score-prior D:/6CJNM007/idea_rearch/code/output/EXP-0008/analysis/position_prior.npy --fastv-stratify 6 | POPE 8910 题 | — | completed | 主指标 64.66371522585975 | 见实验记录 | 0.1387 秒/题，峰值 13.94 GiB | `code/output/EXP-0010/EXP-0010-R05/`，SHA256SUMS 的 sha256 5568f47c…；备份同名目录 |
+| EXP-0010-R06 | fastv64_prior_strat × mme | 399b2d0；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --fastv-score-prior D:/6CJNM007/idea_rearch/code/output/EXP-0008/analysis/position_prior.npy --fastv-stratify 6 | MME 2374 题 | — | completed | 主指标 1253.3211284513804 | 见实验记录 | 0.1476 秒/题，峰值 13.96 GiB | `code/output/EXP-0010/EXP-0010-R06/`，SHA256SUMS 的 sha256 5e53e37c…；备份同名目录 |
 
 ## 汇总与比较
 
@@ -174,5 +190,10 @@
 | C-0006-1 | EXP-0006-R01～R04 | pope_img20 358 道题，keep 30 与 166 | 保留 patch 的位置统计（无随机重复） | FastV 平均行号 15.92 / 16.56，随机 11.53 / 11.50；底部 1/4 占比 57.3% / 56.0% vs 24.8%；4×4 块覆盖率 45.4% / 85.4% vs 57.7% / 99.6%；同图不同题 Jaccard 0.948 / 0.957 vs 0.026 / 0.169 | 计划中的方向性预测（H1～H3） | 无 | FastV（K=2）的选择由位置主导、几乎不看问题 |
 | C-0008-1 | EXP-0008-R01、R02 | pope_img20 的 358 道题，纯灰图与真实图像 | 第 1 层最后一个 token 的 head 平均注意力在 576 个位置上的平均 | 纯灰图底部 4 行占 31.7%（均匀 16.7%），第 22 行为均匀的 2.56 倍；与真实分数的 Pearson r 0.329（逐题中位数 0.138） | 计划规则 1（“高度相关”未给数值门槛） | 无 | 有一条与内容无关的位置曲线，但只解释真实分数的一小部分（F16） |
 | C-0008-2 | EXP-0008-R05、R06 vs EXP-0002-R11、R10（FastV-64）、R29、R28（随机-64 种子 2021）、R17、R35（VisionZip-64） | POPE 8910 题、MME 2374 题 | 同题配对 bootstrap，1000 次 | POPE +21.22 [19.61, 22.81] / −2.85 [−4.40, −1.25] / −19.61 [−20.88, −18.38]；MME-P +205.3 [141.4, 274.8] / +16.8 [−74.5, 103.9] / −179.3 [−236.8, −120.0] | 计划规则 3 | 无 | 位置校正补回 FastV 与随机差距的 88%，仍不超过随机（F17） |
+| C-0007-1 | EXP-0007-R03、R07 vs EXP-0002-R41、R40（SparseVLM-64） | POPE 8910 题、MME 2374 题；随机种子 2021 | 同题配对 bootstrap，1000 次 | POPE −15.48 [−16.80, −14.20]；MME-P −99.8 [−180.3, −22.3] | 计划 Q1 的规则（区间是否跨 0） | 无 | 同一层分布下随机远低于 SparseVLM：SparseVLM 的优势来自选择规则（F19） |
+| C-0007-2 | EXP-0007-R04 vs R03，R08 vs R07；探索性：R06 vs R05，R10 vs R09 | 同上 | 同上 | SVP 分布下 FastV − 随机：POPE −7.16 [−8.87, −5.62]，MME-P −92.3 [−166.4, −14.9]；平坦分布下（探索性）：POPE −14.25 [−15.90, −12.64]，MME-P −67.8 [−154.4, 14.7] | 计划 Q2 的规则 | 无 | FastV 的打分在两种分布下都不如随机；差距大小随分布变化（F21） |
+| C-0007-3 | EXP-0007-R03 vs R05、R04 vs R06（MME：R07 vs R09、R08 vs R10）；R05、R06 vs EXP-0002-R29、R11（MME：R09、R10 vs R28、R10） | 同上 | 同上 | SVP − 平坦（层平均 82.25 vs 81.94）：随机 POPE −5.55 [−7.00, −4.23]、MME-P −63.0 [−136.2, 12.9]；FastV POPE +1.54 [0.07, 2.99]、MME-P −87.4 [−156.4, −15.0]。平坦 49 − 平坦 30：随机 POPE +7.47 [6.58, 8.42]，FastV +17.30 [15.97, 18.75] | 计划 Q3 的规则 | 无 | 前多后少的分布没有收益，随机选择下更差（F20；M4 不成立的方向） |
+| C-0010-1 | EXP-0010-R03、R04 vs EXP-0008-R05、R06（只去位置）、EXP-0002-R11、R10（FastV-64）、R29、R28（随机-64 种子 2021） | POPE 8910 题、MME 2374 题 | 同题配对 bootstrap，1000 次 | 只覆盖 − 只去位置：POPE +4.06 [2.83, 5.27]，MME-P +95.8 [29.5, 157.0]；− FastV-64：+25.28 [23.82, 26.87]，+301.2 [231.2, 370.1]；− 随机：+1.21 [−0.30, 2.80]，+112.6 [36.1, 191.0] | 计划规则 1（R03 ≥ EXP-0008-R05 − 1） | 无 | 收益主要来自更分散；只覆盖就补回 FastV 与随机的全部 POPE 差距（F24） |
+| C-0010-2 | EXP-0010-R05、R06 vs 随机-64、只去位置、R03、R04 | 同上 | 同上 | 去位置 + 覆盖 − 随机：POPE +4.40 [2.81, 5.83]，MME-P +85.2 [5.3, 164.7]；− 只去位置：+7.25 [6.08, 8.39]，+68.4 [4.7, 128.2]；− 只覆盖：+3.19 [2.20, 4.21]，−27.4 [−84.3, 27.5] | 计划规则 3（区间不含 0） | 无 | K=2 时第 1 层注意力去掉位置后有可用的内容信号，与 FEATHER 方向一致；POPE 上仍比 VisionZip-64 低 12.4（未做区间） |
 
 指标较多时在单次记录中使用长表，或引用可恢复的 CSV/JSON 并登记 schema、计算命令与校验和。缺失写 NA 及原因，未运行不写成失败或通过。见[事实记录模板](templates/EXPERIMENT_RECORD.md)。

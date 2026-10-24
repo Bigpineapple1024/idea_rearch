@@ -34,7 +34,7 @@
 
 同样“平均 64 个视觉 token”时，三者的理论 FLOPs 几乎相同（vanilla 的 18～23%，EXP-0001 flops_budget.py）。差别在于**每层看到的视觉信息量**：FastV 在第 2 层以后只剩 30 个，SparseVLM 在最后 17 层只剩 17～20 个，VisionZip 每层 64 个。这可以部分解释为什么作者报告的低预算结果中 VisionZip 最好（推断，需在统一口径下实测）。
 
-2026-10-24 统一口径实测（EXP-0002）：64 档 POPE 为 VisionZip 77.03、SparseVLM 77.67（实际层平均 82.25）、同分布随机 60.14、FastV 36.19。SparseVLM 的实际 token 比名义多，FastV 的打分由位置主导（EXP-0006）；层分布与选择规则各自的作用由 EXP-0007 拆分。第 ⑥ 步的交叉结论见[骨架全景图](baseline骨架的全景图.md)文末。
+2026-10-24 统一口径实测（EXP-0002）：64 档 POPE 为 VisionZip 77.03、SparseVLM 77.67（实际层平均 82.25）、同分布随机 60.14、FastV 36.19。SparseVLM 的实际 token 比名义多，FastV 的打分由位置主导（EXP-0006）；层分布与选择规则各自的作用已由 EXP-0007 拆分：同一层分布下 SparseVLM 的规则比随机高 15.5，层平均相同时前多后少的分布没有收益。FastV 加上 FEATHER 式的去位置与覆盖后升到 64.66（EXP-0010）。第 ⑥ 步的交叉结论见[骨架全景图](baseline骨架的全景图.md)文末。
 
 ## baseline 选择
 
