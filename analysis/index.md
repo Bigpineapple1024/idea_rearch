@@ -103,6 +103,7 @@
 | [analysis/实验报告/EXP-0014_record.md](../analysis/实验报告/EXP-0014_record.md) | EXPERIMENT_RECORD：IDF 加权的题目查询，第 ⑫ 步的 A / A′ / A′+B / A+B（POPE、MME） |
 | [analysis/实验报告/EXP-0014_squeeze.md](../analysis/实验报告/EXP-0014_squeeze.md) | SQUEEZE_REPORT：EXP-0014（POPE 上复现物体名查询 F34；MME 名字类受损 F35） |
 | [analysis/实验报告/EXP-0017_record.md](../analysis/实验报告/EXP-0017_record.md) | EXPERIMENT_RECORD：192 档复验（第 ⑫ 步第四轮） |
+| [analysis/实验报告/EXP-0015-0016_squeeze.md](../analysis/实验报告/EXP-0015-0016_squeeze.md) | SQUEEZE_REPORT：EXP-0015、EXP-0016（收益主要来自切分；POPE 提升随预算缩小 F37） |
 | [analysis/实验报告/EXP-0016_record.md](../analysis/实验报告/EXP-0016_record.md) | EXPERIMENT_RECORD：可视性与切分的拆分，以及 128 档复验（第 ⑫ 步第三轮） |
 | [analysis/实验报告/EXP-0015_record.md](../analysis/实验报告/EXP-0015_record.md) | EXPERIMENT_RECORD：按词的可视性分配名额的题目查询（第 ⑨～⑫ 步第二轮，P10） |
 | [analysis/1a-4b_FastV不如随机选择.md](../analysis/1a-4b_FastV不如随机选择.md) | 1a–4b 机制分析：同预算下 FastV 为什么不如随机选择（第 1 轮，到 2b） |

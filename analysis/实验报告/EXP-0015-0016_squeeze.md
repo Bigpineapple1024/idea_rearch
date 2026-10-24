@@ -1,0 +1,77 @@
+# SQUEEZE_REPORT：EXP-0015、EXP-0016（按可视性分配名额；固定切分对照；128 档复验）
+
+深挖 ID：SQZ-EXP-0015-0016 / 输入实验记录：[EXP-0015](EXP-0015_record.md)、[EXP-0016](EXP-0016_record.md) / 日期：2026-10-25 / 执行者：Claude Code（实验室电脑，分支 code/token-pruning）。
+
+## 0. 交接元数据
+
+- 包类型：SQUEEZE_REPORT（research-pipeline-contract v1.0）。
+- 来源 IDs：EXP-0015-R01～R03、EXP-0016-R01～R05；参照 EXP-0014、EXP-0011、EXP-0002。
+- 证据状态：verified。8 次运行都有 SHA256SUMS 并已备份；分析目录 EXP-0015/visibility（b1af357f…）、EXP-0015/analysis（a44a3770…）、EXP-0016/analysis（3e4bb7c3…）已封存。
+- 缺失证据：第二个一般题目的 benchmark（VQAv2 验证集，待用户许可下载）；192 档（EXP-0017 进行中）。
+- 说明：EXP-0015 结束时只把结果写进了记录，没有单独的 squeeze；本报告补上，并与 EXP-0016 合并（两者回答同一组问题）。
+
+## 1. 事实与证据边界
+
+- **问题**：按词的可视性给 IDF 查询降权、并把名额按“可见占比”分给查询与强对照，能否让一般题目（MME）不再受损；它的收益来自可视性还是来自切分；结论能否跨预算。
+- **设计**：可视性只用 coco_dev 的 300 张图估计；64 档 A′+B+V 与固定切分 15 / 15 对比；128 档 A 与 A′+B+V 在 POPE、MME 上对比。全部规则在运行前写定。
+
+## 2. 主要结果
+
+| 结果 | 对照 | 差 | 不确定性 | 意义 |
+| --- | --- | --- | --- | --- |
+| 64 档 POPE A′+B+V 82.74 | A 66.90 | +15.84 | [14.59, 17.12] | 目标问题解决 |
+| 64 档 MME A′+B+V 1338.7 | A 1288.3 | +50.4 | [−10.6, +114.6] | 不显著 |
+| 64 档 MME A′+B+V | 固定切分 1320.0 | +18.7 | [−27.3, +65.7] | 可视性的贡献测不出 |
+| 128 档 POPE A′+B+V 84.71 | A 79.50 | +5.21 | [4.49, 6.02] | 跨预算成立；高于 VisionZip-128，与 SparseVLM-128 持平 |
+| 128 档 MME A′+B+V 1447.2 | A 1453.8 | −6.6 | [−55.7, +38.8] | 不变 |
+
+## 3. 深挖发现
+
+| 维度 | 发现 | 证据 | 稳健性 | 新信息 |
+| --- | --- | --- | --- | --- |
+| 中间量 | 可视性估计有噪声：“▁the”、“▁Graham” 排在 0.99，“▁dog” 0.73，“▁left” 0.06。“最大值 − 均值”可能受某些词向量在空间中偏“中心”（hubness）的影响，而不只是是否看得见 | visibility.md | 中 | 新 |
+| 中间量 | S 在 MME 各子任务上只在 0.44～0.66 之间，名字类（celebrity 0.52）与物体类（existence 0.55）几乎重合；实际效果接近“约一半按查询”的固定切分 | s_report.md | 高 | 新 |
+| 异质性 | 64 档相对 A：color +25、OCR +27.5、existence +10、position +10；celebrity −9.7、landmark −10.8。固定切分的子任务模式与之相近 | vis.md、0016.md | 中 | 新 |
+| 预算 | 预算从 64 到 128，POPE 上与 A 的差从 +15.8 缩到 +5.2；A 本身从 66.9 升到 79.5。与 F25 一致：保留数越多，与题目无关的选择越容易碰上物体 | 0016.md | 高 | 新（F37） |
+| 预算 | 128 档的强对照在 MME 上（1453.8）已高于 VisionZip-128（1432.4）、SparseVLM-128（1435.0）；题目查询没有再加分 | 0016.md | 中 | 新 |
+| 统计功效 | MME-P 的配对区间半宽约 50～65 分；即使把名字类子任务全部救回，64 档预计也只多约 +45～60，难以显著 | 各 analysis | 高 | 新 |
+
+## 4. 解释与不确定性
+
+- **最支持的解释**（AI）：一般题目上，把一部分名额留给与题目无关的选择，能保住名字类、场景类题目需要的整体信息；题目查询只在点名可见物体时有用。本项目的可视性估计没能区分这两类题，所以实际起作用的是切分。
+- **替代解释**：MME 题量小、区间宽，真实的小收益（约 +20～50）测不出来。
+- **不支持的强结论**：可视性加权有效；方法在一般题目上提升。
+
+## 5. 知识沉淀
+
+- **新现象**：F37（POPE 上的提升随预算增大而缩小：64 档 +15.8、128 档 +5.2）；F36 的解释修正为“收益主要来自切分”。
+- **已回答**：可视性（未显示贡献）、跨预算（POPE 成立，MME 不变）。
+- **更新位置**：已发现的实验现象（F36 修正、F37）、MODE_C-0002 回流 8、结果总表。
+
+## 6. 下一步决策
+
+1. **第二个一般题目的 benchmark**（题量大、区间窄）：VQAv2 验证集（COCO val2014 图像已在本地；题目与标注两个文件 13.3 MB，待用户许可）。
+2. **192 档复验**：EXP-0017 进行中。
+3. 若要改进可视性：用“峰值在图像间的离散程度”（95% 分位 − 中位数）代替“峰值水平”，去掉 hubness 的影响；需要先在开发集上看它能否区分名字与物体（开发集没有名字类题目，需要另找开发数据）。
+
+## 7. 回流到 deep-read Mode C 的输入包
+
+```text
+package_type: SQUEEZE_REPORT
+squeeze_id: SQZ-EXP-0015-0016
+input_experiment_record_ids: [EXP-0015, EXP-0016, EXP-0014]
+claim_scope: LLaVA-1.5-7B；层平均 64、128；POPE、MME
+data_quality_and_provenance_gaps: 无；EXP-0015 的 squeeze 补写
+primary_result_with_uncertainty: POPE 64 档 +15.84 [14.59, 17.12]、128 档 +5.21 [4.49, 6.02]；MME 64 档 +50.4 [−10.6, +114.6]、128 档 −6.6 [−55.7, +38.8]；可视性 − 固定切分 +18.7 [−27.3, +65.7]
+process_dynamics: 无（推理）
+mechanism_and_intermediate_findings: 可视性估计受 hubness 影响，S 分不开名字与物体；收益主要来自切分
+errors_heterogeneity_and_boundary_conditions: 名字类子任务仍略受损；POPE 收益随预算增大而缩小
+robustness_sensitivity_and_alternative_explanations: MME 区间宽，统计功效不足
+new_P: none
+new_F: [F37]
+new_M: [M15：一般题目上保留一部分与题目无关的名额，保住了整体信息（AI，切分对照支持）]
+evidence_index: [code/output/EXP-0015/analysis/vis.md, EXP-0015/visibility/, EXP-0016/analysis/0016.md]
+open_questions: [第二个一般题目 benchmark 上的结论, 192 档, 更干净的可视性估计]
+next_routes: [VQAv2 验证集（待许可）, EXP-0017]
+next_skill: deep-read Mode C
+```
