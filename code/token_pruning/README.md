@@ -26,6 +26,7 @@
 | check_layer_rows_log.py | `--layer-rows-log` 的 CPU 自检：在随机小 LLaVA 上确认题目句与物体名的 token 区间正确，记录的各项与直接重算一致，不改变生成结果，写出与读回一致 | 见 EXP-0011 记录 |
 | prompt_spans.py | 从 LLaVA prompt 中图像之后的 token 找出 POPE 式题目句和物体名的 token 区间（与 analyze_text_rows.py 的规则相同） | 随 check_layer_rows_log.py 自检 |
 | check_object_cos.py | D3 选项的 CPU 自检：打分等于输入 embedding 的余弦，保留集合等于离线规则（排除填充区后的分块轮流取），填充区掩码与 analyze_object_boxes 相同，参数检查 | CPU 已运行，12 项通过（2026-10-24）；同时复跑了 check_text_rows_log、check_layer_rows_log、check_fastv_equivalence（相对差 ≤ 3.1e-7） |
+| analyze_d3.py | EXP-0011 D3 的分析：POPE F1（原始标注与 RePOPE）、配对 bootstrap 差、保留集合在被问物体上的命中率、剂量关系、按大小五分位的新漏答率；先核对每个运行的重算 F1 与登记值一致 | code/output/EXP-0011/d3_pope |
 | analyze_layer_rows.py | EXP-0011 D2b 的离线统计（第 2 版）：参与判定的算子（第 0 层注意力、逐 head、归一化后平均、输入与前两层输出的余弦）与更深层的描述项，在分块 + 排除填充区下的小物体命中率、P1、P2、物体 AUC；先用 R02 自检 | code/output/EXP-0011/d2b_coco_dev_v2（第 1 版的输出在 d2b_coco_dev，AUC 有缺陷） |
 | analyze_text_rows.py | EXP-0011 D2 的离线统计：第 1 层三种打分（最后一个 token、题目句、物体名）的同图不同题 Jaccard（P1）、物体对准比值（P2）、24 种模拟选择的小物体命中率（P3）和剂量关系；先用模拟复现运行的保留集合作自检 | code/output/EXP-0011/d2_coco_dev（开发集）、d2_pope |
 | make_coco_dev.py | EXP-0011 的开发集：COCO val2014 中 POPE 没用到的 300 张图，按 POPE 的方式出 1800 题（种子 0），在它上面做选择，POPE 只作测试集 | 已生成（data/llava_eval/pope/llava_coco_dev*.jsonl，校验和在 llava_coco_dev.SHA256SUMS） |
