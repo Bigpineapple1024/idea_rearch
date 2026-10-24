@@ -14,7 +14,7 @@ baseline 按用户偏好选近三年、有源码、效果比当前最好的方�
 | 主 baseline 与依据 | FastV（ECCV 2024，有源码）：同等预算下弱于 VisionZip、SparseVLM，后续工作普遍以它为对照；骨架模型 LLaVA-1.5-7B | iTransformer（ICLR 2024，有源码，MIT）：论文报告 ETTh1（回看 96）平均 MSE 0.454，弱于 2025 年方法（约 0.44，均为论文报告值）；备选 CycleNet（NeurIPS 2024） |
 | 对照与组合实验素材 | VisionZip、SparseVLM | DUET、TQNet、WPMixer |
 | 数据 | POPE（COCO val2014）、MME 为主；GQA、TextVQA 用于独立验证 | ETTh1/ETTh2/ETTm1/ETTm2、Weather、Electricity、Traffic（iTransformer 的标准划分；与 TFB 预处理版逐值比对后再跨框架比较） |
-| 主指标 | POPE 三子集 F1 均值（同时报告准确率、yes 比例和召回率）、MME 感知分；同时报告理论 FLOPs、实测每层 token 数与每题耗时 | MSE、MAE（全部测试窗口计分），3 个种子的均值 ± 标准差 |
+| 主指标 | POPE 三子集 F1 均值（同时报告准确率、yes 比例和召回率；原始标注与 RePOPE 修订标注各报一次，DEC-0017）、MME 感知分；同时报告理论 FLOPs、实测每层 token 数与每题耗时 | MSE、MAE（全部测试窗口计分），3 个种子的均值 ± 标准差 |
 | 普遍性要求 | 至少两个 benchmark 上现象一致 | 至少两个数据集上现象一致 |
 
 共同项：
