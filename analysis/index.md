@@ -102,6 +102,7 @@
 | [analysis/实验报告/EXP-0013_squeeze.md](../analysis/实验报告/EXP-0013_squeeze.md) | SQUEEZE_REPORT：EXP-0013（选择丢掉“没有”的证据 F31；F1 下最优阈值偏向 yes F32；对比打分 F33） |
 | [analysis/实验报告/EXP-0014_record.md](../analysis/实验报告/EXP-0014_record.md) | EXPERIMENT_RECORD：IDF 加权的题目查询，第 ⑫ 步的 A / A′ / A′+B / A+B（POPE、MME） |
 | [analysis/实验报告/EXP-0014_squeeze.md](../analysis/实验报告/EXP-0014_squeeze.md) | SQUEEZE_REPORT：EXP-0014（POPE 上复现物体名查询 F34；MME 名字类受损 F35） |
+| [analysis/实验报告/EXP-0018_record.md](../analysis/实验报告/EXP-0018_record.md) | EXPERIMENT_RECORD：VQAv2 验证集子集上的一般题目检验（第 ⑫ 步第五轮） |
 | [analysis/实验报告/EXP-0017_record.md](../analysis/实验报告/EXP-0017_record.md) | EXPERIMENT_RECORD：192 档复验（第 ⑫ 步第四轮） |
 | [analysis/实验报告/EXP-0015-0016_squeeze.md](../analysis/实验报告/EXP-0015-0016_squeeze.md) | SQUEEZE_REPORT：EXP-0015、EXP-0016（收益主要来自切分；POPE 提升随预算缩小 F37） |
 | [analysis/实验报告/EXP-0016_record.md](../analysis/实验报告/EXP-0016_record.md) | EXPERIMENT_RECORD：可视性与切分的拆分，以及 128 档复验（第 ⑫ 步第三轮） |
