@@ -17,6 +17,7 @@
 | analyze_exp0002.py | 从运行目录生成 EXP-0002 的全部分析表（code/output/EXP-0002/analysis/） | EXP-0002 |
 | squeeze_exp0002.py | SQZ-EXP-0002 的探索性检查：答案格式、FastV 与随机的逐题对照、按物体的召回率 | EXP-0002 |
 | analyze_object_boxes.py、analyze_object_boxes_extra.py | 用 COCO val2014 物体框分析已有 POPE 运行（不跑模型）：①按物体大小、竖直位置统计漏答率；② pope_img20 上保留的 patch 落在填充区与被问物体上的比例；③ COCO 中没有同名实例的正样本。图像按 LLaVA 的 `expand2square` 映射到 24×24 网格。在 Windows 控制台用 `python -I -X utf8` 运行 | 第 ⑧ 步的分析：code/output/EXP-0002/deepdive3（1A4B-0003） |
+| analyze_repope.py | 用 RePOPE（YanNeu/RePOPE@bcf22e56）的修订标注重算全部已完成的 POPE 运行：三个 split 的 F1 均值、配对差的 bootstrap 区间；先用原始标注复现每次运行登记的主指标作自检 | code/output/EXP-0002/deepdive4（DEC-0017） |
 | prepare_eval_data.sh | 下载并校验 POPE 标注、COCO val2014、MME 图像和 LLaVA eval.zip | 实验室电脑已运行 |
 | run_pope_mme.sh | 早期的批量评测脚本 | 只检查过 DRY_RUN 输出；EXP-0002 改用 exp0002.py |
 | smoke_test.py | 用随机小 LLaVA 走一遍官方 generate()，打印每层视觉 token 数 | CPU 已运行，可复现 |
