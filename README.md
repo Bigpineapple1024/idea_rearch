@@ -2,10 +2,10 @@
 
 从论文阅读、问题发现、实验验证到论文写作的可追溯工作区。
 
-**当前状态（2026-10-23）：**两条方向并行，均处于“复现 baseline”阶段。baseline 按用户偏好选近三年、有源码、效果比当前最好的方法差一点的工作（DEC-0012）。
+**当前状态（2026-10-24）：**视觉 token 剪枝在研究流程第 ⑧ 步第 3 轮（压误报，EXP-0013），之后按流程进入第 ⑨～⑫ 步（DEC-0023）；时序预测在第 ⑦ 步后暂停（DEC-0020）。baseline 按用户偏好选近三年、有源码、效果比当前最好的方法差一点的工作（DEC-0012）。最新结果见[最新实验分析报告](analysis/最新实验分析报告.md)。
 
-- **视觉 token 剪枝**：主 baseline 为 FastV（LLaVA-1.5-7B），VisionZip、SparseVLM 为对照。代码已在 CPU 上核验（EXP-0001），GPU 复现（EXP-0002）待执行。
-- **时序预测**：主 baseline 为 iTransformer（备选 CycleNet），DUET、TQNet、WPMixer 为对照。三篇对照已在 CPU 上用 ETTh1 真实运行（EXP-0003）；iTransformer 待在实验室 GPU 上复现。
+- **视觉 token 剪枝**：主 baseline 为 FastV（LLaVA-1.5-7B），VisionZip、SparseVLM 为对照。GPU 复现 EXP-0002 完成；第 ④～⑦ 步的诊断见 EXP-0006～EXP-0010；第 ⑧ 步第 2 轮（EXP-0011）发现输入层的物体名 embedding 余弦能保住被问的小物体，同一预算下 POPE F1 从 64.66 升到 83.63，代价是误报增加（F30）。
+- **时序预测**：主 baseline 为 iTransformer（备选 CycleNet），DUET、TQNet、WPMixer 为对照。iTransformer 复现（EXP-0004，记为偏差，DEC-0018）、对照重跑（EXP-0005）、验证期预测（EXP-0009）与候选 1 的 CPU 诊断（EXP-0012）已完成；方向暂停中。
 
 六篇论文已有原文笔记和源码核验补充，见[论文笔记](analysis/论文笔记/README.md)、[六篇总结与趋势](analysis/六篇论文总结与视觉Token压缩趋势.md)、[视觉 Mode C](analysis/视觉Token压缩_ModeC.md)。
 
