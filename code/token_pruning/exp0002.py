@@ -46,6 +46,10 @@ BENCHES = {
     # choices are made here so POPE stays a test set; not scored by score_pope_mme.py
     "coco_dev": {"question_file": f"{DATA}/llava_eval/pope/llava_coco_dev.jsonl",
                  "image_folder": f"{DATA}/coco/val2014", "annotations": [], "score": False},
+    # selection set for EXP-0013: coco_dev plus POPE's popular and adversarial negatives on the same 300 images
+    # (make_coco_dev3.py); scored offline by analyze_fp.py, not by score_pope_mme.py
+    "coco_dev3": {"question_file": f"{DATA}/llava_eval/pope/llava_coco_dev3.jsonl",
+                  "image_folder": f"{DATA}/coco/val2014", "annotations": [], "score": False},
 }
 # Budgets are 32-layer averages of visual tokens (code/token_pruning/README.md, "预算的口径").
 FASTV_KEEP = {192: 166, 128: 98, 64: 30}
@@ -88,6 +92,11 @@ for b in (192, 128, 64):
     CONFIGS[f"fastv{b}_objcos_strat_nopad"] = ("tp", CONFIGS[f"fastv{b}"][1] + [
         "--fastv-stratify", "6", "--fastv-score", "object_cos", "--fastv-exclude-padding"])
     CONFIGS[f"fastv{b}_prior_strat_nopad"] = ("tp", CONFIGS[f"fastv{b}_prior_strat"][1] + ["--fastv-exclude-padding"])
+# EXP-0013: the same budget split between the two rankings: mix<n> keeps n tokens by the object-name cosine and the rest
+# by the strong baseline's score (prior, blocks, padding never kept), the second rotation filling the empty blocks first
+for n in (20, 15, 10):
+    CONFIGS[f"fastv64_mix{n}"] = ("tp", CONFIGS["fastv64_prior_strat_nopad"][1] + [
+        "--fastv-score", "mix", "--fastv-mix-question", str(n)])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
@@ -104,6 +113,13 @@ CONFIGS.update({f"{name}_logits": CONFIGS[name] for name in BASE if not name.sta
 # EXP-0011 D2b: vanilla with --layer-rows-log (attention rows at several layers, per-head rows at layers 0-1 and
 # hidden-state similarities of the question spans); the prefill runs the eager kernel, so answers may differ slightly
 CONFIGS["vanilla_layerrows"] = CONFIGS["vanilla"]
+# EXP-0013: "<config>_ksl" logs the kept patches, the first stage's score vector and the first answer token's
+# log-probabilities in one run; "<config>_kl" the kept patches and the log-probabilities; "vanilla_names" is vanilla with
+# the log-probabilities and the input-embedding cosine of every image token to the 80 COCO names. None of them changes
+# the computation.
+CONFIGS.update({f"{name}_ksl": CONFIGS[name] for name in BASE if name.startswith("fastv")})
+CONFIGS.update({f"{name}_kl": CONFIGS[name] for name in BASE if name.startswith("fastv64_mix")})
+CONFIGS["vanilla_names"] = CONFIGS["vanilla"]
 
 
 def experiment(run_id):
@@ -167,6 +183,14 @@ def run_one(run_id, config, bench):
         method_args = method_args + ["--answer-logit-log", f"{run_dir}/answer_logits.json"]
     if config.endswith("_layerrows"):
         method_args = method_args + ["--layer-rows-log", f"{run_dir}/layer_rows.npz"]
+    if config.endswith(("_ksl", "_kl")):
+        method_args = method_args + ["--kept-token-log", f"{run_dir}/kept_tokens.json",
+                                     "--answer-logit-log", f"{run_dir}/answer_logits.json"]
+    if config.endswith("_ksl"):
+        method_args = method_args + ["--score-log", f"{run_dir}/scores.npy"]
+    if config.endswith("_names"):
+        method_args = method_args + ["--answer-logit-log", f"{run_dir}/answer_logits.json",
+                                     "--name-cos-log", f"{run_dir}/name_cos.npz"]
     eval_cmd = ("cd {here} && HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TQDM_MININTERVAL=30 VISIONZIP_ROOT={vz} "
                 "python run_eval.py {margs} -- --model-path {model} --question-file {q} --image-folder {img} "
                 "--answers-file {ans} --temperature 0 --conv-mode vicuna_v1").format(
@@ -238,6 +262,15 @@ def run_one(run_id, config, bench):
             json.dump({"benchmark": bench, "headline": "n_prefills", "n_prefills": int(scores.shape[0]),
                        "n_questions": n_questions, "n_image_tokens": int(scores.shape[1])}, f, indent=2)
         status["score_exit"] = 0 if scores.shape[0] == n_questions else 1
+    elif status["eval_exit"] == 0 and os.path.exists(f"{run_dir}/answer_logits.json"):
+        with open(f"{run_dir}/answer_logits.json") as f:              # unscored diagnostic: log-probabilities only
+            logits = json.load(f)
+        with open(b["question_file"]) as f:
+            n_questions = sum(1 for _ in f)
+        with open(f"{run_dir}/metrics.json", "w") as f:
+            json.dump({"benchmark": bench, "headline": "n_prefills", "n_prefills": logits["n_prefills"],
+                       "n_questions": n_questions}, f, indent=2)
+        status["score_exit"] = 0 if logits["n_prefills"] == n_questions else 1
     status["end"] = now()
     status["status"] = "completed" if status.get("score_exit") == 0 else "failed"
     with open(f"{run_dir}/status.json", "w") as f:

@@ -33,6 +33,8 @@ from transformers.modeling_outputs import BaseModelOutputWithPast
 from fastv_llava import _record_image_span, apply_fastv
 from prompt_spans import question_spans
 
+COCO_INSTANCES = os.environ.get("COCO_INSTANCES", "D:/6CJNM007/data/coco/annotations/instances_val2014.json")
+
 
 def _schedule(text):
     stages = [tuple(int(x) for x in part.split(":")) for part in text.split(",")]
@@ -77,11 +79,17 @@ def parse():
                       help="diagnostic, fastv only: .npy with one value per image patch; scores are divided by it")
     ours.add_argument("--fastv-stratify", type=int, default=None,
                       help="diagnostic, fastv only: take the ranking in turns from an n x n grid of image blocks")
-    ours.add_argument("--fastv-score", choices=["last", "object_cos"], default="last",
+    ours.add_argument("--fastv-score", choices=["last", "object_cos", "mix"], default="last",
                       help="fastv: rank by the last token's attention at layer K-1 (FastV), or, for POPE-style questions, "
-                           "by the cosine of each image token's input embedding to the object name's (EXP-0011 D3)")
+                           "by the cosine of each image token's input embedding to the object name's (EXP-0011 D3), or "
+                           "keep --fastv-mix-question tokens by that cosine and the rest by FastV's score (EXP-0013)")
+    ours.add_argument("--fastv-mix-question", type=int, default=None,
+                      help="fastv, --fastv-score mix: number of kept tokens chosen by the object-name cosine")
     ours.add_argument("--fastv-exclude-padding", action="store_true",
                       help="fastv: never keep patches lying wholly in the padding of LLaVA's square image (EXP-0011 D3)")
+    ours.add_argument("--name-cos-log", default=None,
+                      help="diagnostic: per image, the cosine of every image token's input embedding to the mean input "
+                           "embedding of each COCO category name as it appears in a POPE question (.npz, EXP-0013)")
     argv = sys.argv[1:]
     split = argv.index("--") if "--" in argv else len(argv)
     method_args = ours.parse_args(argv[:split])
@@ -115,6 +123,13 @@ def parse():
         ours.error("--fastv-score and --fastv-exclude-padding need --method fastv")
     if method_args.fastv_score == "object_cos" and (method_args.text_rows_log or method_args.fastv_score_prior):
         ours.error("--fastv-score object_cos has no attention rows to log and takes no position prior")
+    if (method_args.fastv_score == "mix") != (method_args.fastv_mix_question is not None):
+        ours.error("--fastv-score mix and --fastv-mix-question go together")
+    if method_args.fastv_score == "mix" and (method_args.text_rows_log or not method_args.fastv_stratify
+                                             or method_args.fastv_schedule):
+        ours.error("--fastv-score mix needs --fastv-stratify, a single stage and no --text-rows-log")
+    if method_args.name_cos_log and method_args.method in ("visionzip", "sparsevlm"):
+        ours.error("--name-cos-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     if method_args.method == "sparsevlm":
         if method_args.retained_tokens is None:
             ours.error("--method sparsevlm needs --retained-tokens")
@@ -130,11 +145,12 @@ def apply_method(model, m, tokenizer=None):
         prior_path = getattr(m, "fastv_score_prior", None)
         prior = torch.from_numpy(np.load(prior_path)) if prior_path else None
         score_kind = getattr(m, "fastv_score", "last")
-        span = (lambda ids: question_spans(tokenizer, ids)[1]) if score_kind == "object_cos" else None
+        span = (lambda ids: question_spans(tokenizer, ids)[1]) if score_kind in ("object_cos", "mix") else None
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule, score_prior=prior,
                            stratify=getattr(m, "fastv_stratify", None),
                            log_text_rows=bool(getattr(m, "text_rows_log", None)), score_kind=score_kind,
-                           object_span=span, exclude_padding=bool(getattr(m, "fastv_exclude_padding", False)))
+                           object_span=span, exclude_padding=bool(getattr(m, "fastv_exclude_padding", False)),
+                           mix_question=getattr(m, "fastv_mix_question", None))
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "visionzip":
@@ -177,6 +193,7 @@ def _write_layer_tokens(path, n_layers):
 
 _KEPT = []                   # one list per prefill: indices (0..n_img-1, row-major patch order) of the kept image tokens
 _KEPT_N_IMG = set()          # image-token count of each prefill (576 for LLaVA-1.5 at 336 px)
+_KEPT_QUESTION = []          # --fastv-score mix: the kept patches chosen by the object-name cosine, per prefill
 
 
 def _record_kept(module, args, kwargs, output):
@@ -184,11 +201,69 @@ def _record_kept(module, args, kwargs, output):
     if embeds is not None and embeds.shape[1] > 1:      # prefill only: generate() decodes from input_ids
         _KEPT.append(module.fastv_kept_image_positions.tolist())
         _KEPT_N_IMG.add(int(module.fastv_image_span[1]))
+        if getattr(module, "fastv_score_kind", None) == "mix":
+            _KEPT_QUESTION.append(module.fastv_kept_question_positions.tolist())
 
 
 def _write_kept(path, keep):
+    record = {"n_prefills": len(_KEPT), "keep": keep, "n_image_tokens": sorted(_KEPT_N_IMG), "kept": _KEPT}
+    if _KEPT_QUESTION:
+        record["kept_by_object_name"] = _KEPT_QUESTION
     with open(path, "w") as f:
-        json.dump({"n_prefills": len(_KEPT), "keep": keep, "n_image_tokens": sorted(_KEPT_N_IMG), "kept": _KEPT}, f)
+        json.dump(record, f)
+
+
+_NAME_COS = {"cos": [], "index": [], "seen": {}}     # one (576, n_names) array per distinct image, an index per prefill
+
+
+def _name_token_ids(tokenizer, names, conv_mode):
+    """The ids of each name inside a POPE question, from the prompt exactly as model_vqa_loader builds it."""
+    from llava.constants import DEFAULT_IMAGE_TOKEN, IMAGE_TOKEN_INDEX
+    from llava.conversation import conv_templates
+    from llava.mm_utils import tokenizer_image_token
+    out = {}
+    for name in names:
+        question = f"Is there {'an' if name[0] in 'aeiou' else 'a'} {name} in the image?"
+        conv = conv_templates[conv_mode].copy()
+        conv.append_message(conv.roles[0], DEFAULT_IMAGE_TOKEN + "\n" + question
+                            + "\nAnswer the question using a single word or phrase.")
+        conv.append_message(conv.roles[1], None)
+        ids = tokenizer_image_token(conv.get_prompt(), tokenizer, IMAGE_TOKEN_INDEX)
+        after = ids[ids.index(IMAGE_TOKEN_INDEX) + 1:]
+        _, o_idx, found = question_spans(tokenizer, after)
+        if found != name:
+            raise RuntimeError(f"name span of {name!r} reads {found!r}")
+        out[name] = [after[i] for i in o_idx]
+    return out
+
+
+def _log_name_cos(lm, name_ids):
+    """Forward hook on the LlamaModel: at each prefill, the cosine of every image token's input embedding to each name's
+    mean input embedding (context-free lookups, as the object-name score uses), stored once per distinct image."""
+    names = list(name_ids)
+    weight = lm.embed_tokens.weight
+    name_emb = torch.stack([weight[torch.tensor(name_ids[n], device=weight.device)].float().mean(0) for n in names])
+    name_emb = torch.nn.functional.normalize(name_emb, dim=-1)
+
+    def hook(module, args, kwargs, output):
+        embeds = kwargs.get("inputs_embeds")
+        if embeds is None or embeds.shape[1] == 1:
+            return
+        start, n_img = module.fastv_image_span
+        img = embeds[0, start:start + n_img].float()
+        key = (n_img, float(img.sum()), float((img * img).sum()), float(img[0, 0]), float(img[-1, -1]))
+        if key not in _NAME_COS["seen"]:
+            _NAME_COS["seen"][key] = len(_NAME_COS["cos"])
+            _NAME_COS["cos"].append((torch.nn.functional.normalize(img, dim=-1) @ name_emb.T).cpu().numpy())
+        _NAME_COS["index"].append(_NAME_COS["seen"][key])
+
+    lm.register_forward_hook(hook, with_kwargs=True)
+    return names
+
+
+def _write_name_cos(path, names, name_ids):
+    np.savez_compressed(path, cos=np.stack(_NAME_COS["cos"]).astype(np.float16), index=np.array(_NAME_COS["index"]),
+                        names=np.array(names), name_ids=np.array([json.dumps(name_ids[n]) for n in names]))
 
 
 _SCORES = []                 # one vector per prefill: FastV's score of every image patch, before any prior
@@ -324,6 +399,13 @@ def main():
         if method_args.layer_rows_log:
             _record_image_span(model)
             _log_layer_rows(model.get_model(), tokenizer)
+        if method_args.name_cos_log:
+            if method_args.method == "vanilla" and not method_args.layer_rows_log:
+                _record_image_span(model)                # FastV and random record the image span themselves
+            with open(COCO_INSTANCES, encoding="utf-8") as f:
+                names = [c["name"] for c in sorted(json.load(f)["categories"], key=lambda c: c["id"])]
+            times["name_ids"] = _name_token_ids(tokenizer, names, llava_args.conv_mode)
+            times["names"] = _log_name_cos(model.get_model(), times["name_ids"])
         torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
         times["loaded"] = time.time()                # evaluation timing starts after loading
@@ -371,6 +453,8 @@ def main():
         _write_logits(method_args.answer_logit_log, times["answer_ids"])
     if method_args.layer_rows_log:
         _write_layer_rows(method_args.layer_rows_log)
+    if method_args.name_cos_log:
+        _write_name_cos(method_args.name_cos_log, times["names"], times["name_ids"])
 
 
 if __name__ == "__main__":

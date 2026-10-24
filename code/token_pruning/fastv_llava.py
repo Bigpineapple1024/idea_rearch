@@ -24,6 +24,8 @@ With score_kind="object_cos" (EXP-0011 D3, POPE-style questions), the ranking is
 image token's input embedding to the mean input embedding of the object name's tokens (object_span maps the ids after
 the image to their indices); no attention map is needed. With exclude_padding, patches lying wholly in the padding of
 LLaVA's centred square image (expand2square) are never kept. Without either option the computation is as before.
+With score_kind="mix" (EXP-0013, blocks only), mix_question of the kept tokens are taken by the object-name cosine and the
+rest by FastV's (prior-divided) attention score, the second rotation filling the blocks the first left empty.
 """
 import types
 
@@ -47,19 +49,22 @@ def _causal_mask(hidden):
     return modeling_llama._prepare_4d_causal_attention_mask(None, (1, n), hidden, 0)
 
 
-def _stratified_top(score, k, patches, side, blocks):
+def _block_of(patches, side, blocks):
+    return ((patches // side) * blocks // side * blocks + (patches % side) * blocks // side).tolist()
+
+
+def _stratified_top(score, k, patches, side, blocks, taken=None):
     """Indices of k scores taken in turns from a blocks x blocks grid over the side x side patch image: first the best
-    patch of every block, then every block's second best, and so on, each round in order of score."""
-    block_row = (patches // side) * blocks // side
-    block_col = (patches % side) * blocks // side
-    cell = (block_row * blocks + block_col).tolist()
+    patch of every block, then every block's second best, and so on, each round in order of score. taken counts patches
+    already kept per block; those blocks then wait until the empty ones have their turn."""
+    cell = _block_of(patches, side, blocks)
     s = score.float().tolist()
-    taken, rank = {}, [0] * len(s)
+    taken, rank = dict(taken or {}), [0] * len(s)
     for i in sorted(range(len(s)), key=lambda i: -s[i]):
         rank[i] = taken.get(cell[i], 0)
         taken[cell[i]] = rank[i] + 1
     chosen = sorted(range(len(s)), key=lambda i: (rank[i], -s[i]))[:k]
-    return torch.tensor(chosen, device=score.device)
+    return torch.tensor(chosen, dtype=torch.long, device=score.device)
 
 
 def _padding_mask(width, height, side):
@@ -97,10 +102,11 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
     hidden = inputs_embeds
     attn = None
     object_cos = self.fastv_score_kind == "object_cos"
+    mix = self.fastv_score_kind == "mix"
     if prefill:
         start, n_img = self.fastv_image_span
         kept = torch.arange(n_img, device=hidden.device)       # original patch index of each image token still present
-        if object_cos:                                         # question-aware score from the input embeddings
+        if object_cos or mix:                                  # question-aware score from the input embeddings
             obj = [start + n_img + i for i in self.fastv_object_span(self.fastv_text_after_ids)]
             h = inputs_embeds[0].float()
             self.fastv_object_cos = torch.nn.functional.cosine_similarity(
@@ -126,7 +132,18 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
                 score = score.to(hidden.device)
             pos = allowed[kept].nonzero().squeeze(1)           # positions among the present image tokens that may stay
             count = min(stages[idx], pos.numel())
-            if self.fastv_stratify is None:
+            if mix:                                            # part by the object name, the rest by FastV's score
+                side, blocks = round(n_img ** 0.5), self.fastv_stratify
+                n_q = min(self.fastv_mix_question, count)
+                first = pos[_stratified_top(self.fastv_object_cos[kept][pos], n_q, kept[pos], side, blocks)]
+                rest = pos[~torch.isin(pos, first)]
+                filled = {}
+                for cell in _block_of(kept[first], side, blocks):
+                    filled[cell] = filled.get(cell, 0) + 1
+                second = rest[_stratified_top(score[rest], count - n_q, kept[rest], side, blocks, filled)]
+                top = torch.cat((first, second)).sort().values
+                self.fastv_kept_question_positions = kept[first].sort().values
+            elif self.fastv_stratify is None:
                 top = pos[score[pos].topk(count).indices].sort().values
             else:
                 side = round(n_img ** 0.5)
@@ -173,7 +190,7 @@ def _record_image_span(model):
 
 
 def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
-               score_kind="last", object_span=None, exclude_padding=False):
+               score_kind="last", object_span=None, exclude_padding=False, mix_question=None):
     """Turn a transformers LlamaModel into FastV in place (image span set by the caller).
 
     seed=None keeps FastV's attention ranking; an integer selects random image tokens from that seed.
@@ -185,12 +202,19 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
     log_text_rows keeps the first stage's attention rows of the text after the image (diagnostic, FastV ranking only).
     score_kind "object_cos" ranks by the input-embedding cosine to the object name, whose token indices among the ids
     after the image object_span returns; exclude_padding never keeps patches lying wholly in the square's padding.
+    score_kind "mix" keeps mix_question tokens by that cosine and the rest by FastV's score (after score_prior, if any),
+    both taken in blocks (stratify required, single stage).
     """
-    if score_kind not in ("last", "object_cos"):
+    if score_kind not in ("last", "object_cos", "mix"):
         raise ValueError(f"unknown score_kind {score_kind!r}")
     if score_kind == "object_cos" and (object_span is None or seed is not None or score_prior is not None or log_text_rows):
         raise ValueError("object_cos needs object_span and takes no seed, position prior or attention-row log")
+    if score_kind == "mix" and (object_span is None or seed is not None or stratify is None or log_text_rows
+                                or mix_question is None or not 0 <= mix_question <= keep or schedule):
+        raise ValueError("mix needs object_span, stratify and 0 <= mix_question <= keep; no seed, schedule or row log")
     llama_model.fastv_score_kind = score_kind
+    llama_model.fastv_mix_question = mix_question
+    llama_model.fastv_kept_question_positions = None
     llama_model.fastv_object_span = object_span
     llama_model.fastv_exclude_padding = exclude_padding
     llama_model.fastv_score_prior = None if score_prior is None else score_prior.float()
@@ -213,9 +237,9 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
 
 
 def apply_fastv(model, k=2, keep=288, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
-                score_kind="last", object_span=None, exclude_padding=False):
+                score_kind="last", object_span=None, exclude_padding=False, mix_question=None):
     """Enable FastV (or its random-selection control when seed is given) on a loaded LlavaLlamaForCausalLM."""
     bind_fastv(model.get_model(), k, keep, seed, schedule, score_prior, stratify, log_text_rows, score_kind, object_span,
-               exclude_padding)
+               exclude_padding, mix_question)
     _record_image_span(model)
     return model
