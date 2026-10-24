@@ -106,6 +106,7 @@
 | [analysis/审计记录_第12步_2026-10-25.md](../analysis/审计记录_第12步_2026-10-25.md) | 第 ⑫ 步结论的独立审计与修正（DEC-0030） |
 | [analysis/IDEA-0003_按题目句式路由.md](../analysis/IDEA-0003_按题目句式路由.md) | IDEA_PACKAGE：按题目句式路由（助动词或 how many 开头的题用题目查询，其余用强对照；P11） |
 | [analysis/实验报告/EXP-0020_record.md](../analysis/实验报告/EXP-0020_record.md) | EXPERIMENT_RECORD：按题目句式路由在新抽的 VQAv2 test2 上的预注册确认（第 ⑫ 步第六轮） |
+| [analysis/实验报告/EXP-0021_record.md](../analysis/实验报告/EXP-0021_record.md) | EXPERIMENT_RECORD：VQAv2 test2 的补全（192 档路由；128 档参照） |
 | [analysis/实验报告/EXP-0018_squeeze.md](../analysis/实验报告/EXP-0018_squeeze.md) | SQUEEZE_REPORT：EXP-0018（答案类型上效应相反 F38；损失集中在问点名物体属性的题 F39；一般题目上 FastV 一族低于 VisionZip F40） |
 | [analysis/实验报告/EXP-0019_record.md](../analysis/实验报告/EXP-0019_record.md) | EXPERIMENT_RECORD：审计要求的补充（A+B 的对照；最终方法的区分力） |
 | [analysis/实验报告/EXP-0018_record.md](../analysis/实验报告/EXP-0018_record.md) | EXPERIMENT_RECORD：VQAv2 验证集子集上的一般题目检验（第 ⑫ 步第五轮） |

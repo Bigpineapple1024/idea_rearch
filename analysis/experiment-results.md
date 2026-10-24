@@ -25,6 +25,7 @@
 | EXP-0017 | IDEA-0002 | 192 档复验 A′+B+V 与 A（POPE、MME） | [EXP-0017_record](实验报告/EXP-0017_record.md)（计划 v1） | 记录内（三档汇总见 DEC-0029） | completed（192 档 POPE +2.29，MME −20.6 不显著） |
 | EXP-0018 | IDEA-0002 | VQAv2 验证集子集（5246 题）上的一般题目检验：A′+B+V 与 A（64、128 档）及参照 | [EXP-0018_record](实验报告/EXP-0018_record.md)（计划 v1） | [SQZ-EXP-0018](实验报告/EXP-0018_squeeze.md) | completed（Q1、Q2 不成立：64 档 −0.74 [−1.70, +0.20]、128 档 −0.20，差异不显著；64 档 yes/no +1.70、other −3.43，F38～F40；R01 vanilla 失败，R09 重跑 76.69） |
 | EXP-0020 | IDEA-0003 | 按题目句式路由（助动词或 how many 开头 → A′+B+V，其余 → A）在新抽的 VQAv2 test2（5415 题）上的预注册确认（64、128 档），加参照 | [EXP-0020_record](实验报告/EXP-0020_record.md)（计划 v1～v1.2） | 待做 | running（2026-10-25 07:38 起，代码 commit 9ceacd1） |
+| EXP-0021 | IDEA-0003 | VQAv2 test2 的补全：192 档路由与 A，128 档 VisionZip、SparseVLM 参照（只作描述） | [EXP-0021_record](实验报告/EXP-0021_record.md)（计划 v1） | 待做 | planned（排在 EXP-0020 之后） |
 | EXP-0019 | IDEA-0002 | 审计补充：A+B 的无先验对照；最终方法的 margin AUC（POPE） | [EXP-0019_record](实验报告/EXP-0019_record.md)（计划 v1） | 记录内 | completed（A+B − A₀ +0.56 [−0.70, +1.96]：适配必要得到支持；A′+B+V 的 AUC 比 vanilla 低 0.018～0.034、比 A 高，误报偏多，F41） |
 
 ## 全部运行
