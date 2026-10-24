@@ -9,7 +9,7 @@
 
 六篇论文已有原文笔记和源码核验补充，见[论文笔记](analysis/论文笔记/README.md)、[六篇总结与趋势](analysis/六篇论文总结与视觉Token压缩趋势.md)、[视觉 Mode C](analysis/视觉Token压缩_ModeC.md)。
 
-流程规范见[研究流程 v2.0](analysis/研究流程.md)，入口见[文档索引](analysis/index.md)。在实验室电脑上开新会话先读[交接说明](analysis/实验室会话交接.md)；实验室电脑上的所有文件只放在 `D:\6CJNM007`。
+流程规范见[研究流程 v2.1](analysis/研究流程.md)，入口见[文档索引](analysis/index.md)。在实验室电脑上开新会话先读[交接说明](analysis/实验室会话交接.md)；实验室电脑上的所有文件只放在 `D:\6CJNM007`。
 
 ## 目录与维护边界
 
