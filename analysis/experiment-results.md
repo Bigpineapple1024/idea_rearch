@@ -20,6 +20,7 @@
 | EXP-0012 | none | 96 步输入下，未来窗口的水平能否用简单统计量预测（时序候选 1 的 CPU 诊断，不训练神经网络；DEC-0020） | [EXP-0012_record](实验报告/EXP-0012_record.md) | [SQZ-EXP-0012](实验报告/EXP-0012_squeeze.md) | completed（按预设规则为高；两个支持数据集是同一台变压器，另一台上大幅变差，DEC-0021） |
 | EXP-0013 | none | 题目相关的选择为什么多出误报（F30），能否在同一预算下压下去（第 ⑧ 步第 3 轮；挑选在 coco_dev3 上做，POPE 只作测试） | [EXP-0013_record](实验报告/EXP-0013_record.md)（计划 v1） | [SQZ-EXP-0013](实验报告/EXP-0013_squeeze.md) | completed（没有修正通过开发集门槛，R09 未运行；误报伴随区分力下降，F31～F33） |
 | EXP-0014 | IDEA-0002 | 第 ⑫ 步：IDF 加权的题目查询（A′+B）与 A、A′、A+B 在 POPE、MME 上的比较（任意题目，不需要物体名的位置） | [EXP-0014_record](实验报告/EXP-0014_record.md)（计划 v1） | [SQZ-EXP-0014](实验报告/EXP-0014_squeeze.md) | completed（POPE 上 A′+B 83.59，与物体名查询相同，比 A 高 16.7；MME-P 比 A 低 52，区间含 0；F34、F35） |
+| EXP-0015 | IDEA-0002（第二轮） | 按词的可视性分配名额的题目查询（P10）：MME 与 POPE 上是否都比 A 提升 | [EXP-0015_record](实验报告/EXP-0015_record.md)（计划 v1） | 待做 | planned |
 
 ## 全部运行
 
