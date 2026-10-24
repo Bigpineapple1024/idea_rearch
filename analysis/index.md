@@ -103,6 +103,7 @@
 | [analysis/实验报告/EXP-0014_record.md](../analysis/实验报告/EXP-0014_record.md) | EXPERIMENT_RECORD：IDF 加权的题目查询，第 ⑫ 步的 A / A′ / A′+B / A+B（POPE、MME） |
 | [analysis/实验报告/EXP-0014_squeeze.md](../analysis/实验报告/EXP-0014_squeeze.md) | SQUEEZE_REPORT：EXP-0014（POPE 上复现物体名查询 F34；MME 名字类受损 F35） |
 | [analysis/审计记录_第12步_2026-10-25.md](../analysis/审计记录_第12步_2026-10-25.md) | 第 ⑫ 步结论的独立审计与修正（DEC-0030） |
+| [analysis/实验报告/EXP-0019_record.md](../analysis/实验报告/EXP-0019_record.md) | EXPERIMENT_RECORD：审计要求的补充（A+B 的对照；最终方法的区分力） |
 | [analysis/实验报告/EXP-0018_record.md](../analysis/实验报告/EXP-0018_record.md) | EXPERIMENT_RECORD：VQAv2 验证集子集上的一般题目检验（第 ⑫ 步第五轮） |
 | [analysis/实验报告/EXP-0017_record.md](../analysis/实验报告/EXP-0017_record.md) | EXPERIMENT_RECORD：192 档复验（第 ⑫ 步第四轮） |
 | [analysis/实验报告/EXP-0015-0016_squeeze.md](../analysis/实验报告/EXP-0015-0016_squeeze.md) | SQUEEZE_REPORT：EXP-0015、EXP-0016（收益主要来自切分；POPE 提升随预算缩小 F37） |
