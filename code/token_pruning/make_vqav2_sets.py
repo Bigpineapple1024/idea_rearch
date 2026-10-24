@@ -6,7 +6,10 @@ Source: VQAv2 val (v2_OpenEnded_mscoco_val2014_questions.json, v2_mscoco_val2014
 download 2026-10-25, checksums in data/vqav2/SHA256SUMS). test: every question on 1000 images drawn with seed 0 from the
 val2014 images that neither POPE nor coco_dev uses (and that exist locally); dev: every question on the 300 coco_dev
 images. The prompt is LLaVA's VQAv2 prompt (question + "\\nAnswer the question using a single word or phrase."); each
-annotation keeps the ten human answers, the answer type and the question type. LLaVA-1.5 trained on VQAv2 train, not val.
+annotation keeps the ten human answers, the answer type and the question type. LLaVA-1.5 trained on VQAv2 train, not on
+val's questions and answers; the val2014 images may still appear in its COCO-train2017-based instruction data, as POPE's
+do (affects absolute accuracy, not comparisons on the same model). The dev images all hold >= 3 COCO categories (they
+are coco_dev's), unlike the uniformly drawn test images.
 """
 import json
 import os

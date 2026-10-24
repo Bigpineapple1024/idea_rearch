@@ -30,6 +30,7 @@
 | analyze_layer_rows.py | EXP-0011 D2b 的离线统计（第 2 版）：参与判定的算子（第 0 层注意力、逐 head、归一化后平均、输入与前两层输出的余弦）与更深层的描述项，在分块 + 排除填充区下的小物体命中率、P1、P2、物体 AUC；先用 R02 自检 | code/output/EXP-0011/d2b_coco_dev_v2（第 1 版的输出在 d2b_coco_dev，AUC 有缺陷） |
 | analyze_text_rows.py | EXP-0011 D2 的离线统计：第 1 层三种打分（最后一个 token、题目句、物体名）的同图不同题 Jaccard（P1）、物体对准比值（P2）、24 种模拟选择的小物体命中率（P3）和剂量关系；先用模拟复现运行的保留集合作自检 | code/output/EXP-0011/d2_coco_dev（开发集）、d2_pope |
 | make_coco_dev.py | EXP-0011 的开发集：COCO val2014 中 POPE 没用到的 300 张图，按 POPE 的方式出 1800 题（种子 0），在它上面做选择，POPE 只作测试集 | 已生成（data/llava_eval/pope/llava_coco_dev*.jsonl，校验和在 llava_coco_dev.SHA256SUMS） |
+| make_vqav2_sets.py | EXP-0018：VQAv2 验证集在本地 COCO val2014 图像上的两个子集。test 为 POPE、coco_dev 都没用的图中按种子 0 抽 1000 张的全部 5246 题；dev 为 coco_dev 300 张图上的 1485 题 | 已生成（data/llava_eval/vqav2_val/，校验和在 SHA256SUMS）；划分经多代理复核 |
 | make_coco_dev3.py | EXP-0013 的开发集：coco_dev 的 1800 题不变，在同样 300 张图上按 POPE 论文的做法补 popular、adversarial 负样本各 900 题 | 已生成（llava_coco_dev3*.jsonl，校验和在 llava_coco_dev3.SHA256SUMS） |
 | check_mix_names.py | EXP-0013 选项的 CPU 自检：`--fastv-score mix` 的保留集合等于离线两轮规则（混合 30 = object_cos，混合 0 = 强对照 + 排除填充区）；对比打分等于重算值、排除与被问物体同拼写的类名；`--name-cos-log` 的数值与去重；coco_dev3 全部 prompt 的物体名 id（真实 tokenizer）；参数检查 | CPU 已运行，38 项通过（2026-10-24）；同时复跑了其余 check（FastV 等价相对差 ≤ 3.13e-7）与 smoke_test |
 | probes/*.py | 三个仓库的代码级探针和 FLOPs 计算 | CPU 已运行，输出见 EXP-0001 |

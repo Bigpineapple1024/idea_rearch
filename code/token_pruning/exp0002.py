@@ -50,13 +50,16 @@ BENCHES = {
     # (make_coco_dev3.py); scored offline by analyze_fp.py, not by score_pope_mme.py
     "coco_dev3": {"question_file": f"{DATA}/llava_eval/pope/llava_coco_dev3.jsonl",
                   "image_folder": f"{DATA}/coco/val2014", "annotations": [], "score": False},
-    # EXP-0018: VQAv2 val subsets on local COCO val2014 images (make_vqav2_sets.py), scored by score_pope_mme.py
+    # EXP-0018: VQAv2 val subsets on local COCO val2014 images (make_vqav2_sets.py), scored by score_pope_mme.py; the
+    # VQAv2 archives' checksums are in downloads/vqav2/SHA256SUMS, the extracted JSONs' in vqav2/SHA256SUMS
     "vqav2_test": {"question_file": f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test.jsonl",
                    "image_folder": f"{DATA}/coco/val2014",
-                   "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test_annotations.jsonl"]},
+                   "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test_annotations.jsonl"],
+                   "archives_sha256": f"{DATA}/downloads/vqav2/SHA256SUMS"},
     "vqav2_dev": {"question_file": f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_dev.jsonl",
                   "image_folder": f"{DATA}/coco/val2014",
-                  "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_dev_annotations.jsonl"]},
+                  "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_dev_annotations.jsonl"],
+                  "archives_sha256": f"{DATA}/downloads/vqav2/SHA256SUMS"},
 }
 # Budgets are 32-layer averages of visual tokens (code/token_pruning/README.md, "预算的口径").
 FASTV_KEEP = {192: 166, 128: 98, 64: 30}
@@ -127,6 +130,9 @@ CONFIGS["fastv64_qvis_half"] = ("tp", CONFIGS["fastv64_prior_strat_nopad"][1] + 
     "--fastv-score", "query_vis", "--fastv-visibility", VISIBILITY_HALF])
 CONFIGS["fastv128_qvis"] = ("tp", CONFIGS["fastv128_prior_strat_nopad"][1] + [
     "--fastv-score", "query_vis", "--fastv-visibility", VISIBILITY])
+# EXP-0019: the strong baseline without the position prior (last-token row, blocks, padding never kept), the matching
+# control for EXP-0014's A+B (attn_idf has no prior)
+CONFIGS["fastv64_strat_nopad"] = ("tp", CONFIGS["fastv64_strat"][1] + ["--fastv-exclude-padding"])
 # EXP-0017: query_vis at the 192 budget (keep 166)
 CONFIGS["fastv192_qvis"] = ("tp", CONFIGS["fastv192_prior_strat_nopad"][1] + [
     "--fastv-score", "query_vis", "--fastv-visibility", VISIBILITY])
@@ -243,7 +249,7 @@ def run_one(run_id, config, bench):
                   "question_file": b["question_file"], "question_file_sha256": sha256(b["question_file"]),
                   "image_folder": b["image_folder"],
                   "annotations_sha256": {os.path.basename(p): sha256(p) for p in b["annotations"]},
-                  "data_archives_sha256_file": f"{DATA}/downloads/SHA256SUMS"}
+                  "data_archives_sha256_file": b.get("archives_sha256", f"{DATA}/downloads/SHA256SUMS")}
     with open(f"{run_dir}/config.json", "w") as f:
         json.dump(config_rec, f, indent=2)
     seed = method_args[method_args.index("--seed") + 1] if "--seed" in method_args else "none"

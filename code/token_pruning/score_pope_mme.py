@@ -1,7 +1,11 @@
-"""Score LLaVA answers on POPE or MME with the official tools and write metrics.json.
+"""Score LLaVA answers on POPE, MME or the VQAv2 val subsets and write metrics.json.
 
   python score_pope_mme.py pope <answers.jsonl> <out_dir>
   python score_pope_mme.py mme  <answers.jsonl> <out_dir> [--tag NAME]
+  python score_pope_mme.py vqav2_test <answers.jsonl> <out_dir>    # or vqav2_dev (EXP-0018)
+
+VQAv2 uses LLaVA's m4c TextVQAAccuracyEvaluator (EvalAI normalisation, which also drops commas, unlike the official
+vqaEval.py; leave-one-out min(1, matches / 3)); per-question scores go to <out_dir>/vqa_scores.jsonl.
 
 POPE runs LLaVA's llava/eval/eval_pope.py. The headline number is the F1 averaged over the
 adversarial / popular / random splits, in percent (LLaVA MODEL_ZOO: 85.9 for LLaVA-1.5-7B).
