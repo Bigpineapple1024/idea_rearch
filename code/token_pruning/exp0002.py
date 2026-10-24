@@ -113,6 +113,13 @@ for name, kind in (("qmean", "query_mean"), ("qidf", "query_idf"), ("attnidf", "
 VISIBILITY = f"{REPO}/code/output/EXP-0015/visibility/visibility.npy"
 CONFIGS["fastv64_qvis"] = ("tp", CONFIGS["fastv64_prior_strat_nopad"][1] + [
     "--fastv-score", "query_vis", "--fastv-visibility", VISIBILITY])
+# EXP-0016: the same with visibility 0.5 for every id (a fixed 15 / 15 split, the IDF query unchanged), and query_vis at
+# the 128 budget (keep 98)
+VISIBILITY_HALF = f"{REPO}/code/output/EXP-0016/visibility_half/visibility.npy"
+CONFIGS["fastv64_qvis_half"] = ("tp", CONFIGS["fastv64_prior_strat_nopad"][1] + [
+    "--fastv-score", "query_vis", "--fastv-visibility", VISIBILITY_HALF])
+CONFIGS["fastv128_qvis"] = ("tp", CONFIGS["fastv128_prior_strat_nopad"][1] + [
+    "--fastv-score", "query_vis", "--fastv-visibility", VISIBILITY])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
