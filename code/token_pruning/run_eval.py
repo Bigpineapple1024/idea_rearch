@@ -79,12 +79,16 @@ def parse():
                       help="diagnostic, fastv only: .npy with one value per image patch; scores are divided by it")
     ours.add_argument("--fastv-stratify", type=int, default=None,
                       help="diagnostic, fastv only: take the ranking in turns from an n x n grid of image blocks")
-    ours.add_argument("--fastv-score", choices=["last", "object_cos", "mix", "contrast_max", "contrast_mean"],
+    ours.add_argument("--fastv-score", choices=["last", "object_cos", "mix", "contrast_max", "contrast_mean", "query_mean",
+                                                "query_idf", "attn_idf"],
                       default="last",
                       help="fastv: rank by the last token's attention at layer K-1 (FastV), or, for POPE-style questions, "
                            "by the cosine of each image token's input embedding to the object name's (EXP-0011 D3), or "
                            "keep --fastv-mix-question tokens by that cosine and the rest by FastV's score (EXP-0013), or "
-                           "by that cosine minus the largest / mean cosine to the other 80 COCO names (EXP-0013)")
+                           "by that cosine minus the largest / mean cosine to the other 80 COCO names (EXP-0013); "
+                           "query_mean / query_idf: by the cosine to the uniform / IDF-weighted mean input embedding of "
+                           "all tokens after the image, IDF over the question file; attn_idf: the scoring layer's "
+                           "attention rows of those tokens, IDF-weighted (EXP-0014)")
     ours.add_argument("--fastv-mix-question", type=int, default=None,
                       help="fastv, --fastv-score mix: number of kept tokens chosen by the object-name cosine")
     ours.add_argument("--fastv-exclude-padding", action="store_true",
@@ -123,9 +127,11 @@ def parse():
         ours.error("--layer-rows-log needs --method vanilla")
     if (method_args.fastv_score != "last" or method_args.fastv_exclude_padding) and method_args.method != "fastv":
         ours.error("--fastv-score and --fastv-exclude-padding need --method fastv")
-    if method_args.fastv_score in ("object_cos", "contrast_max", "contrast_mean") and (
-            method_args.text_rows_log or method_args.fastv_score_prior):
+    if method_args.fastv_score in ("object_cos", "contrast_max", "contrast_mean", "query_mean", "query_idf",
+                                   "attn_idf") and (method_args.text_rows_log or method_args.fastv_score_prior):
         ours.error(f"--fastv-score {method_args.fastv_score} has no attention rows to log and takes no position prior")
+    if method_args.fastv_score in ("query_mean", "query_idf", "attn_idf") and method_args.fastv_schedule:
+        ours.error(f"--fastv-score {method_args.fastv_score} works with a single stage")
     if (method_args.fastv_score == "mix") != (method_args.fastv_mix_question is not None):
         ours.error("--fastv-score mix and --fastv-mix-question go together")
     if method_args.fastv_score == "mix" and (method_args.text_rows_log or not method_args.fastv_stratify
@@ -134,6 +140,7 @@ def parse():
     if method_args.name_cos_log and method_args.method in ("visionzip", "sparsevlm"):
         ours.error("--name-cos-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     method_args.conv_mode = llava_args.conv_mode          # the contrast vocabulary is tokenised in the same template
+    method_args.question_file = llava_args.question_file  # IDF weights are counted over the evaluated questions
     if method_args.method == "sparsevlm":
         if method_args.retained_tokens is None:
             ours.error("--method sparsevlm needs --retained-tokens")
@@ -154,11 +161,20 @@ def apply_method(model, m, tokenizer=None):
         if score_kind.startswith("contrast"):                  # the 80 COCO names, as they appear in a POPE question
             contrast_ids = getattr(m, "fastv_contrast_ids", None) or list(
                 _name_token_ids(tokenizer, coco_names(), getattr(m, "conv_mode", "vicuna_v1")).values())
+        weights = None
+        if score_kind == "query_mean":
+            weights = lambda ids: [1.0] * len(ids)             # noqa: E731
+        elif score_kind in ("query_idf", "attn_idf"):          # IDF of each token over the evaluated question file
+            idf = getattr(m, "fastv_idf", None) or question_idf(tokenizer, m.question_file, getattr(m, "conv_mode", "vicuna_v1"))
+            m.fastv_idf = idf
+            weights = lambda ids: [idf["idf"].get(t, idf["unseen"]) for t in ids]   # noqa: E731
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule, score_prior=prior,
                            stratify=getattr(m, "fastv_stratify", None),
                            log_text_rows=bool(getattr(m, "text_rows_log", None)), score_kind=score_kind,
-                           object_span=span, exclude_padding=bool(getattr(m, "fastv_exclude_padding", False)),
-                           mix_question=getattr(m, "fastv_mix_question", None), contrast_ids=contrast_ids)
+                           object_span=span if score_kind in ("object_cos", "mix", "contrast_max", "contrast_mean") else None,
+                           exclude_padding=bool(getattr(m, "fastv_exclude_padding", False)),
+                           mix_question=getattr(m, "fastv_mix_question", None), contrast_ids=contrast_ids,
+                           token_weights=weights)
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "visionzip":
@@ -222,6 +238,33 @@ def _write_kept(path, keep):
 
 
 _NAME_COS = {"cos": [], "index": [], "seen": {}}     # one (576, n_names) array per distinct image, an index per prefill
+
+
+def prompt_ids_after_image(tokenizer, text, conv_mode):
+    """The prompt ids after the image token for one question, built exactly as model_vqa_loader builds the prompt."""
+    from llava.constants import DEFAULT_IMAGE_TOKEN, IMAGE_TOKEN_INDEX
+    from llava.conversation import conv_templates
+    from llava.mm_utils import tokenizer_image_token
+    conv = conv_templates[conv_mode].copy()
+    conv.append_message(conv.roles[0], DEFAULT_IMAGE_TOKEN + "\n" + text)
+    conv.append_message(conv.roles[1], None)
+    ids = tokenizer_image_token(conv.get_prompt(), tokenizer, IMAGE_TOKEN_INDEX)
+    return ids[ids.index(IMAGE_TOKEN_INDEX) + 1:]
+
+
+def question_idf(tokenizer, question_file, conv_mode):
+    """IDF of every token id after the image over the questions of question_file (each question one document; plus-one
+    smoothing as in BERTScore): log((N + 1) / (df + 1)); a token absent from the file gets log(N + 1)."""
+    import math
+    with open(question_file) as f:
+        texts = [json.loads(line)["text"] for line in f]
+    df = {}
+    for text in texts:
+        for t in set(prompt_ids_after_image(tokenizer, text, conv_mode)):
+            df[t] = df.get(t, 0) + 1
+    n = len(texts)
+    return {"n_questions": n, "idf": {t: math.log((n + 1) / (c + 1)) for t, c in df.items()}, "unseen": math.log(n + 1),
+            "df": df}
 
 
 def coco_names():
@@ -452,6 +495,11 @@ def main():
             "flash_attention_stand_in": "sdpa" if method_args.method == "sparsevlm" and os.name == "nt" else None}
     with open(answers_file + ".meta.json", "w") as f:
         json.dump(meta, f, indent=2)
+    if getattr(method_args, "fastv_idf", None):                # the IDF table the query weights came from
+        idf = method_args.fastv_idf
+        with open(answers_file + ".idf.json", "w") as f:
+            json.dump({"question_file": llava_args.question_file, "n_questions": idf["n_questions"],
+                       "unseen": idf["unseen"], "df": {str(t): c for t, c in sorted(idf["df"].items())}}, f)
     if method_args.layer_token_log:
         _write_layer_tokens(method_args.layer_token_log, times["n_layers"])
     if method_args.kept_token_log:

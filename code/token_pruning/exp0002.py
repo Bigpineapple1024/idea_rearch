@@ -102,6 +102,12 @@ for n in (20, 15, 10):
 for kind in ("max", "mean"):
     CONFIGS[f"fastv64_contrast{kind}_strat_nopad"] = ("tp", CONFIGS["fastv64"][1] + [
         "--fastv-stratify", "6", "--fastv-score", f"contrast_{kind}", "--fastv-exclude-padding"])
+# EXP-0014 (steps 9-12, any question): the query is the uniform (qmean, A') or IDF-weighted (qidf, A'+B) mean input
+# embedding of all tokens after the image; attnidf (A+B) weights the layer-1 attention rows of those tokens by IDF.
+# Blocks and padding exclusion as in the EXP-0011 variant; IDF is counted over the evaluated question file.
+for name, kind in (("qmean", "query_mean"), ("qidf", "query_idf"), ("attnidf", "attn_idf")):
+    CONFIGS[f"fastv64_{name}_strat_nopad"] = ("tp", CONFIGS["fastv64"][1] + [
+        "--fastv-stratify", "6", "--fastv-score", kind, "--fastv-exclude-padding"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
@@ -123,7 +129,7 @@ CONFIGS["vanilla_layerrows"] = CONFIGS["vanilla"]
 # the log-probabilities and the input-embedding cosine of every image token to the 80 COCO names. None of them changes
 # the computation.
 CONFIGS.update({f"{name}_ksl": CONFIGS[name] for name in BASE if name.startswith("fastv")})
-CONFIGS.update({f"{name}_kl": CONFIGS[name] for name in BASE if name.startswith("fastv64_mix")})
+CONFIGS.update({f"{name}_kl": CONFIGS[name] for name in BASE if name.startswith("fastv")})
 CONFIGS["vanilla_names"] = CONFIGS["vanilla"]
 
 
