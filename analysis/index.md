@@ -1,6 +1,6 @@
 # 项目文档索引
 
-状态（2026-10-24，DEC-0012～0025）：视觉 token 剪枝方向完成第 ⑧ 步第 3 轮（EXP-0013，压误报，没有修正通过），进入第 ⑨～⑫ 步：IDF 加权的题目查询（DEC-0025，EXP-0014）；时序预测方向在第 ⑦ 步后暂停（DEC-0020、DEC-0021）。七篇论文已有原文笔记与源码核验补充。实验室电脑是原生 Windows，文件只放在 D:\6CJNM007。流程规范为[研究流程 v2.1](研究流程.md)。新增、移动或归档文档时同步本索引。（此前这一行停在 DEC-0014 时的状态，2026-10-24 的跑偏检查中更新。）
+状态（2026-10-25，DEC-0012～0026）：视觉 token 剪枝方向完成第 ⑧ 步第 3 轮（EXP-0013，压误报，没有修正通过），第 ⑨～⑫ 步：IDF 加权的题目查询在 POPE 上提升、MME 上未提升（EXP-0014，DEC-0026），回到第 ⑨ 步处理词的可视性；时序预测方向在第 ⑦ 步后暂停（DEC-0020、DEC-0021）。七篇论文已有原文笔记与源码核验补充。实验室电脑是原生 Windows，文件只放在 D:\6CJNM007。流程规范为[研究流程 v2.1](研究流程.md)。新增、移动或归档文档时同步本索引。（此前这一行停在 DEC-0014 时的状态，2026-10-24 的跑偏检查中更新。）
 
 ## 当前工作入口
 
@@ -13,7 +13,7 @@
 | 问题—现象—机制矩阵（合并版，回流 EXP-0002） | [MODE_C-0002](MODE_C-0002_视觉token剪枝.md)；旧版保留：[视觉Token压缩_ModeC](视觉Token压缩_ModeC.md)（原文）、[MODE_C-0001](MODE_C-0001_视觉token剪枝.md)（源码与探针） |
 | 论文全文（MinerU 解析，只有文本） | [literature/processed](../literature/processed/README.md) |
 | 候选方案（待 baseline 复现与组合实验后重新排序） | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
-| **视觉方向第 ⑨～⑫ 步：IDF 加权的题目查询（DEC-0025）** | [IDEA-0002](IDEA-0002_题目词按信息量加权.md)（迁移方案）；[EXP-0014](实验报告/EXP-0014_record.md)（A / A′ / A′+B / A+B，POPE 与 MME） |
+| **视觉方向第 ⑨～⑫ 步：IDF 加权的题目查询（DEC-0025）** | [IDEA-0002](IDEA-0002_题目词按信息量加权.md)（迁移方案）；[EXP-0014](实验报告/EXP-0014_record.md)、[SQZ-EXP-0014](实验报告/EXP-0014_squeeze.md)（A / A′ / A′+B / A+B：POPE 提升，MME 未提升，F34、F35） |
 | baseline 复现代码与步骤 | [code/token_pruning](../code/token_pruning/README.md) |
 | 视觉方向 GPU 复现记录与深挖 | [EXP-0002](实验报告/EXP-0002_record.md)、[SQZ-EXP-0002](实验报告/EXP-0002_squeeze.md) |
 | 视觉方向第 ⑤ 步：深挖意外现象 | [1a-4b_FastV不如随机选择](1a-4b_FastV不如随机选择.md)；[EXP-0006](实验报告/EXP-0006_record.md)、[SQZ-EXP-0006](实验报告/EXP-0006_squeeze.md)；[EXP-0008](实验报告/EXP-0008_record.md)、[SQZ-EXP-0008](实验报告/EXP-0008_squeeze.md)；[EXP-0007](实验报告/EXP-0007_record.md)、[SQZ-EXP-0007](实验报告/EXP-0007_squeeze.md)（层分布与选择规则）；[EXP-0010](实验报告/EXP-0010_record.md)、[SQZ-EXP-0010](实验报告/EXP-0010_squeeze.md)（覆盖对照） |
@@ -101,6 +101,7 @@
 | [analysis/实验报告/EXP-0013_record.md](../analysis/实验报告/EXP-0013_record.md) | EXPERIMENT_RECORD：题目相关的选择为什么多出误报，能否在同一预算下压下去（第 ⑧ 步第 3 轮） |
 | [analysis/实验报告/EXP-0013_squeeze.md](../analysis/实验报告/EXP-0013_squeeze.md) | SQUEEZE_REPORT：EXP-0013（选择丢掉“没有”的证据 F31；F1 下最优阈值偏向 yes F32；对比打分 F33） |
 | [analysis/实验报告/EXP-0014_record.md](../analysis/实验报告/EXP-0014_record.md) | EXPERIMENT_RECORD：IDF 加权的题目查询，第 ⑫ 步的 A / A′ / A′+B / A+B（POPE、MME） |
+| [analysis/实验报告/EXP-0014_squeeze.md](../analysis/实验报告/EXP-0014_squeeze.md) | SQUEEZE_REPORT：EXP-0014（POPE 上复现物体名查询 F34；MME 名字类受损 F35） |
 | [analysis/1a-4b_FastV不如随机选择.md](../analysis/1a-4b_FastV不如随机选择.md) | 1a–4b 机制分析：同预算下 FastV 为什么不如随机选择（第 1 轮，到 2b） |
 | [analysis/1a-4b_选择与题目无关漏掉被问的小物体.md](../analysis/1a-4b_选择与题目无关漏掉被问的小物体.md) | 1a–4b 机制分析（第 ⑧ 步，候选 1）：选择与题目无关时，被问的小物体为什么被删掉（第 1 轮，到 2b；COCO 物体框） |
 | [analysis/1a-4b_四种架构在同一批窗口上出错.md](../analysis/1a-4b_四种架构在同一批窗口上出错.md) | 1a–4b 机制分析：时序四种架构为什么在同一批窗口上出错（第 1 轮，到 2b；误差的水平/形状拆分） |

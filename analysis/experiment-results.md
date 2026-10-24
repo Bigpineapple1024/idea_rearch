@@ -1,6 +1,6 @@
 # Experiment Results：实验详细数据总表
 
-状态（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 已完成（D3 成立），第 3 轮 EXP-0013（误报）已完成（没有修正通过），第 ⑫ 步的 EXP-0014 计划已写定；时序预测有 iTransformer 的 GPU 复现（EXP-0004，56 次运行）、验证期预测（EXP-0009，48 次运行）、对照的 GPU 重跑（EXP-0005）和 ETTh1 上的 CPU 复现（EXP-0003），候选 1 的 CPU 诊断 EXP-0012 已完成（之后时序方向暂停，DEC-0020、DEC-0021）。空表表示无数据，绝不表示数值为零。
+状态（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 已完成（D3 成立），第 3 轮 EXP-0013（误报）已完成（没有修正通过），第 ⑫ 步的 EXP-0014 已完成（POPE 提升，MME 未提升）；时序预测有 iTransformer 的 GPU 复现（EXP-0004，56 次运行）、验证期预测（EXP-0009，48 次运行）、对照的 GPU 重跑（EXP-0005）和 ETTh1 上的 CPU 复现（EXP-0003），候选 1 的 CPU 诊断 EXP-0012 已完成（之后时序方向暂停，DEC-0020、DEC-0021）。空表表示无数据，绝不表示数值为零。
 
 ## 实验登记
 
@@ -19,7 +19,7 @@
 | EXP-0011 | none | 第 1 层的题目注意力能否保住被问的小物体（1A4B-0003 的 D2、D2b、D3；候选 1）；挑选在 COCO 开发集上做，POPE 只作测试 | [EXP-0011_record](实验报告/EXP-0011_record.md)（计划 v1、v1.1、v1.2） | [SQZ-EXP-0011](实验报告/EXP-0011_squeeze.md) | completed（D2 不成立；D2b 通过；D3 成立：POPE 83.63，比强对照 +18.97；误报增加，F30） |
 | EXP-0012 | none | 96 步输入下，未来窗口的水平能否用简单统计量预测（时序候选 1 的 CPU 诊断，不训练神经网络；DEC-0020） | [EXP-0012_record](实验报告/EXP-0012_record.md) | [SQZ-EXP-0012](实验报告/EXP-0012_squeeze.md) | completed（按预设规则为高；两个支持数据集是同一台变压器，另一台上大幅变差，DEC-0021） |
 | EXP-0013 | none | 题目相关的选择为什么多出误报（F30），能否在同一预算下压下去（第 ⑧ 步第 3 轮；挑选在 coco_dev3 上做，POPE 只作测试） | [EXP-0013_record](实验报告/EXP-0013_record.md)（计划 v1） | [SQZ-EXP-0013](实验报告/EXP-0013_squeeze.md) | completed（没有修正通过开发集门槛，R09 未运行；误报伴随区分力下降，F31～F33） |
-| EXP-0014 | IDEA-0002 | 第 ⑫ 步：IDF 加权的题目查询（A′+B）与 A、A′、A+B 在 POPE、MME 上的比较（任意题目，不需要物体名的位置） | [EXP-0014_record](实验报告/EXP-0014_record.md)（计划 v1） | 待做 | planned |
+| EXP-0014 | IDEA-0002 | 第 ⑫ 步：IDF 加权的题目查询（A′+B）与 A、A′、A+B 在 POPE、MME 上的比较（任意题目，不需要物体名的位置） | [EXP-0014_record](实验报告/EXP-0014_record.md)（计划 v1） | [SQZ-EXP-0014](实验报告/EXP-0014_squeeze.md) | completed（POPE 上 A′+B 83.59，与物体名查询相同，比 A 高 16.7；MME-P 比 A 低 52，区间含 0；F34、F35） |
 
 ## 全部运行
 
@@ -277,6 +277,13 @@
 | EXP-0013-R07 | fastv64_contrastmax_strat_nopad_ksl × coco_dev3 | 同上 | --fastv-score contrast_max | 同上 | — | completed | 86.28 | 82.4%，43 / 65 / 128 | 0.143 秒/题，13.94 GiB | a9b9115c… |
 | EXP-0013-R08 | fastv64_contrastmean_strat_nopad_ksl × coco_dev3 | 同上 | --fastv-score contrast_mean | 同上 | — | completed | 85.33 | 80.9%，36 / 69 / 133 | 0.143 秒/题，13.94 GiB | 5205c460… |
 | EXP-0013-R09 | 选出的修正 × POPE | — | — | — | — | 未运行：开发集挑选规则未通过 | NA | NA | NA | — |
+| EXP-0014-R04 | fastv64_prior_strat_nopad_kl × MME（A） | 2a407fd；无未提交改动 | `tp`；强对照 + 排除填充区 | MME 2374 题 | — | completed | MME-P 1288.3 | Cognition 见 metrics.json | 0.149 秒/题，13.96 GiB | `code/output/EXP-0014/EXP-0014-R04/`，7f824677…；备份同名目录 |
+| EXP-0014-R05 | fastv64_qmean_strat_nopad_kl × MME（A′） | 同上 | --fastv-score query_mean | 同上 | — | completed | 1028.3 | — | 0.151 秒/题 | 96546624… |
+| EXP-0014-R06 | fastv64_qidf_strat_nopad_kl × MME（A′+B） | 同上 | --fastv-score query_idf（IDF 在 MME 题目上计） | 同上 | — | completed | 1236.2 | — | 0.149 秒/题 | 1e0d6e3c… |
+| EXP-0014-R07 | fastv64_attnidf_strat_nopad_kl × MME（A+B） | 同上 | --fastv-score attn_idf | 同上 | — | completed | 1313.3 | — | 0.150 秒/题 | c2949d2f… |
+| EXP-0014-R01 | fastv64_qmean_strat_nopad_kl × POPE（A′） | 同上 | --fastv-score query_mean | POPE 8910 题 | — | completed | F1 65.85（RePOPE 69.80） | 召回 51.7% | 0.144 秒/题，13.93 GiB | 9c8854d2… |
+| EXP-0014-R02 | fastv64_qidf_strat_nopad_kl × POPE（A′+B） | 同上 | --fastv-score query_idf | 同上 | — | completed | 83.59（86.77） | 召回 78.0%，精确率 90.2% | 0.143 秒/题 | 368f521a… |
+| EXP-0014-R03 | fastv64_attnidf_strat_nopad_kl × POPE（A+B） | 同上 | --fastv-score attn_idf | 同上 | — | completed | 66.61（73.22） | 召回 50.7% | 0.143 秒/题 | 5e4ace0f… |
 
 ## 汇总与比较
 
@@ -294,6 +301,7 @@
 | C-0011-2 | EXP-0011-R04 vs R02 | 开发集 395 个小物体正样本 | 16 个第 2 层前可用的算子，分块 + 排除填充区；head 用两折交叉选择 | 最好的 C0_o（输入 embedding 余弦，物体名）70.4% vs 强对照 35.4%：+34.9 [29.6, 40.6]；比只排除填充区 +30.4 | 计划 v1.1：+10 个百分点 | 无（第 1 版的 AUC 缺陷不影响判定） | 通过，做 D3（F29） |
 | C-0011-3 | EXP-0011-R06、R07 vs R03；EXP-0002 的参照运行 | POPE 8910 题 | 配对 bootstrap（题目在各子集内重抽 1000 次），原始标注与 RePOPE | 变体 − 强对照 +18.97 [17.67, 20.37]（RePOPE +16.50 [15.12, 17.98]）；− 只排除填充区 +16.73；只排除填充区 − 强对照 +2.24；− VisionZip-64 +6.61；− SparseVLM-64 +5.97 | 计划 v1.2：差 > 0 且区间在 0 以上 | 无 | 成立；误报比 vanilla 多 1.6～1.8 倍（F30）；只适用于点名物体的题目 |
 | C-0013-1 | EXP-0013-R03～R08 及校准的变体 vs R03；R01 | coco_dev3 3600 题（300 张图） | 三个 split 的 F1 均值；按图像重抽 1000 次的配对差；margin AUC | 校准 +0.97 [−0.01, +2.04]，对比打分 max +0.49 [−0.55, +1.64]，名额切分 −1.40 / −1.36 / −2.05（区间都在 0 以下）；变体 − vanilla 的 margin AUC −0.017 / −0.014 / −0.020（区间都在 −0.01 以下） | 计划 v1：最好的候选与变体的差，区间在 0 以上才进 POPE | 无 | 没有修正通过，R09 未运行；误报伴随区分力下降（F31～F33） |
+| C-0014-1 | EXP-0014-R01～R07；EXP-0011-R06、R07；EXP-0002、EXP-0010 的参照 | POPE 8910 题、MME 2374 题 | POPE：题目在各子集内重抽 1000 次（两种标注）；MME-P：子任务内图像重抽 1000 次 | POPE A′+B − A′ +17.74 [16.55, 19.06]，− A +16.69 [15.44, 17.98]，A+B − A −0.29 [−1.27, 0.67]，A′+B − 物体名查询 −0.04；MME-P A′+B − A −52.1 [−133.2, +19.1]，− VisionZip-64 −128.1 [−210.2, −49.8] | 计划 v1 的 S1～S3 | 无 | S1、S2 成立，S3 按字面成立；MME 没有提升（F34、F35） |
 | C-0012-1 | EXP-0012 主分析（不训练）vs EXP-0004 测试期、EXP-0009 验证期的 iTransformer 运行 | 4 个数据集 × 4 个预测长度 × 验证期与测试期；iTransformer 3 个种子平均 | 只在训练窗口上拟合的 4 特征线性水平预测器（S1）替换 iTransformer 的水平，形状不变；ΔMSE = 水平误差之差 | 明显更好：ETTh1-720 测试 −0.0084（验证 −0.318），ETTm1-336 −0.0147（−0.004），ETTm1-720 −0.0234（−0.065）；ETTh2、ETTm2 测试 +0.07 ～ +0.79（+37% ～ +184%）；按验证期选权重的混合 16 个组合测试 ΔMSE −0.027 ～ 0 | 计划 v1：测试 ΔMSE < −0.005、验证 ΔMSE < 0、两期相关更高；至少两个数据集 | 无 | 按规则为高（DEC-0021）；ETTh1、ETTm1 是同一台变压器，另一台上同一预测器大幅变差（F-TS15） |
 | C-0005-1 | EXP-0005-R01～R12、R25～R39；EXP-0004 包装脚本运行 | ETTh1 × 4 个预测长度 × 3 个种子（DUET 只有 96 档） | 三种子均值 ± 样本标准差，全部测试窗口 | 四档平均：iTransformer 0.4576，TQNet 0.4460，WPMixer 0.4370（drop_last 计分 0.4331）；96 档 TQNet 0.3728 < WPMixer 0.3778 < DUET 0.3795 < iTransformer 0.3858 | 无（对照重评，不设门槛） | WPMixer R13～R24 失败已重跑 | 统一协议下 TQNet、WPMixer 在 ETTh1 各档都好于 iTransformer；WPMixer 仍比论文差 0.011～0.015 |
 | C-0005-2 | EXP-0005-R25 vs EXP-0004-R03；两份 ETTh1.csv | ETTh1-96 的 2785 个测试窗口 | 逐值比较 | 原始值最大差 3.6e-15；标准化后的测试窗口最大差 2.2e-07 | — | 无 | DUET（TFB）与 TSLib 式框架计分的是同一批窗口 |
