@@ -42,6 +42,10 @@ BENCHES = {
     # diagnostic only: the pope_img20 questions on one blank grey image (make_blank_questions.py); not scored
     "pope_img20_blank": {"question_file": f"{DATA}/llava_eval/pope/llava_pope_test_img20_blank.jsonl",
                          "image_folder": f"{DATA}/blank", "annotations": [], "score": False},
+    # selection set for EXP-0011: POPE-style questions on 300 COCO val2014 images POPE does not use (make_coco_dev.py);
+    # choices are made here so POPE stays a test set; not scored by score_pope_mme.py
+    "coco_dev": {"question_file": f"{DATA}/llava_eval/pope/llava_coco_dev.jsonl",
+                 "image_folder": f"{DATA}/coco/val2014", "annotations": [], "score": False},
 }
 # Budgets are 32-layer averages of visual tokens (code/token_pruning/README.md, "预算的口径").
 FASTV_KEEP = {192: 166, 128: 98, 64: 30}
@@ -85,6 +89,12 @@ CONFIGS.update({f"{name}_layers": spec for name, spec in list(CONFIGS.items())})
 # "<config>_kept": FastV or random selection with --kept-token-log, for the kept-patch position diagnostic
 CONFIGS.update({f"{name}_kept": spec for name, spec in list(CONFIGS.items())
                 if name.startswith(("fastv", "random")) and not name.endswith(("_layers", "_scores"))})
+# EXP-0011 (1A4B-0003 D2): "<config>_rows" is FastV with the kept patches, the scoring layer's attention rows of every
+# text token after the image, and the first answer token's log-probabilities; "<config>_logits" is any method except
+# SparseVLM with the log-probabilities only (candidate 2's diagnostic). Neither changes the computation.
+BASE = [name for name in CONFIGS if not name.endswith(("_layers", "_kept", "_scores"))]
+CONFIGS.update({f"{name}_rows": CONFIGS[name] for name in BASE if name.startswith("fastv")})
+CONFIGS.update({f"{name}_logits": CONFIGS[name] for name in BASE if not name.startswith("sparsevlm")})
 
 
 def experiment(run_id):
@@ -140,6 +150,12 @@ def run_one(run_id, config, bench):
         method_args = method_args + ["--kept-token-log", f"{run_dir}/kept_tokens.json"]
     if config.endswith("_scores"):
         method_args = method_args + ["--score-log", f"{run_dir}/scores.npy"]
+    if config.endswith("_rows"):
+        method_args = method_args + ["--kept-token-log", f"{run_dir}/kept_tokens.json",
+                                     "--text-rows-log", f"{run_dir}/text_rows.npz",
+                                     "--answer-logit-log", f"{run_dir}/answer_logits.json"]
+    if config.endswith("_logits"):
+        method_args = method_args + ["--answer-logit-log", f"{run_dir}/answer_logits.json"]
     eval_cmd = ("cd {here} && HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TQDM_MININTERVAL=30 VISIONZIP_ROOT={vz} "
                 "python run_eval.py {margs} -- --model-path {model} --question-file {q} --image-folder {img} "
                 "--answers-file {ans} --temperature 0 --conv-mode vicuna_v1").format(

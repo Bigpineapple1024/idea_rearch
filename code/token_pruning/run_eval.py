@@ -60,6 +60,12 @@ def parse():
                       help="diagnostic, fastv/random only: write the image-patch indices kept in every prefill (JSON)")
     ours.add_argument("--score-log", default=None,
                       help="diagnostic, fastv only: save FastV's attention score of every image patch per prefill (.npy)")
+    ours.add_argument("--text-rows-log", default=None,
+                      help="diagnostic, fastv only: save the scoring layer's head-averaged attention rows of every text "
+                           "token after the image over the image patches, with the token ids, per prefill (.npz)")
+    ours.add_argument("--answer-logit-log", default=None,
+                      help="diagnostic, not sparsevlm: write the log-probabilities of Yes/No/yes/no as the first answer "
+                           "token, and the most likely first token, per prefill (JSON)")
     ours.add_argument("--fastv-score-prior", default=None,
                       help="diagnostic, fastv only: .npy with one value per image patch; scores are divided by it")
     ours.add_argument("--fastv-stratify", type=int, default=None,
@@ -86,8 +92,11 @@ def parse():
         ours.error("--method random needs --seed")
     if method_args.kept_token_log and method_args.method not in ("fastv", "random"):
         ours.error("--kept-token-log needs --method fastv or random")
-    if (method_args.score_log or method_args.fastv_score_prior or method_args.fastv_stratify) and method_args.method != "fastv":
-        ours.error("--score-log, --fastv-score-prior and --fastv-stratify need --method fastv")
+    if (method_args.score_log or method_args.fastv_score_prior or method_args.fastv_stratify
+            or method_args.text_rows_log) and method_args.method != "fastv":
+        ours.error("--score-log, --fastv-score-prior, --fastv-stratify and --text-rows-log need --method fastv")
+    if method_args.answer_logit_log and method_args.method == "sparsevlm":
+        ours.error("--answer-logit-log is not wired for SparseVLM's generate()")
     if method_args.method == "sparsevlm":
         if method_args.retained_tokens is None:
             ours.error("--method sparsevlm needs --retained-tokens")
@@ -103,7 +112,8 @@ def apply_method(model, m):
         prior_path = getattr(m, "fastv_score_prior", None)
         prior = torch.from_numpy(np.load(prior_path)) if prior_path else None
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule, score_prior=prior,
-                           stratify=getattr(m, "fastv_stratify", None))
+                           stratify=getattr(m, "fastv_stratify", None),
+                           log_text_rows=bool(getattr(m, "text_rows_log", None)))
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "visionzip":
@@ -169,6 +179,40 @@ def _record_scores(module, args, kwargs, output):
         _SCORES.append(module.fastv_last_scores.float().cpu().numpy())
 
 
+_TEXT_ROWS = []              # one (rows, token ids) pair per prefill: attention of each text token after the image
+
+
+def _record_text_rows(module, args, kwargs, output):
+    embeds = kwargs.get("inputs_embeds")
+    if embeds is not None and embeds.shape[1] > 1:
+        rows, ids = module.fastv_text_rows.half().cpu().numpy(), module.fastv_text_after_ids
+        if rows.shape[0] != len(ids):
+            raise RuntimeError(f"{rows.shape[0]} attention rows for {len(ids)} text tokens after the image")
+        _TEXT_ROWS.append((rows, ids))
+
+
+def _write_text_rows(path):
+    lengths = [len(ids) for _, ids in _TEXT_ROWS]
+    np.savez_compressed(path, rows=np.concatenate([rows for rows, _ in _TEXT_ROWS]),
+                        offsets=np.cumsum([0] + lengths),
+                        token_ids=np.concatenate([np.asarray(ids, dtype=np.int64) for _, ids in _TEXT_ROWS]))
+
+
+ANSWER_TOKENS = ["▁Yes", "▁No", "▁yes", "▁no"]
+_LOGITS = []                 # one dict per prefill: log-probabilities of ANSWER_TOKENS as the first answer token
+
+
+def _record_logits(candidate_ids, module, args, output):
+    if output.shape[1] > 1:          # prefill: the last position predicts the first answer token
+        logp = torch.log_softmax(output[0, -1].float(), dim=-1)
+        _LOGITS.append({"logprobs": logp[candidate_ids].tolist(), "argmax": int(logp.argmax())})
+
+
+def _write_logits(path, candidate_ids):
+    with open(path, "w") as f:
+        json.dump({"tokens": ANSWER_TOKENS, "ids": candidate_ids, "n_prefills": len(_LOGITS), "first_token": _LOGITS}, f)
+
+
 def main():
     method_args, llava_args = parse()
     original_load = loader.load_pretrained_model
@@ -187,6 +231,14 @@ def main():
             model.get_model().register_forward_hook(_record_kept, with_kwargs=True)
         if method_args.score_log:
             model.get_model().register_forward_hook(_record_scores, with_kwargs=True)
+        if method_args.text_rows_log:
+            model.get_model().register_forward_hook(_record_text_rows, with_kwargs=True)
+        if method_args.answer_logit_log:
+            ids = tokenizer.convert_tokens_to_ids(ANSWER_TOKENS)
+            if tokenizer.unk_token_id in ids:
+                raise SystemExit(f"answer tokens {ANSWER_TOKENS} map to {ids}, which includes the unknown token")
+            times["answer_ids"] = ids
+            model.lm_head.register_forward_hook(functools.partial(_record_logits, ids))
         torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
         times["loaded"] = time.time()                # evaluation timing starts after loading
@@ -228,6 +280,10 @@ def main():
         _write_kept(method_args.kept_token_log, schedule[-1][1] if schedule else method_args.fastv_keep)
     if method_args.score_log:
         np.save(method_args.score_log, np.stack(_SCORES))
+    if method_args.text_rows_log:
+        _write_text_rows(method_args.text_rows_log)
+    if method_args.answer_logit_log:
+        _write_logits(method_args.answer_logit_log, times["answer_ids"])
 
 
 if __name__ == "__main__":
