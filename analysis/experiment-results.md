@@ -20,7 +20,8 @@
 | EXP-0012 | none | 96 步输入下，未来窗口的水平能否用简单统计量预测（时序候选 1 的 CPU 诊断，不训练神经网络；DEC-0020） | [EXP-0012_record](实验报告/EXP-0012_record.md) | [SQZ-EXP-0012](实验报告/EXP-0012_squeeze.md) | completed（按预设规则为高；两个支持数据集是同一台变压器，另一台上大幅变差，DEC-0021） |
 | EXP-0013 | none | 题目相关的选择为什么多出误报（F30），能否在同一预算下压下去（第 ⑧ 步第 3 轮；挑选在 coco_dev3 上做，POPE 只作测试） | [EXP-0013_record](实验报告/EXP-0013_record.md)（计划 v1） | [SQZ-EXP-0013](实验报告/EXP-0013_squeeze.md) | completed（没有修正通过开发集门槛，R09 未运行；误报伴随区分力下降，F31～F33） |
 | EXP-0014 | IDEA-0002 | 第 ⑫ 步：IDF 加权的题目查询（A′+B）与 A、A′、A+B 在 POPE、MME 上的比较（任意题目，不需要物体名的位置） | [EXP-0014_record](实验报告/EXP-0014_record.md)（计划 v1） | [SQZ-EXP-0014](实验报告/EXP-0014_squeeze.md) | completed（POPE 上 A′+B 83.59，与物体名查询相同，比 A 高 16.7；MME-P 比 A 低 52，区间含 0；F34、F35） |
-| EXP-0015 | IDEA-0002（第二轮） | 按词的可视性分配名额的题目查询（P10）：MME 与 POPE 上是否都比 A 提升 | [EXP-0015_record](实验报告/EXP-0015_record.md)（计划 v1） | 待做 | planned |
+| EXP-0015 | IDEA-0002（第二轮） | 按词的可视性分配名额的题目查询（P10）：MME 与 POPE 上是否都比 A 提升 | [EXP-0015_record](实验报告/EXP-0015_record.md)（计划 v1） | 记录内（探索性检查未单独成文） | completed（POPE +15.84，区间在 0 以上；MME-P +50.4，区间含 0；F36） |
+| EXP-0016 | IDEA-0002 | 可视性与切分的拆分（MME），128 档复验（POPE、MME） | [EXP-0016_record](实验报告/EXP-0016_record.md)（计划 v1） | 待做 | planned |
 
 ## 全部运行
 
@@ -285,6 +286,9 @@
 | EXP-0014-R01 | fastv64_qmean_strat_nopad_kl × POPE（A′） | 同上 | --fastv-score query_mean | POPE 8910 题 | — | completed | F1 65.85（RePOPE 69.80） | 召回 51.7% | 0.144 秒/题，13.93 GiB | 9c8854d2… |
 | EXP-0014-R02 | fastv64_qidf_strat_nopad_kl × POPE（A′+B） | 同上 | --fastv-score query_idf | 同上 | — | completed | 83.59（86.77） | 召回 78.0%，精确率 90.2% | 0.143 秒/题 | 368f521a… |
 | EXP-0014-R03 | fastv64_attnidf_strat_nopad_kl × POPE（A+B） | 同上 | --fastv-score attn_idf | 同上 | — | completed | 66.61（73.22） | 召回 50.7% | 0.143 秒/题 | 5e4ace0f… |
+| EXP-0015-R01 | vanilla_vocabvis × coco_dev（可视性记录） | 9a746fd；无未提交改动 | `tp`；--vocab-visibility-log | coco_dev 1800 题 | — | completed（不计分） | NA | — | 0.251 秒/题，14.99 GiB | `code/output/EXP-0015/EXP-0015-R01/`，65ab44fd…；备份同名目录 |
+| EXP-0015-R02 | fastv64_qvis_kl × MME（A′+B+V） | 同上 | --fastv-score query_vis | MME 2374 题 | — | completed | MME-P 1338.7 | — | 0.152 秒/题 | 88cb7a26… |
+| EXP-0015-R03 | fastv64_qvis_kl × POPE（A′+B+V） | 同上 | 同上 | POPE 8910 题 | — | completed | F1 82.74（RePOPE 86.73） | 召回 75.8% | 0.146 秒/题 | 7f4bf365… |
 
 ## 汇总与比较
 

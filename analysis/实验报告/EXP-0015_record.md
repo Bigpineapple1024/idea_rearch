@@ -1,6 +1,6 @@
 # EXPERIMENT_RECORD：按词的可视性分配名额的题目查询（第 ⑨～⑫ 步第二轮，P10）
 
-状态：计划 v1（2026-10-25），在任何运行之前写定。
+状态：completed（2026-10-25）。计划 v1 在任何运行之前写定；3 次运行完成，核对全部通过。V2 成立（POPE +15.84），V1 不成立、V1′ 成立（MME-P +50.4，区间含 0）。结论见 DEC-0027。
 
 - 实验 ID：EXP-0015。
 - IDEA ID：IDEA-0002 的第二轮（[迁移方案](../IDEA-0002_题目词按信息量加权.md)）；MODE_C-0002 的 C17。
@@ -68,3 +68,38 @@
 - `make_visibility.py`：可视性表。
 - **CPU 自检**（`check_query_vis.py`，14 项全部通过）：可视性全为 1 时与 query_idf 相同；全为 0 时与强对照相同；随机可视性下保留集合等于离线两轮规则，记录的个数与占比正确；词表记录每张图一行、数值等于重算；可视性表在 [0, 1] 且与原始值同序；参数检查。
 - **回归**：check_query_idf 17/17、check_mix_names 38/38、check_object_cos 12/12、check_layer_rows_log 12/12、check_text_rows_log 13/13；FastV 等价相对差 ≤ 3.13e-7；smoke_test 五项正常。
+
+## 结果（R01～R03，2026-10-25）
+
+- **可视性表**（R01 + `make_visibility.py`，`code/output/EXP-0015/visibility/`，SHA256SUMS 的 sha256 b1af357f…）：可视性最高的多是可见的词（black、red、blue、green、white、person、people、road、trees、tennis、mirror），但估计有噪声：“▁the” 0.989、人名 “▁Graham” 0.989、“▁dog” 0.732、“▁left” 0.064。
+- **S 的分布**（运行前只报告）：POPE 平均 0.74（30 个中约 22 个按查询选）；MME 各子任务 0.44～0.66，人名类（celebrity 0.52）与物体类（existence 0.55）几乎分不开。
+- **分析**：`analyze_vis.py`（code/token-pruning，与本节同时提交），输出 `code/output/EXP-0015/analysis/vis.{md,json}`（a44a3770…）。核对全部通过：按查询选的个数与离线重算的 round(30 × S) 100% 一致；全部主指标重算一致。
+
+| 配置 | POPE F1 原始 / RePOPE | MME-P |
+| --- | --- | --- |
+| **A′+B+V（R03、R02）** | **82.74 / 86.73** | **1338.7** |
+| A（强对照 + 排除填充区） | 66.90 / 72.81 | 1288.3 |
+| A′+B（EXP-0014） | 83.59 / 86.77 | 1236.2 |
+| VisionZip-64 / SparseVLM-64 | 77.03 / 77.67 | 1364.2 / 1279.6 |
+| vanilla | 85.90 / 90.64 | 1507.6 |
+
+| 配对差 | POPE（原始 / RePOPE） | MME-P |
+| --- | --- | --- |
+| A′+B+V − A | +15.84 [14.59, 17.12] / +13.92 [12.73, 15.23] | +50.4 [−10.6, +114.6] |
+| A′+B+V − A′+B | −0.85 [−1.31, −0.40] / −0.04 [−0.51, +0.47] | +102.5 [+45.2, +166.6] |
+| A′+B+V − VisionZip-64 | +5.72 / +4.95（区间在 0 以上） | −25.5 [−93.4, +45.4] |
+| A′+B+V − SparseVLM-64 | +5.08 / +4.23（区间在 0 以上） | +59.1 [−4.5, +118.0] |
+
+- MME 各子任务（A′+B+V − A）：existence +10、count +3.3、position +10、color +25、OCR +27.5、posters +1.0、scene −1.7、artwork −4.3、celebrity −9.7、landmark −10.8。名字类的损失从 A′+B 的 −96 缩小到约 −27。
+- **判读（计划 v1）**：V2 成立；V1 不成立；V1′ 成立（+50.4，区间含 0）。两个 benchmark 上点估计都高于 A，POPE 的提升有区间支持，MME 的没有。
+- **替代解释**：S 几乎分不开名字与物体，收益可能主要来自“约一半按查询、一半按强对照”的切分，而不是可视性本身。需要一个固定切分、不用可视性的对照（见 EXP-0016）。
+
+### 全部运行
+
+| 运行 ID | 配置 × 数据 | 开始 / 结束 | 状态 | 实际配置 | 原始输出 / 校验和 / 备份 |
+| --- | --- | --- | --- | --- | --- |
+| EXP-0015-R01 | `vanilla_vocabvis` × coco_dev | 10-25 00:31 / 00:39 | completed | commit 9a746fd，无未提交改动；`tp`；每题 0.251 秒，峰值 14.99 GiB | `code/output/EXP-0015/EXP-0015-R01/`，65ab44fd…；备份同名目录 |
+| EXP-0015-R02 | `fastv64_qvis_kl` × MME | 00:44 / 00:50 | completed | 同上；0.152 秒，13.96 GiB | 88cb7a26… |
+| EXP-0015-R03 | `fastv64_qvis_kl` × POPE | 00:50 / 01:12 | completed | 同上；0.146 秒，13.94 GiB | 7f4bf365… |
+
+- 预算：3 次运行，约 0.6 GPU 小时；候选 1 累计 25 次（上限 30）。偏差：无。
