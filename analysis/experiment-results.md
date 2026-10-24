@@ -1,6 +1,6 @@
 # Experiment Results：实验详细数据总表
 
-状态（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 已完成（D3 成立），第 3 轮 EXP-0013（误报）已完成（没有修正通过），第 ⑫ 步的 EXP-0014 已完成（POPE 提升，MME 未提升）；时序预测有 iTransformer 的 GPU 复现（EXP-0004，56 次运行）、验证期预测（EXP-0009，48 次运行）、对照的 GPU 重跑（EXP-0005）和 ETTh1 上的 CPU 复现（EXP-0003），候选 1 的 CPU 诊断 EXP-0012 已完成（之后时序方向暂停，DEC-0020、DEC-0021）。空表表示无数据，绝不表示数值为零。
+状态（2026-10-25 补）：EXP-0018（VQAv2 验证集）已完成，一般题目上差异不显著，答案类型上效应相反；EXP-0019 进行中；EXP-0020（按题目句式路由）已预注册。原状态行（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 已完成（D3 成立），第 3 轮 EXP-0013（误报）已完成（没有修正通过），第 ⑫ 步的 EXP-0014 已完成（POPE 提升，MME 未提升）；时序预测有 iTransformer 的 GPU 复现（EXP-0004，56 次运行）、验证期预测（EXP-0009，48 次运行）、对照的 GPU 重跑（EXP-0005）和 ETTh1 上的 CPU 复现（EXP-0003），候选 1 的 CPU 诊断 EXP-0012 已完成（之后时序方向暂停，DEC-0020、DEC-0021）。空表表示无数据，绝不表示数值为零。
 
 ## 实验登记
 
@@ -23,7 +23,8 @@
 | EXP-0015 | IDEA-0002（第二轮） | 按词的可视性分配名额的题目查询（P10）：MME 与 POPE 上是否都比 A 提升 | [EXP-0015_record](实验报告/EXP-0015_record.md)（计划 v1） | [SQZ-EXP-0015-0016](实验报告/EXP-0015-0016_squeeze.md) | completed（POPE +15.84，区间在 0 以上；MME-P +50.4，区间含 0；F36） |
 | EXP-0016 | IDEA-0002 | 可视性与切分的拆分（MME），128 档复验（POPE、MME） | [EXP-0016_record](实验报告/EXP-0016_record.md)（计划 v1） | [SQZ-EXP-0015-0016](实验报告/EXP-0015-0016_squeeze.md) | completed（可视性测不出切分之外的贡献；128 档 POPE +5.21，MME −6.6 不显著） |
 | EXP-0017 | IDEA-0002 | 192 档复验 A′+B+V 与 A（POPE、MME） | [EXP-0017_record](实验报告/EXP-0017_record.md)（计划 v1） | 记录内（三档汇总见 DEC-0029） | completed（192 档 POPE +2.29，MME −20.6 不显著） |
-| EXP-0018 | IDEA-0002 | VQAv2 验证集子集（5246 题）上的一般题目检验：A′+B+V 与 A（64、128 档）及参照 | [EXP-0018_record](实验报告/EXP-0018_record.md)（计划 v1） | 待做 | running（R01 vanilla 失败，退出码 127，用 R09 重跑） |
+| EXP-0018 | IDEA-0002 | VQAv2 验证集子集（5246 题）上的一般题目检验：A′+B+V 与 A（64、128 档）及参照 | [EXP-0018_record](实验报告/EXP-0018_record.md)（计划 v1） | [SQZ-EXP-0018](实验报告/EXP-0018_squeeze.md) | completed（Q1、Q2 不成立：64 档 −0.74 [−1.70, +0.20]、128 档 −0.20，差异不显著；64 档 yes/no +1.70、other −3.43，F38～F40；R01 vanilla 失败，R09 重跑 76.69） |
+| EXP-0020 | IDEA-0003 | 按题目句式路由（助动词或 how many 开头 → A′+B+V，其余 → A）在新抽的 VQAv2 test2（5415 题）上的预注册确认（64、128 档） | [EXP-0020_record](实验报告/EXP-0020_record.md)（计划 v1） | 待做 | planned |
 | EXP-0019 | IDEA-0002 | 审计补充：A+B 的无先验对照；最终方法的 margin AUC（POPE） | [EXP-0019_record](实验报告/EXP-0019_record.md)（计划 v1） | 待做 | planned |
 
 ## 全部运行
