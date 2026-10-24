@@ -1,6 +1,6 @@
 # Experiment Results：实验详细数据总表
 
-状态（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 正在运行；时序预测有 iTransformer 的 GPU 复现（EXP-0004，56 次运行）、验证期预测（EXP-0009，48 次运行）、对照的 GPU 重跑（EXP-0005）和 ETTh1 上的 CPU 复现（EXP-0003），候选 1 的 CPU 诊断 EXP-0012 已完成（之后时序方向暂停，DEC-0020、DEC-0021）。空表表示无数据，绝不表示数值为零。
+状态（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 已完成（D3 成立）；时序预测有 iTransformer 的 GPU 复现（EXP-0004，56 次运行）、验证期预测（EXP-0009，48 次运行）、对照的 GPU 重跑（EXP-0005）和 ETTh1 上的 CPU 复现（EXP-0003），候选 1 的 CPU 诊断 EXP-0012 已完成（之后时序方向暂停，DEC-0020、DEC-0021）。空表表示无数据，绝不表示数值为零。
 
 ## 实验登记
 
@@ -16,7 +16,7 @@
 | EXP-0008 | none | 去掉位置项后 FastV 的选择是否恢复（1A4B-0001 的 3a） | [EXP-0008_record](实验报告/EXP-0008_record.md) | [SQZ-EXP-0008](实验报告/EXP-0008_squeeze.md) | completed |
 | EXP-0009 | none | iTransformer 检查点在验证期上的预测（1A4B-0002 的 3a，不训练），四个 ETT 数据集 | [EXP-0009_record](实验报告/EXP-0009_record.md) | [SQZ-EXP-0009](实验报告/EXP-0009_squeeze.md) | completed（普遍性判据不成立；收缩只在 ETTh1-720 有效且不稳） |
 | EXP-0010 | none | 位置校正的收益来自“去位置”还是“更分散”（1A4B-0001 的 3b，对 FEATHER 两个部件的独立复核） | [EXP-0010_record](实验报告/EXP-0010_record.md) | [SQZ-EXP-0010](实验报告/EXP-0010_squeeze.md) | completed |
-| EXP-0011 | none | 第 1 层的题目注意力能否保住被问的小物体（1A4B-0003 的 D2、D3；候选 1）；挑选在 COCO 开发集上做，POPE 只作测试 | [EXP-0011_record](实验报告/EXP-0011_record.md)（计划 v1） | — | running（D2 的 R01～R03 于 2026-10-24 开始） |
+| EXP-0011 | none | 第 1 层的题目注意力能否保住被问的小物体（1A4B-0003 的 D2、D2b、D3；候选 1）；挑选在 COCO 开发集上做，POPE 只作测试 | [EXP-0011_record](实验报告/EXP-0011_record.md)（计划 v1、v1.1、v1.2） | [SQZ-EXP-0011](实验报告/EXP-0011_squeeze.md) | completed（D2 不成立；D2b 通过；D3 成立：POPE 83.63，比强对照 +18.97；误报增加，F30） |
 | EXP-0012 | none | 96 步输入下，未来窗口的水平能否用简单统计量预测（时序候选 1 的 CPU 诊断，不训练神经网络；DEC-0020） | [EXP-0012_record](实验报告/EXP-0012_record.md) | [SQZ-EXP-0012](实验报告/EXP-0012_squeeze.md) | completed（按预设规则为高；两个支持数据集是同一台变压器，另一台上大幅变差，DEC-0021） |
 
 ## 全部运行
@@ -259,6 +259,13 @@
 | EXP-0010-R04 | fastv64_strat × mme | 399b2d0；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --fastv-stratify 6 | MME 2374 题 | — | completed | 主指标 1280.7306922769108 | 见实验记录 | 0.1439 秒/题，峰值 13.96 GiB | `code/output/EXP-0010/EXP-0010-R04/`，SHA256SUMS 的 sha256 83d1e896…；备份同名目录 |
 | EXP-0010-R05 | fastv64_prior_strat × pope | 399b2d0；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --fastv-score-prior D:/6CJNM007/idea_rearch/code/output/EXP-0008/analysis/position_prior.npy --fastv-stratify 6 | POPE 8910 题 | — | completed | 主指标 64.66371522585975 | 见实验记录 | 0.1387 秒/题，峰值 13.94 GiB | `code/output/EXP-0010/EXP-0010-R05/`，SHA256SUMS 的 sha256 5568f47c…；备份同名目录 |
 | EXP-0010-R06 | fastv64_prior_strat × mme | 399b2d0；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --fastv-score-prior D:/6CJNM007/idea_rearch/code/output/EXP-0008/analysis/position_prior.npy --fastv-stratify 6 | MME 2374 题 | — | completed | 主指标 1253.3211284513804 | 见实验记录 | 0.1476 秒/题，峰值 13.96 GiB | `code/output/EXP-0010/EXP-0010-R06/`，SHA256SUMS 的 sha256 5e53e37c…；备份同名目录 |
+| EXP-0011-R01 | fastv64_prior_strat_rows × pope_img20（记录保留集合、第 1 层文本行、首 token 对数概率） | 91bd699；无未提交改动 | `tp`；同 EXP-0010-R05 的参数，加三个记录选项 | pope_img20 358 题 | — | completed | 不计分（诊断） | 保留集合与答案与 EXP-0010-R02 逐题相同 | 0.1853 秒/题，峰值 13.94 GiB | `code/output/EXP-0011/EXP-0011-R01/`，SHA256SUMS 的 sha256 8d1e0a2c…；备份同名目录 |
+| EXP-0011-R02 | fastv64_prior_strat_rows × coco_dev | 91bd699；无未提交改动 | 同上 | COCO 开发集 1800 题（题目 b70efa02…，标签 14fe106d…） | — | completed | 不计分（诊断） | D2：P1～P3 不成立 | 0.1514 秒/题，峰值 13.94 GiB | `code/output/EXP-0011/EXP-0011-R02/`，SHA256SUMS 的 sha256 b1016eb7…；备份同名目录 |
+| EXP-0011-R03 | fastv64_prior_strat_rows × pope | 91bd699；无未提交改动 | 同上 | POPE 8910 题 | — | completed | 主指标 64.66371522585975（与 EXP-0010-R05 相同） | 答案与 EXP-0010-R05 逐题相同 | 0.1456 秒/题，峰值 13.94 GiB | `code/output/EXP-0011/EXP-0011-R03/`，SHA256SUMS 的 sha256 46d10730…；备份同名目录 |
+| EXP-0011-R04 | vanilla_layerrows × coco_dev（D2b 的分层记录） | 2a75f12；无未提交改动 | `tp`；--method vanilla --layer-rows-log；prefill 用 eager 注意力 | COCO 开发集 1800 题 | — | completed | 不计分（诊断） | D2b 通过：C0_o 小物体命中 70.4% | 0.2697 秒/题，峰值 15.14 GiB | `code/output/EXP-0011/EXP-0011-R04/`，SHA256SUMS 的 sha256 55315b81…；备份同名目录 |
+| EXP-0011-R05 | fastv64_objcos_strat_nopad_kept × coco_dev（D3 的实现核对） | be160e6；无未提交改动 | `tp`；--method fastv --fastv-k 2 --fastv-keep 30 --fastv-stratify 6 --fastv-score object_cos --fastv-exclude-padding --kept-token-log | COCO 开发集 1800 题 | — | completed | 不计分（诊断） | 保留集合与离线模拟 100% 相同 | 0.1503 秒/题，峰值 13.93 GiB | `code/output/EXP-0011/EXP-0011-R05/`，SHA256SUMS 的 sha256 f71a60c0…；备份同名目录 |
+| EXP-0011-R06 | fastv64_objcos_strat_nopad_kept × pope（D3 变体） | be160e6；无未提交改动 | 同上 | POPE 8910 题 | — | completed | 主指标 83.63425797161123（RePOPE 86.85） | 召回 78.0%，精确率 90.3%，误报 211 / 121 / 56 | 0.1454 秒/题，峰值 13.93 GiB | `code/output/EXP-0011/EXP-0011-R06/`，SHA256SUMS 的 sha256 f3921ded…；备份同名目录 |
+| EXP-0011-R07 | fastv64_prior_strat_nopad_kept × pope（只排除填充区的对照） | be160e6；无未提交改动 | `tp`；EXP-0010-R05 的参数加 --fastv-exclude-padding --kept-token-log | POPE 8910 题 | — | completed | 主指标 66.90387173063968（RePOPE 72.81） | 召回 51.1%，精确率 96.8% | 0.1443 秒/题，峰值 13.94 GiB | `code/output/EXP-0011/EXP-0011-R07/`，SHA256SUMS 的 sha256 4ff53779…；备份同名目录 |
 
 ## 汇总与比较
 
@@ -272,6 +279,9 @@
 | C-0004-1 | EXP-0004-R01～R20 | ETTh1 × 4 个预测长度；每档直接运行 2 次 + 包装脚本 3 个种子 | 包装脚本三个种子的均值 ± 样本标准差，与论文 Table 10 比较 | MSE：96 档 0.3858 ± 0.0008（论文 0.386），192 档 0.4426 ± 0.0033（0.441），336 档 0.4902 ± 0.0015（0.487），720 档 0.5120 ± 0.0047（0.503）；包装脚本（种子 2023）与直接运行逐位相同 | 论文值在均值 ± 2 SD 内 | 无 | 阶段 A：3 档达标、336 档未达标（差 0.0002），按计划进入阶段 B |
 | C-0004-2 | EXP-0004-R21～R56 | ETTh2、ETTm1、ETTm2 × 4 个预测长度 × 3 个种子 | 同上 | 12 个组合中 3 个达标（ETTh2-192、ETTm1-720、ETTm2-720）；均值 − 论文在 −0.0080～+0.0081 之间，12 个中 3 个低于论文；种子标准差 0.0003～0.0045 | 同上 | 无 | 共 6/16 达标；用户决定记为偏差、继续使用（DEC-0018）；以后与本项目自己的运行比较 |
 | C-0009-1 | EXP-0009-R01～R48 vs EXP-0004、EXP-0005 的测试期拆分 | 4 个数据集 × 4 个预测长度，3 个种子合并 | 计划 v1 的规则 1～3 与 v1.1 的普遍性判据（analysis/rules.md） | 规则 1：ETTm2-336、720（但测试期 a=0 更差）；规则 2：ETTh1-192、336、720，ETTm1-720；规则 3：只有 ETTh1-720（−0.0146）；普遍性：不成立 | 预先写下的规则 | 无 | F-TS10 只在 ETTh1 的测试期出现；收缩不是改进方向；水平变化在四个数据集上都几乎预测不出（F-TS13） |
+| C-0011-1 | EXP-0011-R02（开发集），R03（POPE，描述） | 开发集 900 个正样本（≤ 1.35% 的 395 个）；POPE 4053 个正样本题 | 第 1 层三种打分的同图不同题 Jaccard、物体对准比值、24 种模拟选择的命中率 | 题目句 / 物体名 / 最后一个 token 的 Jaccard 0.980 / 0.931 / 0.959；比值 0.95～0.99；最好的题目行 + 分块比强对照 +4.8 [1.5, 8.0] | 计划 v1 的 P1～P3（Jaccard 低 0.1；比值 > 1；+10 个百分点） | 无 | 第 1 层的注意力不看题目，换行无用（F28） |
+| C-0011-2 | EXP-0011-R04 vs R02 | 开发集 395 个小物体正样本 | 16 个第 2 层前可用的算子，分块 + 排除填充区；head 用两折交叉选择 | 最好的 C0_o（输入 embedding 余弦，物体名）70.4% vs 强对照 35.4%：+34.9 [29.6, 40.6]；比只排除填充区 +30.4 | 计划 v1.1：+10 个百分点 | 无（第 1 版的 AUC 缺陷不影响判定） | 通过，做 D3（F29） |
+| C-0011-3 | EXP-0011-R06、R07 vs R03；EXP-0002 的参照运行 | POPE 8910 题 | 配对 bootstrap（题目在各子集内重抽 1000 次），原始标注与 RePOPE | 变体 − 强对照 +18.97 [17.67, 20.37]（RePOPE +16.50 [15.12, 17.98]）；− 只排除填充区 +16.73；只排除填充区 − 强对照 +2.24；− VisionZip-64 +6.61；− SparseVLM-64 +5.97 | 计划 v1.2：差 > 0 且区间在 0 以上 | 无 | 成立；误报比 vanilla 多 1.6～1.8 倍（F30）；只适用于点名物体的题目 |
 | C-0012-1 | EXP-0012 主分析（不训练）vs EXP-0004 测试期、EXP-0009 验证期的 iTransformer 运行 | 4 个数据集 × 4 个预测长度 × 验证期与测试期；iTransformer 3 个种子平均 | 只在训练窗口上拟合的 4 特征线性水平预测器（S1）替换 iTransformer 的水平，形状不变；ΔMSE = 水平误差之差 | 明显更好：ETTh1-720 测试 −0.0084（验证 −0.318），ETTm1-336 −0.0147（−0.004），ETTm1-720 −0.0234（−0.065）；ETTh2、ETTm2 测试 +0.07 ～ +0.79（+37% ～ +184%）；按验证期选权重的混合 16 个组合测试 ΔMSE −0.027 ～ 0 | 计划 v1：测试 ΔMSE < −0.005、验证 ΔMSE < 0、两期相关更高；至少两个数据集 | 无 | 按规则为高（DEC-0021）；ETTh1、ETTm1 是同一台变压器，另一台上同一预测器大幅变差（F-TS15） |
 | C-0005-1 | EXP-0005-R01～R12、R25～R39；EXP-0004 包装脚本运行 | ETTh1 × 4 个预测长度 × 3 个种子（DUET 只有 96 档） | 三种子均值 ± 样本标准差，全部测试窗口 | 四档平均：iTransformer 0.4576，TQNet 0.4460，WPMixer 0.4370（drop_last 计分 0.4331）；96 档 TQNet 0.3728 < WPMixer 0.3778 < DUET 0.3795 < iTransformer 0.3858 | 无（对照重评，不设门槛） | WPMixer R13～R24 失败已重跑 | 统一协议下 TQNet、WPMixer 在 ETTh1 各档都好于 iTransformer；WPMixer 仍比论文差 0.011～0.015 |
 | C-0005-2 | EXP-0005-R25 vs EXP-0004-R03；两份 ETTh1.csv | ETTh1-96 的 2785 个测试窗口 | 逐值比较 | 原始值最大差 3.6e-15；标准化后的测试窗口最大差 2.2e-07 | — | 无 | DUET（TFB）与 TSLib 式框架计分的是同一批窗口 |
