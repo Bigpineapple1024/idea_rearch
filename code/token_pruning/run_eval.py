@@ -79,8 +79,13 @@ def parse():
                       help="diagnostic, fastv only: .npy with one value per image patch; scores are divided by it")
     ours.add_argument("--fastv-stratify", type=int, default=None,
                       help="diagnostic, fastv only: take the ranking in turns from an n x n grid of image blocks")
+    ours.add_argument("--fastv-visibility", default=None,
+                      help="fastv, --fastv-score query_vis: .npy with one visibility in [0, 1] per vocabulary id (EXP-0015)")
+    ours.add_argument("--vocab-visibility-log", default=None,
+                      help="diagnostic: per image, the largest and the mean cosine over the image tokens' input embeddings "
+                           "for every vocabulary embedding (.npz, EXP-0015)")
     ours.add_argument("--fastv-score", choices=["last", "object_cos", "mix", "contrast_max", "contrast_mean", "query_mean",
-                                                "query_idf", "attn_idf"],
+                                                "query_idf", "attn_idf", "query_vis"],
                       default="last",
                       help="fastv: rank by the last token's attention at layer K-1 (FastV), or, for POPE-style questions, "
                            "by the cosine of each image token's input embedding to the object name's (EXP-0011 D3), or "
@@ -130,8 +135,14 @@ def parse():
     if method_args.fastv_score in ("object_cos", "contrast_max", "contrast_mean", "query_mean", "query_idf",
                                    "attn_idf") and (method_args.text_rows_log or method_args.fastv_score_prior):
         ours.error(f"--fastv-score {method_args.fastv_score} has no attention rows to log and takes no position prior")
-    if method_args.fastv_score in ("query_mean", "query_idf", "attn_idf") and method_args.fastv_schedule:
+    if method_args.fastv_score in ("query_mean", "query_idf", "attn_idf", "query_vis") and method_args.fastv_schedule:
         ours.error(f"--fastv-score {method_args.fastv_score} works with a single stage")
+    if (method_args.fastv_score == "query_vis") != bool(method_args.fastv_visibility):
+        ours.error("--fastv-score query_vis and --fastv-visibility go together")
+    if method_args.fastv_score == "query_vis" and (method_args.text_rows_log or not method_args.fastv_stratify):
+        ours.error("--fastv-score query_vis needs --fastv-stratify and no --text-rows-log")
+    if method_args.vocab_visibility_log and method_args.method in ("visionzip", "sparsevlm"):
+        ours.error("--vocab-visibility-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     if (method_args.fastv_score == "mix") != (method_args.fastv_mix_question is not None):
         ours.error("--fastv-score mix and --fastv-mix-question go together")
     if method_args.fastv_score == "mix" and (method_args.text_rows_log or not method_args.fastv_stratify
@@ -164,7 +175,7 @@ def apply_method(model, m, tokenizer=None):
         weights = None
         if score_kind == "query_mean":
             weights = lambda ids: [1.0] * len(ids)             # noqa: E731
-        elif score_kind in ("query_idf", "attn_idf"):          # IDF of each token over the evaluated question file
+        elif score_kind in ("query_idf", "attn_idf", "query_vis"):     # IDF of each token over the evaluated question file
             idf = getattr(m, "fastv_idf", None) or question_idf(tokenizer, m.question_file, getattr(m, "conv_mode", "vicuna_v1"))
             m.fastv_idf = idf
             weights = lambda ids: [idf["idf"].get(t, idf["unseen"]) for t in ids]   # noqa: E731
@@ -174,7 +185,8 @@ def apply_method(model, m, tokenizer=None):
                            object_span=span if score_kind in ("object_cos", "mix", "contrast_max", "contrast_mean") else None,
                            exclude_padding=bool(getattr(m, "fastv_exclude_padding", False)),
                            mix_question=getattr(m, "fastv_mix_question", None), contrast_ids=contrast_ids,
-                           token_weights=weights)
+                           token_weights=weights,
+                           visibility=np.load(m.fastv_visibility) if score_kind == "query_vis" else None)
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "visionzip":
@@ -225,7 +237,7 @@ def _record_kept(module, args, kwargs, output):
     if embeds is not None and embeds.shape[1] > 1:      # prefill only: generate() decodes from input_ids
         _KEPT.append(module.fastv_kept_image_positions.tolist())
         _KEPT_N_IMG.add(int(module.fastv_image_span[1]))
-        if getattr(module, "fastv_score_kind", None) == "mix":
+        if getattr(module, "fastv_score_kind", None) in ("mix", "query_vis"):
             _KEPT_QUESTION.append(module.fastv_kept_question_positions.tolist())
 
 
@@ -316,6 +328,35 @@ def _log_name_cos(lm, name_ids):
 
     lm.register_forward_hook(hook, with_kwargs=True)
     return names
+
+
+_VOCAB_VIS = {"max": [], "mean": [], "seen": set()}     # per distinct image: largest and mean cosine of every vocab id
+
+
+def _log_vocab_visibility(lm):
+    """Forward hook on the LlamaModel: at each prefill of a new image, the cosine of every image token's input embedding to
+    every vocabulary embedding, reduced over the image tokens to its largest and mean value (one vector per image)."""
+    vocab = torch.nn.functional.normalize(lm.embed_tokens.weight.detach().float(), dim=-1)
+
+    def hook(module, args, kwargs, output):
+        embeds = kwargs.get("inputs_embeds")
+        if embeds is None or embeds.shape[1] == 1:
+            return
+        start, n_img = module.fastv_image_span
+        img = embeds[0, start:start + n_img].float()
+        key = (n_img, float(img.sum()), float((img * img).sum()), float(img[0, 0]), float(img[-1, -1]))
+        if key in _VOCAB_VIS["seen"]:
+            return
+        _VOCAB_VIS["seen"].add(key)
+        sims = torch.nn.functional.normalize(img, dim=-1) @ vocab.T            # (n_img, vocab)
+        _VOCAB_VIS["max"].append(sims.max(0).values.half().cpu().numpy())
+        _VOCAB_VIS["mean"].append(sims.mean(0).half().cpu().numpy())
+
+    lm.register_forward_hook(hook, with_kwargs=True)
+
+
+def _write_vocab_visibility(path):
+    np.savez_compressed(path, max=np.stack(_VOCAB_VIS["max"]), mean=np.stack(_VOCAB_VIS["mean"]))
 
 
 def _write_name_cos(path, names, name_ids):
@@ -461,6 +502,10 @@ def main():
                 _record_image_span(model)                # FastV and random record the image span themselves
             times["name_ids"] = _name_token_ids(tokenizer, coco_names(), llava_args.conv_mode)
             times["names"] = _log_name_cos(model.get_model(), times["name_ids"])
+        if method_args.vocab_visibility_log:
+            if method_args.method == "vanilla" and not (method_args.layer_rows_log or method_args.name_cos_log):
+                _record_image_span(model)
+            _log_vocab_visibility(model.get_model())
         torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
         times["loaded"] = time.time()                # evaluation timing starts after loading
@@ -515,6 +560,8 @@ def main():
         _write_layer_rows(method_args.layer_rows_log)
     if method_args.name_cos_log:
         _write_name_cos(method_args.name_cos_log, times["names"], times["name_ids"])
+    if method_args.vocab_visibility_log:
+        _write_vocab_visibility(method_args.vocab_visibility_log)
 
 
 if __name__ == "__main__":

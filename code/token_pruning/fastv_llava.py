@@ -33,6 +33,9 @@ With score_kind="query_mean" or "query_idf" (EXP-0014, any question), the query 
 embeddings of all tokens after the image, with weights from token_weights (uniform, or IDF over the question file), and
 each image token is ranked by its cosine to that query. score_kind="attn_idf" weights the scoring layer's attention rows
 of the same tokens by those weights instead (FastV's attention, no position prior).
+With score_kind="query_vis" (EXP-0015, blocks only), each token's weight is its IDF times its visibility (a value per
+vocabulary id in [0, 1]); round(keep * S) tokens, S = sum(IDF * visibility) / sum(IDF), are taken by the cosine to that
+weighted query and the rest by FastV's (prior-divided) score, as in "mix".
 """
 import types
 
@@ -111,8 +114,9 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
     contrast = self.fastv_score_kind in ("contrast_max", "contrast_mean")
     query = self.fastv_score_kind in ("query_mean", "query_idf")
     attn_weighted = self.fastv_score_kind == "attn_idf"
+    query_vis = self.fastv_score_kind == "query_vis"
     object_cos = self.fastv_score_kind == "object_cos" or contrast or query     # ranked by an input-embedding score alone
-    mix = self.fastv_score_kind == "mix"
+    mix = self.fastv_score_kind in ("mix", "query_vis")
     if prefill:
         start, n_img = self.fastv_image_span
         kept = torch.arange(n_img, device=hidden.device)       # original patch index of each image token still present
@@ -120,7 +124,14 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             w = torch.tensor(self.fastv_token_weights(self.fastv_text_after_ids), dtype=torch.float32,
                              device=hidden.device)
             self.fastv_query_weights = w if float(w.sum()) > 0 else torch.ones_like(w)
-        if query:                                              # the weighted mean of the question's input embeddings
+        if query_vis:                                          # IDF x visibility; S sets the question's share of the budget
+            idf = torch.tensor(self.fastv_token_weights(self.fastv_text_after_ids), dtype=torch.float32,
+                               device=hidden.device)
+            vis = self.fastv_visibility.to(hidden.device)[torch.tensor(self.fastv_text_after_ids, device=hidden.device)]
+            w = idf * vis.float()
+            self.fastv_visible_share = float(w.sum() / idf.sum()) if float(idf.sum()) > 0 else 0.0
+            self.fastv_query_weights = w if float(w.sum()) > 0 else torch.ones_like(w)
+        if query or query_vis:                                 # the weighted mean of the question's input embeddings
             h = inputs_embeds[0].float()
             w = self.fastv_query_weights
             q = (w[:, None] * h[start + n_img:start + n_img + w.numel()]).sum(0, keepdim=True) / w.sum()
@@ -167,7 +178,8 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             count = min(stages[idx], pos.numel())
             if mix:                                            # part by the object name, the rest by FastV's score
                 side, blocks = round(n_img ** 0.5), self.fastv_stratify
-                n_q = min(self.fastv_mix_question, count)
+                n_q = round(count * self.fastv_visible_share) if query_vis else min(self.fastv_mix_question, count)
+                self.fastv_mix_count = n_q
                 first = pos[_stratified_top(self.fastv_object_cos[kept][pos], n_q, kept[pos], side, blocks)]
                 rest = pos[~torch.isin(pos, first)]
                 filled = {}
@@ -224,7 +236,7 @@ def _record_image_span(model):
 
 def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
                score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None,
-               token_weights=None):
+               token_weights=None, visibility=None):
     """Turn a transformers LlamaModel into FastV in place (image span set by the caller).
 
     seed=None keeps FastV's attention ranking; an integer selects random image tokens from that seed.
@@ -242,14 +254,21 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
     contrast_ids (a list of token-id lists; each name is the mean of its tokens' input embeddings).
     """
     if score_kind not in ("last", "object_cos", "mix", "contrast_max", "contrast_mean", "query_mean", "query_idf",
-                          "attn_idf"):
+                          "attn_idf", "query_vis"):
         raise ValueError(f"unknown score_kind {score_kind!r}")
-    weighted = score_kind in ("query_mean", "query_idf", "attn_idf")
+    weighted = score_kind in ("query_mean", "query_idf", "attn_idf", "query_vis")
     if weighted != (token_weights is not None):
-        raise ValueError("query_mean, query_idf and attn_idf need token_weights, and only they take it")
-    if weighted and (seed is not None or score_prior is not None or log_text_rows or schedule):
+        raise ValueError("query_mean, query_idf, attn_idf and query_vis need token_weights, and only they take it")
+    if weighted and score_kind != "query_vis" and (seed is not None or score_prior is not None or log_text_rows or schedule):
         raise ValueError(f"{score_kind} takes no seed, position prior, attention-row log or schedule")
+    if (score_kind == "query_vis") != (visibility is not None):
+        raise ValueError("query_vis needs visibility, and only it takes it")
+    if score_kind == "query_vis" and (seed is not None or stratify is None or log_text_rows or schedule):
+        raise ValueError("query_vis needs stratify; no seed, schedule or row log")
     llama_model.fastv_token_weights = token_weights
+    llama_model.fastv_visibility = None if visibility is None else torch.as_tensor(visibility).float()
+    llama_model.fastv_visible_share = None
+    llama_model.fastv_mix_count = None
     if score_kind in ("object_cos", "contrast_max", "contrast_mean") and (
             object_span is None or seed is not None or score_prior is not None or log_text_rows):
         raise ValueError(f"{score_kind} needs object_span and takes no seed, position prior or attention-row log")
@@ -289,9 +308,9 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
 
 def apply_fastv(model, k=2, keep=288, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
                 score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None,
-                token_weights=None):
+                token_weights=None, visibility=None):
     """Enable FastV (or its random-selection control when seed is given) on a loaded LlavaLlamaForCausalLM."""
     bind_fastv(model.get_model(), k, keep, seed, schedule, score_prior, stratify, log_text_rows, score_kind, object_span,
-               exclude_padding, mix_question, contrast_ids, token_weights)
+               exclude_padding, mix_question, contrast_ids, token_weights, visibility)
     _record_image_span(model)
     return model

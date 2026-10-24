@@ -108,6 +108,11 @@ for kind in ("max", "mean"):
 for name, kind in (("qmean", "query_mean"), ("qidf", "query_idf"), ("attnidf", "attn_idf")):
     CONFIGS[f"fastv64_{name}_strat_nopad"] = ("tp", CONFIGS["fastv64"][1] + [
         "--fastv-stratify", "6", "--fastv-score", kind, "--fastv-exclude-padding"])
+# EXP-0015: IDF x visibility (visibility per vocabulary id from the coco_dev images, make_visibility.py); round(30 * S)
+# tokens by that query, the rest by the strong baseline's score (prior, blocks, padding never kept)
+VISIBILITY = f"{REPO}/code/output/EXP-0015/visibility/visibility.npy"
+CONFIGS["fastv64_qvis"] = ("tp", CONFIGS["fastv64_prior_strat_nopad"][1] + [
+    "--fastv-score", "query_vis", "--fastv-visibility", VISIBILITY])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
@@ -131,6 +136,8 @@ CONFIGS["vanilla_layerrows"] = CONFIGS["vanilla"]
 CONFIGS.update({f"{name}_ksl": CONFIGS[name] for name in BASE if name.startswith("fastv")})
 CONFIGS.update({f"{name}_kl": CONFIGS[name] for name in BASE if name.startswith("fastv")})
 CONFIGS["vanilla_names"] = CONFIGS["vanilla"]
+# EXP-0015: vanilla with the log-probabilities and, per image, the largest and mean cosine of every vocabulary embedding
+CONFIGS["vanilla_vocabvis"] = CONFIGS["vanilla"]
 
 
 def experiment(run_id):
@@ -202,6 +209,9 @@ def run_one(run_id, config, bench):
     if config.endswith("_names"):
         method_args = method_args + ["--answer-logit-log", f"{run_dir}/answer_logits.json",
                                      "--name-cos-log", f"{run_dir}/name_cos.npz"]
+    if config.endswith("_vocabvis"):
+        method_args = method_args + ["--answer-logit-log", f"{run_dir}/answer_logits.json",
+                                     "--vocab-visibility-log", f"{run_dir}/vocab_visibility.npz"]
     eval_cmd = ("cd {here} && HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TQDM_MININTERVAL=30 VISIONZIP_ROOT={vz} "
                 "python run_eval.py {margs} -- --model-path {model} --question-file {q} --image-folder {img} "
                 "--answers-file {ans} --temperature 0 --conv-mode vicuna_v1").format(
