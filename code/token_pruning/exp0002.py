@@ -97,6 +97,11 @@ for b in (192, 128, 64):
 for n in (20, 15, 10):
     CONFIGS[f"fastv64_mix{n}"] = ("tp", CONFIGS["fastv64_prior_strat_nopad"][1] + [
         "--fastv-score", "mix", "--fastv-mix-question", str(n)])
+# EXP-0013: the object-name cosine minus the largest / mean cosine of the same image token to the other COCO names,
+# otherwise as the EXP-0011 variant (blocks, padding never kept)
+for kind in ("max", "mean"):
+    CONFIGS[f"fastv64_contrast{kind}_strat_nopad"] = ("tp", CONFIGS["fastv64"][1] + [
+        "--fastv-stratify", "6", "--fastv-score", f"contrast_{kind}", "--fastv-exclude-padding"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic

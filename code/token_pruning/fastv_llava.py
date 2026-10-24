@@ -26,6 +26,9 @@ the image to their indices); no attention map is needed. With exclude_padding, p
 LLaVA's centred square image (expand2square) are never kept. Without either option the computation is as before.
 With score_kind="mix" (EXP-0013, blocks only), mix_question of the kept tokens are taken by the object-name cosine and the
 rest by FastV's (prior-divided) attention score, the second rotation filling the blocks the first left empty.
+With score_kind="contrast_max" or "contrast_mean" (EXP-0013), the object-name cosine is compared with the cosine of the
+same image token to a vocabulary of other names (contrast_ids: the token ids of each name; a name spelled with the asked
+object's ids is left out): the score is the asked cosine minus the largest, or minus the mean, of the others.
 """
 import types
 
@@ -101,16 +104,25 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
     prefill = q_len > 1
     hidden = inputs_embeds
     attn = None
-    object_cos = self.fastv_score_kind == "object_cos"
+    contrast = self.fastv_score_kind in ("contrast_max", "contrast_mean")
+    object_cos = self.fastv_score_kind == "object_cos" or contrast     # ranked by an input-embedding score alone
     mix = self.fastv_score_kind == "mix"
     if prefill:
         start, n_img = self.fastv_image_span
         kept = torch.arange(n_img, device=hidden.device)       # original patch index of each image token still present
         if object_cos or mix:                                  # question-aware score from the input embeddings
-            obj = [start + n_img + i for i in self.fastv_object_span(self.fastv_text_after_ids)]
+            span = self.fastv_object_span(self.fastv_text_after_ids)
+            obj = [start + n_img + i for i in span]
             h = inputs_embeds[0].float()
             self.fastv_object_cos = torch.nn.functional.cosine_similarity(
                 h[start:start + n_img], h[obj].mean(0, keepdim=True), dim=-1)
+            self.fastv_input_score = self.fastv_object_cos
+            if contrast:                                       # the asked name against the other names
+                asked = [self.fastv_text_after_ids[i] for i in span]
+                other = [j for j, ids in enumerate(self.fastv_contrast_ids) if ids != asked]
+                alt = torch.nn.functional.normalize(h[start:start + n_img], dim=-1) @ self.fastv_contrast_emb[other].T
+                ref = alt.max(1).values if self.fastv_score_kind == "contrast_max" else alt.mean(1)
+                self.fastv_input_score = self.fastv_object_cos - ref
         allowed = torch.ones(n_img, dtype=torch.bool, device=hidden.device)
         if self.fastv_exclude_padding:
             allowed = ~_padding_mask(*self.fastv_image_size, round(n_img ** 0.5)).to(hidden.device)
@@ -118,7 +130,7 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
         if prefill and idx in stages:
             n_cur = kept.numel()
             if self.fastv_generator is None and object_cos:
-                score = self.fastv_object_cos[kept]
+                score = self.fastv_input_score[kept]
                 self.fastv_last_scores = score
             elif self.fastv_generator is None:
                 score = attn.mean(dim=1)[0, -1, start:start + n_cur]
@@ -190,7 +202,7 @@ def _record_image_span(model):
 
 
 def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
-               score_kind="last", object_span=None, exclude_padding=False, mix_question=None):
+               score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None):
     """Turn a transformers LlamaModel into FastV in place (image span set by the caller).
 
     seed=None keeps FastV's attention ranking; an integer selects random image tokens from that seed.
@@ -204,11 +216,21 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
     after the image object_span returns; exclude_padding never keeps patches lying wholly in the square's padding.
     score_kind "mix" keeps mix_question tokens by that cosine and the rest by FastV's score (after score_prior, if any),
     both taken in blocks (stratify required, single stage).
+    score_kind "contrast_max" / "contrast_mean" subtracts from that cosine the largest / mean cosine to the names in
+    contrast_ids (a list of token-id lists; each name is the mean of its tokens' input embeddings).
     """
-    if score_kind not in ("last", "object_cos", "mix"):
+    if score_kind not in ("last", "object_cos", "mix", "contrast_max", "contrast_mean"):
         raise ValueError(f"unknown score_kind {score_kind!r}")
-    if score_kind == "object_cos" and (object_span is None or seed is not None or score_prior is not None or log_text_rows):
-        raise ValueError("object_cos needs object_span and takes no seed, position prior or attention-row log")
+    if score_kind in ("object_cos", "contrast_max", "contrast_mean") and (
+            object_span is None or seed is not None or score_prior is not None or log_text_rows):
+        raise ValueError(f"{score_kind} needs object_span and takes no seed, position prior or attention-row log")
+    if score_kind.startswith("contrast") != bool(contrast_ids):
+        raise ValueError("the contrast scores need contrast_ids, and only they take it")
+    llama_model.fastv_contrast_ids = [list(ids) for ids in contrast_ids] if contrast_ids else None
+    if contrast_ids:
+        w = llama_model.embed_tokens.weight
+        emb = torch.stack([w[torch.tensor(ids, device=w.device)].detach().float().mean(0) for ids in contrast_ids])
+        llama_model.fastv_contrast_emb = torch.nn.functional.normalize(emb, dim=-1)
     if score_kind == "mix" and (object_span is None or seed is not None or stratify is None or log_text_rows
                                 or mix_question is None or not 0 <= mix_question <= keep or schedule):
         raise ValueError("mix needs object_span, stratify and 0 <= mix_question <= keep; no seed, schedule or row log")
@@ -237,9 +259,9 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
 
 
 def apply_fastv(model, k=2, keep=288, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
-                score_kind="last", object_span=None, exclude_padding=False, mix_question=None):
+                score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None):
     """Enable FastV (or its random-selection control when seed is given) on a loaded LlavaLlamaForCausalLM."""
     bind_fastv(model.get_model(), k, keep, seed, schedule, score_prior, stratify, log_text_rows, score_kind, object_span,
-               exclude_padding, mix_question)
+               exclude_padding, mix_question, contrast_ids)
     _record_image_span(model)
     return model

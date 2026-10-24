@@ -79,10 +79,12 @@ def parse():
                       help="diagnostic, fastv only: .npy with one value per image patch; scores are divided by it")
     ours.add_argument("--fastv-stratify", type=int, default=None,
                       help="diagnostic, fastv only: take the ranking in turns from an n x n grid of image blocks")
-    ours.add_argument("--fastv-score", choices=["last", "object_cos", "mix"], default="last",
+    ours.add_argument("--fastv-score", choices=["last", "object_cos", "mix", "contrast_max", "contrast_mean"],
+                      default="last",
                       help="fastv: rank by the last token's attention at layer K-1 (FastV), or, for POPE-style questions, "
                            "by the cosine of each image token's input embedding to the object name's (EXP-0011 D3), or "
-                           "keep --fastv-mix-question tokens by that cosine and the rest by FastV's score (EXP-0013)")
+                           "keep --fastv-mix-question tokens by that cosine and the rest by FastV's score (EXP-0013), or "
+                           "by that cosine minus the largest / mean cosine to the other 80 COCO names (EXP-0013)")
     ours.add_argument("--fastv-mix-question", type=int, default=None,
                       help="fastv, --fastv-score mix: number of kept tokens chosen by the object-name cosine")
     ours.add_argument("--fastv-exclude-padding", action="store_true",
@@ -121,8 +123,9 @@ def parse():
         ours.error("--layer-rows-log needs --method vanilla")
     if (method_args.fastv_score != "last" or method_args.fastv_exclude_padding) and method_args.method != "fastv":
         ours.error("--fastv-score and --fastv-exclude-padding need --method fastv")
-    if method_args.fastv_score == "object_cos" and (method_args.text_rows_log or method_args.fastv_score_prior):
-        ours.error("--fastv-score object_cos has no attention rows to log and takes no position prior")
+    if method_args.fastv_score in ("object_cos", "contrast_max", "contrast_mean") and (
+            method_args.text_rows_log or method_args.fastv_score_prior):
+        ours.error(f"--fastv-score {method_args.fastv_score} has no attention rows to log and takes no position prior")
     if (method_args.fastv_score == "mix") != (method_args.fastv_mix_question is not None):
         ours.error("--fastv-score mix and --fastv-mix-question go together")
     if method_args.fastv_score == "mix" and (method_args.text_rows_log or not method_args.fastv_stratify
@@ -130,6 +133,7 @@ def parse():
         ours.error("--fastv-score mix needs --fastv-stratify, a single stage and no --text-rows-log")
     if method_args.name_cos_log and method_args.method in ("visionzip", "sparsevlm"):
         ours.error("--name-cos-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
+    method_args.conv_mode = llava_args.conv_mode          # the contrast vocabulary is tokenised in the same template
     if method_args.method == "sparsevlm":
         if method_args.retained_tokens is None:
             ours.error("--method sparsevlm needs --retained-tokens")
@@ -145,12 +149,16 @@ def apply_method(model, m, tokenizer=None):
         prior_path = getattr(m, "fastv_score_prior", None)
         prior = torch.from_numpy(np.load(prior_path)) if prior_path else None
         score_kind = getattr(m, "fastv_score", "last")
-        span = (lambda ids: question_spans(tokenizer, ids)[1]) if score_kind in ("object_cos", "mix") else None
+        span = (lambda ids: question_spans(tokenizer, ids)[1]) if score_kind != "last" else None
+        contrast_ids = None
+        if score_kind.startswith("contrast"):                  # the 80 COCO names, as they appear in a POPE question
+            contrast_ids = getattr(m, "fastv_contrast_ids", None) or list(
+                _name_token_ids(tokenizer, coco_names(), getattr(m, "conv_mode", "vicuna_v1")).values())
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule, score_prior=prior,
                            stratify=getattr(m, "fastv_stratify", None),
                            log_text_rows=bool(getattr(m, "text_rows_log", None)), score_kind=score_kind,
                            object_span=span, exclude_padding=bool(getattr(m, "fastv_exclude_padding", False)),
-                           mix_question=getattr(m, "fastv_mix_question", None))
+                           mix_question=getattr(m, "fastv_mix_question", None), contrast_ids=contrast_ids)
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "visionzip":
@@ -214,6 +222,12 @@ def _write_kept(path, keep):
 
 
 _NAME_COS = {"cos": [], "index": [], "seen": {}}     # one (576, n_names) array per distinct image, an index per prefill
+
+
+def coco_names():
+    """The 80 COCO category names in category-id order."""
+    with open(COCO_INSTANCES, encoding="utf-8") as f:
+        return [c["name"] for c in sorted(json.load(f)["categories"], key=lambda c: c["id"])]
 
 
 def _name_token_ids(tokenizer, names, conv_mode):
@@ -402,9 +416,7 @@ def main():
         if method_args.name_cos_log:
             if method_args.method == "vanilla" and not method_args.layer_rows_log:
                 _record_image_span(model)                # FastV and random record the image span themselves
-            with open(COCO_INSTANCES, encoding="utf-8") as f:
-                names = [c["name"] for c in sorted(json.load(f)["categories"], key=lambda c: c["id"])]
-            times["name_ids"] = _name_token_ids(tokenizer, names, llava_args.conv_mode)
+            times["name_ids"] = _name_token_ids(tokenizer, coco_names(), llava_args.conv_mode)
             times["names"] = _log_name_cos(model.get_model(), times["name_ids"])
         torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
