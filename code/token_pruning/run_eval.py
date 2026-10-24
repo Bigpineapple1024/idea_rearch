@@ -28,8 +28,10 @@ import numpy as np
 import torch
 from llava.eval import model_vqa_loader as loader
 from torch.utils.data import DataLoader
+from transformers.modeling_outputs import BaseModelOutputWithPast
 
-from fastv_llava import apply_fastv
+from fastv_llava import _record_image_span, apply_fastv
+from prompt_spans import question_spans
 
 
 def _schedule(text):
@@ -66,6 +68,11 @@ def parse():
     ours.add_argument("--answer-logit-log", default=None,
                       help="diagnostic, not sparsevlm: write the log-probabilities of Yes/No/yes/no as the first answer "
                            "token, and the most likely first token, per prefill (JSON)")
+    ours.add_argument("--layer-rows-log", default=None,
+                      help="diagnostic, vanilla only: per prefill, the head-averaged attention rows of the last token, "
+                           "the question sentence and the object name over the image patches at several layers, their "
+                           "per-head rows at layers 0 and 1, and the cosine similarity of every image token's hidden "
+                           "state to the two spans' mean states at hidden_states[0..2] (.npz); the prefill runs eager")
     ours.add_argument("--fastv-score-prior", default=None,
                       help="diagnostic, fastv only: .npy with one value per image patch; scores are divided by it")
     ours.add_argument("--fastv-stratify", type=int, default=None,
@@ -97,6 +104,8 @@ def parse():
         ours.error("--score-log, --fastv-score-prior, --fastv-stratify and --text-rows-log need --method fastv")
     if method_args.answer_logit_log and method_args.method == "sparsevlm":
         ours.error("--answer-logit-log is not wired for SparseVLM's generate()")
+    if method_args.layer_rows_log and method_args.method != "vanilla":
+        ours.error("--layer-rows-log needs --method vanilla")
     if method_args.method == "sparsevlm":
         if method_args.retained_tokens is None:
             ours.error("--method sparsevlm needs --retained-tokens")
@@ -213,6 +222,67 @@ def _write_logits(path, candidate_ids):
         json.dump({"tokens": ANSWER_TOKENS, "ids": candidate_ids, "n_prefills": len(_LOGITS), "first_token": _LOGITS}, f)
 
 
+LAYER_ROWS_LAYERS = (0, 1, 2, 4, 8, 16, 31)      # head-averaged rows (EXP-0011 D2b)
+HEAD_ROW_LAYERS = (0, 1)                         # per-head rows: the layers before FastV's K = 2
+STATE_LEVELS = (0, 1, 2)                         # hidden_states index: input embeddings, outputs of layers 0 and 1
+_LAYER_ROWS = []             # one dict per prefill: the D2b statistics of that prefill
+
+
+def _contiguous(idx):
+    if idx != list(range(idx[0], idx[-1] + 1)):
+        raise RuntimeError(f"token span {idx} is not contiguous")
+    return [idx[0], idx[-1] + 1]
+
+
+def _log_layer_rows(lm, tokenizer):
+    """Wrap LlamaModel.forward so that each prefill also returns attentions and hidden states (which makes it run the
+    eager kernel), keep the D2b statistics, and return the output without them; decode steps are left alone."""
+    orig = lm.forward
+    lm.layer_rows_orig_forward = orig
+
+    def forward(*args, **kwargs):
+        embeds = kwargs.get("inputs_embeds")
+        if embeds is None or embeds.shape[1] == 1:
+            return orig(*args, **kwargs)
+        out = orig(*args, **{**kwargs, "output_attentions": True, "output_hidden_states": True, "return_dict": True})
+        start, n_img = lm.fastv_image_span
+        ids = lm.fastv_text_after_ids
+        q_idx, o_idx, _ = question_spans(tokenizer, ids)
+        img = slice(start, start + n_img)
+        q_pos = [start + n_img + i for i in q_idx]
+        o_pos = [start + n_img + i for i in o_idx]
+        avg = []
+        for layer in LAYER_ROWS_LAYERS:
+            a = out.attentions[layer].mean(dim=1)[0]                    # head average, as FastV computes it
+            avg.append(torch.stack([a[-1, img].float(), a[q_pos, img].float().mean(0), a[o_pos, img].float().mean(0)]))
+        head = [torch.stack([out.attentions[layer][0][:, pos, img].float().mean(1) for pos in (q_pos, o_pos)])
+                for layer in HEAD_ROW_LAYERS]
+        cos = []
+        for level in STATE_LEVELS:
+            h = out.hidden_states[level][0].float()
+            cos.append(torch.stack([torch.nn.functional.cosine_similarity(h[img], h[pos].mean(0, keepdim=True), dim=-1)
+                                    for pos in (q_pos, o_pos)]))
+        _LAYER_ROWS.append({"avg": torch.stack(avg).half().cpu().numpy(), "head": torch.stack(head).half().cpu().numpy(),
+                            "cos": torch.stack(cos).cpu().numpy(), "ids": list(ids),
+                            "question": _contiguous(q_idx), "object": _contiguous(o_idx)})
+        return BaseModelOutputWithPast(last_hidden_state=out.last_hidden_state, past_key_values=out.past_key_values)
+
+    lm.forward = forward
+
+
+def _write_layer_rows(path):
+    lengths = [len(r["ids"]) for r in _LAYER_ROWS]
+    np.savez_compressed(path, avg_rows=np.stack([r["avg"] for r in _LAYER_ROWS]),
+                        head_rows=np.stack([r["head"] for r in _LAYER_ROWS]),
+                        cos=np.stack([r["cos"] for r in _LAYER_ROWS]),
+                        question_span=np.array([r["question"] for r in _LAYER_ROWS]),
+                        object_span=np.array([r["object"] for r in _LAYER_ROWS]),
+                        offsets=np.cumsum([0] + lengths),
+                        token_ids=np.concatenate([np.asarray(r["ids"], dtype=np.int64) for r in _LAYER_ROWS]),
+                        layers=np.array(LAYER_ROWS_LAYERS), head_layers=np.array(HEAD_ROW_LAYERS),
+                        state_levels=np.array(STATE_LEVELS))
+
+
 def main():
     method_args, llava_args = parse()
     original_load = loader.load_pretrained_model
@@ -239,6 +309,9 @@ def main():
                 raise SystemExit(f"answer tokens {ANSWER_TOKENS} map to {ids}, which includes the unknown token")
             times["answer_ids"] = ids
             model.lm_head.register_forward_hook(functools.partial(_record_logits, ids))
+        if method_args.layer_rows_log:
+            _record_image_span(model)
+            _log_layer_rows(model.get_model(), tokenizer)
         torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
         times["loaded"] = time.time()                # evaluation timing starts after loading
@@ -284,6 +357,8 @@ def main():
         _write_text_rows(method_args.text_rows_log)
     if method_args.answer_logit_log:
         _write_logits(method_args.answer_logit_log, times["answer_ids"])
+    if method_args.layer_rows_log:
+        _write_layer_rows(method_args.layer_rows_log)
 
 
 if __name__ == "__main__":

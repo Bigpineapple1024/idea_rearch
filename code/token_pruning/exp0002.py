@@ -95,6 +95,9 @@ CONFIGS.update({f"{name}_kept": spec for name, spec in list(CONFIGS.items())
 BASE = [name for name in CONFIGS if not name.endswith(("_layers", "_kept", "_scores"))]
 CONFIGS.update({f"{name}_rows": CONFIGS[name] for name in BASE if name.startswith("fastv")})
 CONFIGS.update({f"{name}_logits": CONFIGS[name] for name in BASE if not name.startswith("sparsevlm")})
+# EXP-0011 D2b: vanilla with --layer-rows-log (attention rows at several layers, per-head rows at layers 0-1 and
+# hidden-state similarities of the question spans); the prefill runs the eager kernel, so answers may differ slightly
+CONFIGS["vanilla_layerrows"] = CONFIGS["vanilla"]
 
 
 def experiment(run_id):
@@ -156,6 +159,8 @@ def run_one(run_id, config, bench):
                                      "--answer-logit-log", f"{run_dir}/answer_logits.json"]
     if config.endswith("_logits"):
         method_args = method_args + ["--answer-logit-log", f"{run_dir}/answer_logits.json"]
+    if config.endswith("_layerrows"):
+        method_args = method_args + ["--layer-rows-log", f"{run_dir}/layer_rows.npz"]
     eval_cmd = ("cd {here} && HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TQDM_MININTERVAL=30 VISIONZIP_ROOT={vz} "
                 "python run_eval.py {margs} -- --model-path {model} --question-file {q} --image-folder {img} "
                 "--answers-file {ans} --temperature 0 --conv-mode vicuna_v1").format(
@@ -208,6 +213,16 @@ def run_one(run_id, config, bench):
                        "n_questions": n_questions, "keep": kept["keep"], "n_image_tokens": kept["n_image_tokens"],
                        "all_sets_full": all(len(s) == kept["keep"] for s in kept["kept"])}, f, indent=2)
         status["score_exit"] = 0 if kept["n_prefills"] == n_questions else 1
+    elif status["eval_exit"] == 0 and os.path.exists(f"{run_dir}/layer_rows.npz"):
+        import numpy as np                                             # unscored diagnostic: one record per question
+        z = np.load(f"{run_dir}/layer_rows.npz")
+        with open(b["question_file"]) as f:
+            n_questions = sum(1 for _ in f)
+        with open(f"{run_dir}/metrics.json", "w") as f:
+            json.dump({"benchmark": bench, "headline": "n_prefills", "n_prefills": int(z["avg_rows"].shape[0]),
+                       "n_questions": n_questions, "avg_rows_shape": list(z["avg_rows"].shape),
+                       "head_rows_shape": list(z["head_rows"].shape), "cos_shape": list(z["cos"].shape)}, f, indent=2)
+        status["score_exit"] = 0 if z["avg_rows"].shape[0] == n_questions else 1
     elif status["eval_exit"] == 0 and os.path.exists(f"{run_dir}/scores.npy"):
         import numpy as np                                             # unscored diagnostic: one score vector per question
         scores = np.load(f"{run_dir}/scores.npy")
