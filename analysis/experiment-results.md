@@ -1,6 +1,6 @@
 # Experiment Results：实验详细数据总表
 
-状态（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001）；时序预测有 iTransformer 的 GPU 复现（EXP-0004 阶段 A，20 次运行）和 ETTh1 上的 CPU 复现（EXP-0003），对照的 GPU 重跑（EXP-0005）进行中。空表表示无数据，绝不表示数值为零。
+状态（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 已写计划；时序预测有 iTransformer 的 GPU 复现（EXP-0004 阶段 A，20 次运行）和 ETTh1 上的 CPU 复现（EXP-0003），对照的 GPU 重跑（EXP-0005）进行中。空表表示无数据，绝不表示数值为零。
 
 ## 实验登记
 
@@ -16,6 +16,7 @@
 | EXP-0008 | none | 去掉位置项后 FastV 的选择是否恢复（1A4B-0001 的 3a） | [EXP-0008_record](实验报告/EXP-0008_record.md) | [SQZ-EXP-0008](实验报告/EXP-0008_squeeze.md) | completed |
 | EXP-0009 | none | iTransformer 检查点在验证期上的预测（1A4B-0002 的 3a，不训练） | [EXP-0009_record](实验报告/EXP-0009_record.md)（计划 v1.1） | — | planned |
 | EXP-0010 | none | 位置校正的收益来自“去位置”还是“更分散”（1A4B-0001 的 3b，对 FEATHER 两个部件的独立复核） | [EXP-0010_record](实验报告/EXP-0010_record.md) | [SQZ-EXP-0010](实验报告/EXP-0010_squeeze.md) | completed |
+| EXP-0011 | none | 第 1 层的题目注意力能否保住被问的小物体（1A4B-0003 的 D2、D3；候选 1）；挑选在 COCO 开发集上做，POPE 只作测试 | [EXP-0011_record](实验报告/EXP-0011_record.md)（计划 v1） | — | planned（代码已在 CPU 上自检，GPU 等时序批次结束） |
 
 ## 全部运行
 

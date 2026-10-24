@@ -17,7 +17,7 @@
 | 视觉方向 GPU 复现记录与深挖 | [EXP-0002](实验报告/EXP-0002_record.md)、[SQZ-EXP-0002](实验报告/EXP-0002_squeeze.md) |
 | 视觉方向第 ⑤ 步：深挖意外现象 | [1a-4b_FastV不如随机选择](1a-4b_FastV不如随机选择.md)；[EXP-0006](实验报告/EXP-0006_record.md)、[SQZ-EXP-0006](实验报告/EXP-0006_squeeze.md)；[EXP-0008](实验报告/EXP-0008_record.md)、[SQZ-EXP-0008](实验报告/EXP-0008_squeeze.md)；[EXP-0007](实验报告/EXP-0007_record.md)、[SQZ-EXP-0007](实验报告/EXP-0007_squeeze.md)（层分布与选择规则）；[EXP-0010](实验报告/EXP-0010_record.md)、[SQZ-EXP-0010](实验报告/EXP-0010_squeeze.md)（覆盖对照） |
 | 第 ⑦ 步：改进方向排序（视觉：用户已选候选 1，DEC-0016；时序待补） | [第7步_改进方向排序](第7步_改进方向排序.md) |
-| **视觉方向第 ⑧ 步：深挖到算子级（候选 1，进行中）** | [1a-4b_选择与题目无关漏掉被问的小物体](1a-4b_选择与题目无关漏掉被问的小物体.md)（1A4B-0003；COCO 物体框分析在 code/output/EXP-0002/deepdive3） |
+| **视觉方向第 ⑧ 步：深挖到算子级（候选 1，进行中）** | [1a-4b_选择与题目无关漏掉被问的小物体](1a-4b_选择与题目无关漏掉被问的小物体.md)（1A4B-0003；COCO 物体框分析在 code/output/EXP-0002/deepdive3，RePOPE 重算在 deepdive4）；[EXP-0011](实验报告/EXP-0011_record.md)（D2、D3 的计划） |
 | 第 ⑥ 步：骨架全景图 × 改进内容交叉分析（视觉与时序） | [baseline骨架的全景图](专题分析/baseline骨架的全景图.md)、[所有论文在baseline骨架的改进内容](专题分析/所有论文在baseline骨架的改进内容.md) |
 | 时序预测：baseline（iTransformer，DEC-0012）、三篇对照对比与组合实验候选 | [时序预测_DUET_TQNet_WPMixer对比](专题分析/时序预测_DUET_TQNet_WPMixer对比.md) |
 | 时序方向 GPU 复现与对照重评 | EXP-0004（阶段 A 完成，记录在 code/ts-forecasting 分支）；[EXP-0005](实验报告/EXP-0005_record.md)、[SQZ-EXP-0005](实验报告/EXP-0005_squeeze.md) |
