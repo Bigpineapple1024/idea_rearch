@@ -120,6 +120,9 @@ CONFIGS["fastv64_qvis_half"] = ("tp", CONFIGS["fastv64_prior_strat_nopad"][1] + 
     "--fastv-score", "query_vis", "--fastv-visibility", VISIBILITY_HALF])
 CONFIGS["fastv128_qvis"] = ("tp", CONFIGS["fastv128_prior_strat_nopad"][1] + [
     "--fastv-score", "query_vis", "--fastv-visibility", VISIBILITY])
+# EXP-0017: query_vis at the 192 budget (keep 166)
+CONFIGS["fastv192_qvis"] = ("tp", CONFIGS["fastv192_prior_strat_nopad"][1] + [
+    "--fastv-score", "query_vis", "--fastv-visibility", VISIBILITY])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
