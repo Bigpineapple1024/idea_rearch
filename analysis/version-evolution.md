@@ -1,4 +1,4 @@
-﻿# Version Evolution：关键决策与方向调整
+# Version Evolution：关键决策与方向调整
 
 记录会改变研究问题、方法、评价或资源分配的决策，不替代逐次运行记录。
 
