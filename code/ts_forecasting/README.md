@@ -20,6 +20,8 @@
 | analyze_hard_windows.py | SQZ-EXP-0005 补充分析：从 CSV 重建 ETTh1-96 测试窗口，逐窗口平均误差与水平差、目标段波动、输入偏离训练期的 Spearman 相关 |
 | analyze_level_shape.py | F-TS8 的 1a–2b 分析：每个窗口的 MSE 精确拆成水平部分与形状部分；预测水平变化与真实水平变化的斜率；把预测的水平换成输入段均值等简单水平时的误差；各变量的有符号水平误差与各时期数据自身的平均漂移。可选数据集与验证期（EXP-0009 的 itransformer_val 运行） |
 | analyze_exp0009_rules.py | EXP-0009 计划 v1、v1.1 的判读：从验证期与测试期的水平 / 形状拆分读出收缩系数表，逐个“数据集 × 预测长度”判断规则 1～3 与普遍性判据，写 code/output/EXP-0009/analysis/rules.md、rules.json |
+| analyze_level_predictor.py | EXP-0012（时序候选 1 的 CPU 诊断）：只在训练窗口上拟合简单的水平预测器（S1：每个变量用自己的 4 个输入统计量；S2：用全部变量的 28 个统计量），与 iTransformer 自己的水平比较相关、水平误差和“换掉水平、形状不变”后的 MSE 变化，按计划 v1 的规则判定；先核对重算的 iTransformer 指标与已封存的 level_shape JSON 一致。写 code/output/EXP-0012/analysis/level_predictor.{md,json} |
+| squeeze_level_predictor.py | SQZ-EXP-0012 的探索性分析：S1 去掉输入段均值 m、只用 m 两个消融，各变量的 ΔMSE，S1 对 m 的系数，各时期输入段均值的平均。写 code/output/EXP-0012/squeeze/ |
 | wpmixer_droplast.py | 运行 WPMixer 官方 run_LTF.py，同一个 checkpoint 在测试集上分别按官方 `drop_last=True` 和全部窗口打分；另把全部窗口的预测与真值存为 pred_all_windows.npy、true_all_windows.npy（存到启动时的目录） |
 | duet_test_stochasticity.py | 运行 DUET 官方 TFB 入口，并在测试时用另外 `--resamples` 个随机种子重新采样通道 mask，测量分数波动；`--save-pred` 时保存官方预测与标准化后的真值 |
 | probe_duet_mask.py | 代码级探针：随机权重下 DUET 在 eval 模式对同一输入两次前向输出是否相同 |
