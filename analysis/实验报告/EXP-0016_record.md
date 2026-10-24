@@ -63,7 +63,7 @@
 | 128 档：A′+B+V − SparseVLM-128 | −0.36 [−0.92, +0.21] / −0.27 | +12.2 [−40.9, +60.9] |
 
 - 128 档的分数：POPE A 79.50、A′+B+V 84.71、VisionZip 83.12、SparseVLM 85.07、FastV 68.29；MME-P A 1453.8、A′+B+V 1447.2、VisionZip 1432.4、SparseVLM 1435.0、FastV 1363.2。固定切分（64 档）MME-P 1320.0。
-- **判读（计划 v1）**：H1 不成立（可视性在切分之外的贡献测不出，EXP-0015 在 MME 上的收益主要来自切分）；G1 成立；G2 不成立（128 档 MME 不变）。
-- **阶段结论**：目标问题（与题目无关的选择保不住被问的小物体）在 64、128 两档上都显著解决（POPE +15.8、+5.2）；一般题目（MME）在两档上都只是不变差。
-- 全部运行：R01 `fastv64_qvis_half_kl` × MME（01:18～01:25，1320.0）；R04 `fastv128_prior_strat_nopad_kl` × MME（1453.8）；R05 `fastv128_qvis_kl` × MME（1447.2）；R02 `fastv128_prior_strat_nopad_kl` × POPE（79.50）；R03 `fastv128_qvis_kl` × POPE（84.71）。全部 completed，commit 77d3170，无未提交改动（运行期间曾误改 exp0002.py 约 1 分钟，当时只有 R01 在跑，R01 的 git.txt 无改动行，已撤回）；校验和见 runs.tsv，备份 `D:\6CJNM007\backup\EXP-0016\`。
+- **判读（计划 v1）**：H1 不成立（可视性在切分之外的贡献测不出，EXP-0015 在 MME 上的收益主要来自切分）；G1 成立；G2 不成立（128 档 MME 差异不显著；原写“不变”）（审计修正，DEC-0030）。
+- **阶段结论**：目标问题（与题目无关的选择保不住被问的小物体）：POPE F1 在 64、128 两档上都显著高于强对照（+15.8、+5.2）；一般题目（MME）在两档上差异都不显著（原写“显著解决”“只是不变差”）（审计修正，DEC-0030）。
+- 全部运行：R01 `fastv64_qvis_half_kl` × MME（01:18～01:25，1320.0）；R04 `fastv128_prior_strat_nopad_kl` × MME（1453.8）；R05 `fastv128_qvis_kl` × MME（1447.2）；R02 `fastv128_prior_strat_nopad_kl` × POPE（79.50）；R03 `fastv128_qvis_kl` × POPE（84.71）。全部 completed，commit 77d3170，无未提交改动（运行期间曾误改 exp0002.py 约 1 分钟，当时只有 R01 在跑（R01 的 git.txt 写于误改之前），已撤回；之后开始的 R04 的 git.txt 干净（证据审计修正））；校验和见 runs.tsv，备份 `D:\6CJNM007\backup\EXP-0016\`。
 - 预算：5 次；候选 1 累计 30 次，用满原上限（复盘见 DEC-0028）。

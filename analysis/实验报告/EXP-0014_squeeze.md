@@ -69,7 +69,7 @@ data_quality_and_provenance_gaps: 探索性检查脚本错两次，三版保留�
 primary_result_with_uncertainty: POPE A'+B 83.59，比 A' +17.74、比 A +16.69（区间都在 0 以上），与物体名查询差 −0.04 [−0.19, +0.11]；MME-P A'+B − A −52.1 [−133.2, +19.1]
 process_dynamics: 无（推理）
 mechanism_and_intermediate_findings: IDF 把权重给物体名（POPE）或名字词片（MME 名字类）；后者在输入空间无对应区域
-errors_heterogeneity_and_boundary_conditions: MME 点名物体子任务 +45，名字类 −96；POPE 拼写 imange 的 246 题保留集合重合 49.6%
+errors_heterogeneity_and_boundary_conditions: MME 点名物体子任务 +45，名字类四项 −82.4（加 scene、OCR −97.1，审计修正）；POPE 拼写 imange 的 246 题保留集合重合 49.6%
 robustness_sensitivity_and_alternative_explanations: 两种 POPE 标注一致；MME 区间宽；名字类题本来就依赖整体外观
 new_P: [P10：题目里最有信息量的词不一定在图像里看得见，IDF 查询在这类题上变成噪声]
 new_F: [F34, F35]

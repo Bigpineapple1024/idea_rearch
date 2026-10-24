@@ -90,7 +90,7 @@
 | A′+B+V − VisionZip-64 | +5.72 / +4.95（区间在 0 以上） | −25.5 [−93.4, +45.4] |
 | A′+B+V − SparseVLM-64 | +5.08 / +4.23（区间在 0 以上） | +59.1 [−4.5, +118.0] |
 
-- MME 各子任务（A′+B+V − A）：existence +10、count +3.3、position +10、color +25、OCR +27.5、posters +1.0、scene −1.7、artwork −4.3、celebrity −9.7、landmark −10.8。名字类的损失从 A′+B 的 −96 缩小到约 −27。
+- MME 各子任务（A′+B+V − A）：existence +10、count +3.3、position +10、color +25、OCR +27.5、posters +1.0、scene −1.7、artwork −4.3、celebrity −9.7、landmark −10.8。四个名字类子任务合计的损失从 A′+B 的 −82.4 缩小到 −23.7（原写 −96 → −27）（审计修正，DEC-0030）。
 - **判读（计划 v1）**：V2 成立；V1 不成立；V1′ 成立（+50.4，区间含 0）。两个 benchmark 上点估计都高于 A，POPE 的提升有区间支持，MME 的没有。
 - **替代解释**：S 几乎分不开名字与物体，收益可能主要来自“约一半按查询、一半按强对照”的切分，而不是可视性本身。需要一个固定切分、不用可视性的对照（见 EXP-0016）。
 

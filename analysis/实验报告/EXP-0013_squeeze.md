@@ -25,14 +25,14 @@
 | 校准的变体（开发集 F1 最高） | 变体 | +0.97 | [−0.01, +2.04]（按图像重抽） | 未达到挑选门槛，不进入 POPE | fp_dev3/fp.md |
 | 对比打分 max | 变体 | +0.49 | [−0.55, +1.64] | 误报略少、召回略高，F1 不显著 | 同上 |
 | 名额切分 20 / 15 / 10 | 变体 | −1.40 / −1.36 / −2.05 | 区间都在 0 以下 | 误报少了，但召回掉得更多 | 同上 |
-| 变体的 margin AUC | vanilla | −0.014 ～ −0.020（三类负样本） | 区间都在 −0.01 以下 | 选择丢掉了区分信息 | 同上 |
+| 变体的 margin AUC | vanilla | −0.014 ～ −0.020（三类负样本） | 区间都在 0 以下（random、adversarial 在 −0.01 以下，审计修正） | 选择丢掉了区分信息 | 同上 |
 
 ## 3. 深挖发现
 
 | 维度 | 发现 | 证据 | 稳健性 | 新信息 / 已知 |
 | --- | --- | --- | --- | --- |
 | 数据质量 | 8 次运行的保留集合、打分与离线规则 100% 一致；R03 与 EXP-0011-R05、R01 与 EXP-0011-R04 在共同的 1800 题上 100% 相同 | fp_dev3 | 高 | — |
-| 机制 / 中间量 | **负样本失去了“没有”的把握**：负样本的 margin 均值，vanilla −3.74 / −3.45 / −2.61，变体 −2.21 / −2.29 / −1.72（抬高 1.2～1.5）；正样本只从 +2.34 降到 +1.99。与题目无关的选择保住了负样本的把握（−3.47 / −3.52 / −2.99），但正样本只有 +0.26 | squeeze/squeeze_fp.md | 中（一个开发集；三类负样本一致） | 新（F31） |
+| 机制 / 中间量 | **负样本失去了“没有”的把握**：负样本的 margin 均值，vanilla −3.74 / −3.45 / −2.61，变体 −2.21 / −2.29 / −1.72（抬高 0.9～1.5（审计修正））；正样本只从 +2.34 降到 +1.99。与题目无关的选择保住了负样本的把握（−3.47 / −3.52 / −2.99），但正样本只有 +0.26 | squeeze/squeeze_fp.md | 中（一个开发集；三类负样本一致） | 新（F31） |
 | 机制 / 中间量 | 名额切分让负样本的把握逐步回来（混合 10：−3.04 / −2.92 / −2.25），代价是正样本的 margin 与召回一起下降：静态切分只能在两种证据之间换 | 同上；fp_dev3 | 中 | 新（F31） |
 | 错误 / 异质性 | 只有变体误报（vanilla 没有）的 114 题集中在 dining table 23、car 15、chair 14、handbag 13；三类负样本中，变体的误报有 47%～56% 与 vanilla 重叠（18/38、38/68、72/136） | squeeze_fp.md | 中 | 新；这几类在 COCO 中常漏标，一部分可能是标签问题（未核实） |
 | 错误 / 异质性 | 误报题保留的 token 落在其他已标注物体上的比例更高（popular +13.6 个百分点，adversarial +4.7）；与题目无关的选择在 popular 上也有同样的差异（+12.6），说明“场景里有相关物体”本身就让题更难 | fp_dev3 Q3 | 中 | 新（F31 的一部分） |
@@ -76,9 +76,9 @@ squeeze_id: SQZ-EXP-0013
 input_experiment_record_ids: [EXP-0013, EXP-0011]
 claim_scope: LLaVA-1.5-7B，FastV 的 K = 2、层平均 64；coco_dev3（COCO 类别、POPE 式题目，标签来自 COCO 标注）
 data_quality_and_provenance_gaps: coco_dev3 的负样本可能有漏标；POPE 上没有新运行
-primary_result_with_uncertainty: 没有同预算修正在开发集上显著提高 F1（最好的校准 +0.97 [−0.01, +2.04]）；变体的 margin AUC 比 vanilla 低 0.014～0.020（区间都在 −0.01 以下）
+primary_result_with_uncertainty: 没有同预算修正在开发集上显著提高 F1（最好的校准 +0.97 [−0.01, +2.04]）；变体的 margin AUC 比 vanilla 低 0.014～0.020（区间都在 0 以下（random、adversarial 在 −0.01 以下，审计修正））
 process_dynamics: 无（推理）
-mechanism_and_intermediate_findings: 负样本的 margin 抬高 1.2～1.5，正样本只降 0.35；名额切分让负样本的把握回来、正样本的把握下降；误报题保留的 token 更多落在其他物体上
+mechanism_and_intermediate_findings: 负样本的 margin 抬高 0.9～1.5（审计修正），正样本只降 0.35；名额切分让负样本的把握回来、正样本的把握下降；误报题保留的 token 更多落在其他物体上
 errors_heterogeneity_and_boundary_conditions: 只有变体误报的题集中在 dining table、car、chair、handbag；F1 下最优阈值偏向 yes
 robustness_sensitivity_and_alternative_explanations: 两折交叉与样本内一致；准确率与 F1 结论相同；一部分误报可能是漏标
 new_P: [P9：预算固定时只选支持假设的证据，会丢掉否定假设所需的证据；静态切分两头顾不全]
