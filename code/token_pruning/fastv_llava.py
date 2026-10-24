@@ -36,6 +36,9 @@ of the same tokens by those weights instead (FastV's attention, no position prio
 With score_kind="query_vis" (EXP-0015, blocks only), each token's weight is its IDF times its visibility (a value per
 vocabulary id in [0, 1]); round(keep * S) tokens, S = sum(IDF * visibility) / sum(IDF), are taken by the cosine to that
 weighted query and the rest by FastV's (prior-divided) score, as in "mix".
+With route (EXP-0020, query_vis only), a callable on the ids after the image: a question it returns False for takes the
+strong baseline's path instead (FastV's prior-divided score taken in blocks, padding never kept), so query_vis applies
+only to the routed questions; fastv_routed records the decision of the last prefill.
 """
 import types
 
@@ -115,8 +118,14 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
     query = self.fastv_score_kind in ("query_mean", "query_idf")
     attn_weighted = self.fastv_score_kind == "attn_idf"
     query_vis = self.fastv_score_kind == "query_vis"
+    if query_vis and prefill and self.fastv_route is not None:     # EXP-0020: the other questions take the baseline's path
+        self.fastv_routed = bool(self.fastv_route(self.fastv_text_after_ids))
+        query_vis = self.fastv_routed
+        if not query_vis:
+            self.fastv_visible_share, self.fastv_mix_count = None, 0
+            self.fastv_kept_question_positions = torch.zeros(0, dtype=torch.long)
     object_cos = self.fastv_score_kind == "object_cos" or contrast or query     # ranked by an input-embedding score alone
-    mix = self.fastv_score_kind in ("mix", "query_vis")
+    mix = self.fastv_score_kind == "mix" or query_vis
     if prefill:
         start, n_img = self.fastv_image_span
         kept = torch.arange(n_img, device=hidden.device)       # original patch index of each image token still present
@@ -236,7 +245,7 @@ def _record_image_span(model):
 
 def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
                score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None,
-               token_weights=None, visibility=None):
+               token_weights=None, visibility=None, route=None):
     """Turn a transformers LlamaModel into FastV in place (image span set by the caller).
 
     seed=None keeps FastV's attention ranking; an integer selects random image tokens from that seed.
@@ -265,6 +274,10 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
         raise ValueError("query_vis needs visibility, and only it takes it")
     if score_kind == "query_vis" and (seed is not None or stratify is None or log_text_rows or schedule):
         raise ValueError("query_vis needs stratify; no seed, schedule or row log")
+    if route is not None and score_kind != "query_vis":
+        raise ValueError("route works with query_vis only")
+    llama_model.fastv_route = route
+    llama_model.fastv_routed = None
     llama_model.fastv_token_weights = token_weights
     llama_model.fastv_visibility = None if visibility is None else torch.as_tensor(visibility).float()
     llama_model.fastv_visible_share = None
@@ -308,9 +321,9 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
 
 def apply_fastv(model, k=2, keep=288, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
                 score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None,
-                token_weights=None, visibility=None):
+                token_weights=None, visibility=None, route=None):
     """Enable FastV (or its random-selection control when seed is given) on a loaded LlavaLlamaForCausalLM."""
     bind_fastv(model.get_model(), k, keep, seed, schedule, score_prior, stratify, log_text_rows, score_kind, object_span,
-               exclude_padding, mix_question, contrast_ids, token_weights, visibility)
+               exclude_padding, mix_question, contrast_ids, token_weights, visibility, route)
     _record_image_span(model)
     return model

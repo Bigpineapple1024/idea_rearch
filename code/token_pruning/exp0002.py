@@ -60,6 +60,11 @@ BENCHES = {
                   "image_folder": f"{DATA}/coco/val2014",
                   "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_dev_annotations.jsonl"],
                   "archives_sha256": f"{DATA}/downloads/vqav2/SHA256SUMS"},
+    # EXP-0020: a second, fresh VQAv2 val test subset (1000 other images, make_vqav2_sets.py test2)
+    "vqav2_test2": {"question_file": f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test2.jsonl",
+                    "image_folder": f"{DATA}/coco/val2014",
+                    "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test2_annotations.jsonl"],
+                    "archives_sha256": f"{DATA}/downloads/vqav2/SHA256SUMS"},
 }
 # Budgets are 32-layer averages of visual tokens (code/token_pruning/README.md, "预算的口径").
 FASTV_KEEP = {192: 166, 128: 98, 64: 30}
@@ -136,6 +141,9 @@ CONFIGS["fastv64_strat_nopad"] = ("tp", CONFIGS["fastv64_strat"][1] + ["--fastv-
 # EXP-0017: query_vis at the 192 budget (keep 166)
 CONFIGS["fastv192_qvis"] = ("tp", CONFIGS["fastv192_prior_strat_nopad"][1] + [
     "--fastv-score", "query_vis", "--fastv-visibility", VISIBILITY])
+# EXP-0020: query_vis only for questions in yes/no form or asking "how many"; the others take the strong baseline's path
+for b in (64, 128, 192):
+    CONFIGS[f"fastv{b}_qroute"] = ("tp", CONFIGS[f"fastv{b}_qvis"][1] + ["--fastv-route", "yesno_howmany"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic

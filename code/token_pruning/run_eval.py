@@ -94,6 +94,10 @@ def parse():
                            "query_mean / query_idf: by the cosine to the uniform / IDF-weighted mean input embedding of "
                            "all tokens after the image, IDF over the question file; attn_idf: the scoring layer's "
                            "attention rows of those tokens, IDF-weighted (EXP-0014)")
+    ours.add_argument("--fastv-route", choices=["yesno_howmany"], default=None,
+                      help="fastv, --fastv-score query_vis (EXP-0020): only questions in yes/no form (first word an "
+                           "auxiliary verb) or starting with 'how many' take query_vis; the others take the strong "
+                           "baseline's path (FastV's prior-divided score in blocks)")
     ours.add_argument("--fastv-mix-question", type=int, default=None,
                       help="fastv, --fastv-score mix: number of kept tokens chosen by the object-name cosine")
     ours.add_argument("--fastv-exclude-padding", action="store_true",
@@ -141,6 +145,8 @@ def parse():
         ours.error("--fastv-score query_vis and --fastv-visibility go together")
     if method_args.fastv_score == "query_vis" and (method_args.text_rows_log or not method_args.fastv_stratify):
         ours.error("--fastv-score query_vis needs --fastv-stratify and no --text-rows-log")
+    if method_args.fastv_route and method_args.fastv_score != "query_vis":
+        ours.error("--fastv-route needs --fastv-score query_vis")
     if method_args.vocab_visibility_log and method_args.method in ("visionzip", "sparsevlm"):
         ours.error("--vocab-visibility-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     if (method_args.fastv_score == "mix") != (method_args.fastv_mix_question is not None):
@@ -179,6 +185,9 @@ def apply_method(model, m, tokenizer=None):
             idf = getattr(m, "fastv_idf", None) or question_idf(tokenizer, m.question_file, getattr(m, "conv_mode", "vicuna_v1"))
             m.fastv_idf = idf
             weights = lambda ids: [idf["idf"].get(t, idf["unseen"]) for t in ids]   # noqa: E731
+        route = None
+        if getattr(m, "fastv_route", None) == "yesno_howmany":       # decided from the prompt text after the image
+            route = lambda ids: routes_to_query(tokenizer.decode(ids))   # noqa: E731
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule, score_prior=prior,
                            stratify=getattr(m, "fastv_stratify", None),
                            log_text_rows=bool(getattr(m, "text_rows_log", None)), score_kind=score_kind,
@@ -186,7 +195,7 @@ def apply_method(model, m, tokenizer=None):
                            exclude_padding=bool(getattr(m, "fastv_exclude_padding", False)),
                            mix_question=getattr(m, "fastv_mix_question", None), contrast_ids=contrast_ids,
                            token_weights=weights,
-                           visibility=np.load(m.fastv_visibility) if score_kind == "query_vis" else None)
+                           visibility=np.load(m.fastv_visibility) if score_kind == "query_vis" else None, route=route)
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "visionzip":
@@ -230,6 +239,7 @@ def _write_layer_tokens(path, n_layers):
 _KEPT = []                   # one list per prefill: indices (0..n_img-1, row-major patch order) of the kept image tokens
 _KEPT_N_IMG = set()          # image-token count of each prefill (576 for LLaVA-1.5 at 336 px)
 _KEPT_QUESTION = []          # --fastv-score mix: the kept patches chosen by the object-name cosine, per prefill
+_ROUTED = []                 # --fastv-route: whether each prefill took query_vis
 
 
 def _record_kept(module, args, kwargs, output):
@@ -239,12 +249,16 @@ def _record_kept(module, args, kwargs, output):
         _KEPT_N_IMG.add(int(module.fastv_image_span[1]))
         if getattr(module, "fastv_score_kind", None) in ("mix", "query_vis"):
             _KEPT_QUESTION.append(module.fastv_kept_question_positions.tolist())
+        if getattr(module, "fastv_route", None) is not None:
+            _ROUTED.append(module.fastv_routed)
 
 
 def _write_kept(path, keep):
     record = {"n_prefills": len(_KEPT), "keep": keep, "n_image_tokens": sorted(_KEPT_N_IMG), "kept": _KEPT}
     if _KEPT_QUESTION:
         record["kept_by_object_name"] = _KEPT_QUESTION
+    if _ROUTED:
+        record["routed"] = _ROUTED
     with open(path, "w") as f:
         json.dump(record, f)
 
@@ -277,6 +291,17 @@ def question_idf(tokenizer, question_file, conv_mode):
     n = len(texts)
     return {"n_questions": n, "idf": {t: math.log((n + 1) / (c + 1)) for t, c in df.items()}, "unseen": math.log(n + 1),
             "df": df}
+
+
+ROUTE_START = ("is ", "are ", "does ", "do ", "did ", "can ", "could ", "was ", "were ", "has ", "have ", "had ", "will ",
+               "would ", "should ", "shall ", "may ", "might ", "must ", "how many ")
+
+
+def routes_to_query(prompt_after_image):
+    """EXP-0020's router: True when the question (the first non-empty line of the prompt after the image) is in yes/no
+    form (starts with an auxiliary verb) or asks 'how many', the forms whose answer turns on the named object itself."""
+    question = prompt_after_image.strip().split("\n")[0].strip().lower()
+    return question.startswith(ROUTE_START)
 
 
 def coco_names():

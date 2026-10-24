@@ -2,7 +2,7 @@
 
   python score_pope_mme.py pope <answers.jsonl> <out_dir>
   python score_pope_mme.py mme  <answers.jsonl> <out_dir> [--tag NAME]
-  python score_pope_mme.py vqav2_test <answers.jsonl> <out_dir>    # or vqav2_dev (EXP-0018)
+  python score_pope_mme.py vqav2_test <answers.jsonl> <out_dir>    # or vqav2_dev (EXP-0018), vqav2_test2 (EXP-0020)
 
 VQAv2 uses LLaVA's m4c TextVQAAccuracyEvaluator (EvalAI normalisation, which also drops commas, unlike the official
 vqaEval.py; leave-one-out min(1, matches / 3)); per-question scores go to <out_dir>/vqa_scores.jsonl.
@@ -98,7 +98,7 @@ def score_vqav2(answers, out_dir, split, log):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("bench", choices=["pope", "mme", "vqav2_test", "vqav2_dev"])
+    p.add_argument("bench", choices=["pope", "mme", "vqav2_test", "vqav2_dev", "vqav2_test2"])
     p.add_argument("answers")
     p.add_argument("out_dir")
     p.add_argument("--tag", help="MME working name (default: the out_dir name)")

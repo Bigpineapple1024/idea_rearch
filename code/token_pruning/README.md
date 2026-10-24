@@ -12,7 +12,7 @@
 | run_eval.py | 在 LLaVA 的 model_vqa_loader 评测里切换 vanilla / FastV / VisionZip / 随机 / SparseVLM；Windows 上的 DataLoader worker；`--layer-token-log` 记录每层输入的 token 数；`--text-rows-log` 保存图像之后各文本 token 的注意力行（.npz），`--answer-logit-log` 记录第一个回答 token 为 Yes/No 的对数概率（EXP-0011）；`--layer-rows-log`（只用于 vanilla）在每次 prefill 记录几层的 head 平均行、第 0～1 层的逐 head 行和 hidden state 余弦相似度（EXP-0011 D2b；这次 prefill 改用 eager 注意力）；`--fastv-score object_cos`、`--fastv-exclude-padding`（EXP-0011 D3）；`--fastv-score mix / contrast_max / contrast_mean`、`--fastv-mix-question`（对比打分的词表是 80 个 COCO 类名，按 POPE 题目的写法取 token），以及 `--name-cos-log`（每张图记录图像 token 与 80 个 COCO 类名的输入 embedding 余弦，EXP-0013） | EXP-0002；EXP-0011、EXP-0013 的选项在 CPU 上自检（check_text_rows_log.py、check_layer_rows_log.py、check_object_cos.py、check_mix_names.py） |
 | exp0002.py | EXP-0002 的运行器：每次运行写 cmd、config、git、seed、env、gpu、stdout、答案、metrics、status 和 SHA256SUMS，复制到备份并核对校验和，追加到 runs.tsv；拒绝复用已有的 run ID | EXP-0002 的 49 次运行 |
 | sparsevlm_sdpa.py | Windows 上把 SparseVLM 的 FlashAttention-2 调用换成 PyTorch SDPA（运行时替换，不改仓库文件） | 自检：与显式 softmax 注意力的差 ≤2.1e-07；EXP-0002-R36～R41 |
-| score_pope_mme.py | 用官方 eval_pope.py 与 MME 的 convert_answer_to_mme.py、calculation.py 打分，写 metrics.json | 给 LLaVA-1.5-13B 官方预测打分，与 MODEL_ZOO 一致 |
+| score_pope_mme.py | 用官方 eval_pope.py 与 MME 的 convert_answer_to_mme.py、calculation.py 打分，写 metrics.json；VQAv2 子集（vqav2_test、vqav2_dev、vqav2_test2）用 LLaVA 的 m4c 评估器，逐题分数写 vqa_scores.jsonl | 给 LLaVA-1.5-13B 官方预测打分，与 MODEL_ZOO 一致 |
 | bootstrap_ci.py | 一次运行的指标或两次运行之差的 bootstrap 95% 区间（POPE 按子集重采样题目，MME 按子任务重采样图像） | EXP-0002 |
 | analyze_exp0002.py | 从运行目录生成 EXP-0002 的全部分析表（code/output/EXP-0002/analysis/） | EXP-0002 |
 | squeeze_exp0002.py | SQZ-EXP-0002 的探索性检查：答案格式、FastV 与随机的逐题对照、按物体的召回率 | EXP-0002 |
@@ -30,9 +30,26 @@
 | analyze_layer_rows.py | EXP-0011 D2b 的离线统计（第 2 版）：参与判定的算子（第 0 层注意力、逐 head、归一化后平均、输入与前两层输出的余弦）与更深层的描述项，在分块 + 排除填充区下的小物体命中率、P1、P2、物体 AUC；先用 R02 自检 | code/output/EXP-0011/d2b_coco_dev_v2（第 1 版的输出在 d2b_coco_dev，AUC 有缺陷） |
 | analyze_text_rows.py | EXP-0011 D2 的离线统计：第 1 层三种打分（最后一个 token、题目句、物体名）的同图不同题 Jaccard（P1）、物体对准比值（P2）、24 种模拟选择的小物体命中率（P3）和剂量关系；先用模拟复现运行的保留集合作自检 | code/output/EXP-0011/d2_coco_dev（开发集）、d2_pope |
 | make_coco_dev.py | EXP-0011 的开发集：COCO val2014 中 POPE 没用到的 300 张图，按 POPE 的方式出 1800 题（种子 0），在它上面做选择，POPE 只作测试集 | 已生成（data/llava_eval/pope/llava_coco_dev*.jsonl，校验和在 llava_coco_dev.SHA256SUMS） |
-| make_vqav2_sets.py | EXP-0018：VQAv2 验证集在本地 COCO val2014 图像上的两个子集。test 为 POPE、coco_dev 都没用的图中按种子 0 抽 1000 张的全部 5246 题；dev 为 coco_dev 300 张图上的 1485 题 | 已生成（data/llava_eval/vqav2_val/，校验和在 SHA256SUMS）；划分经多代理复核 |
+| make_vqav2_sets.py | EXP-0018：VQAv2 验证集在本地 COCO val2014 图像上的两个子集。test 为 POPE、coco_dev 都没用的图中按种子 0 抽 1000 张的全部 5246 题；dev 为 coco_dev 300 张图上的 1485 题。`test2`（EXP-0020）：同一图像池去掉 test 的图后按种子 1 再抽 1000 张，5415 题 | 已生成（data/llava_eval/vqav2_val/，test、dev 的校验和在 SHA256SUMS，test2 的在各运行的 config.json：c086f656…、4eb4e5c2…）；划分经多代理复核 |
 | make_coco_dev3.py | EXP-0013 的开发集：coco_dev 的 1800 题不变，在同样 300 张图上按 POPE 论文的做法补 popular、adversarial 负样本各 900 题 | 已生成（llava_coco_dev3*.jsonl，校验和在 llava_coco_dev3.SHA256SUMS） |
 | check_mix_names.py | EXP-0013 选项的 CPU 自检：`--fastv-score mix` 的保留集合等于离线两轮规则（混合 30 = object_cos，混合 0 = 强对照 + 排除填充区）；对比打分等于重算值、排除与被问物体同拼写的类名；`--name-cos-log` 的数值与去重；coco_dev3 全部 prompt 的物体名 id（真实 tokenizer）；参数检查 | CPU 已运行，38 项通过（2026-10-24）；同时复跑了其余 check（FastV 等价相对差 ≤ 3.13e-7）与 smoke_test |
+| analyze_kept_tokens.py | EXP-0006：FastV 与随机选择保留了图像的哪些位置 | code/output/EXP-0006 |
+| analyze_missed_objects.py | SQZ-EXP-0002 补充：各剪枝方法是否漏掉同一批 POPE 物体（F10） | code/output/EXP-0002 |
+| analyze_object_boxes.py、analyze_object_boxes_extra.py | 按 COCO 框看被漏掉的 POPE 正样本：物体大小、位置、填充区（C10）；extra 为看过第一版结果后补的检查 | code/output/EXP-0002/deepdive3 |
+| analyze_score_prior.py | EXP-0008：FastV 打分在空白图与真实图上的位置曲线，写出校正用的位置先验 | code/output/EXP-0008/analysis |
+| make_pope_subset.py、make_blank_questions.py | pope_img20 诊断子集（20 张图的全部 POPE 题）与同一批题配一张灰色空白图（EXP-0008） | 已生成 |
+| check_layer_profile.py | 批量运行前检查 `_layers` 诊断运行的逐层视觉 token 数是否符合预期，不符合就停止 | EXP-0007 用过 |
+| analyze_fp.py | EXP-0013：物体名余弦变体多出的误报从哪来，哪种同预算修正在 coco_dev3 上最好 | code/output/EXP-0013 |
+| check_query_idf.py | EXP-0014 的 CPU 自检：`--fastv-score query_mean / query_idf / attn_idf` 的打分与保留集合等于离线重算，IDF 表的性质（每题都有的 token 权重为 0），参数检查 | CPU 已运行，17 项通过 |
+| analyze_query.py | EXP-0014：A / A′ / A′+B / A+B 在 POPE、MME 上的比较 | code/output/EXP-0014/analysis |
+| make_visibility.py | EXP-0015：只用 coco_dev 的图估计每个词表 id 的可视性（峰值的 95% 分位的百分位秩） | code/output/EXP-0015/visibility |
+| check_query_vis.py | EXP-0015 的 CPU 自检：`--fastv-score query_vis` 的保留集合等于离线两轮规则，可视性 1 / 0 时分别退化为 query_idf / 强对照，`--vocab-visibility-log` 与 make_visibility.py | CPU 已运行，14 项通过；EXP-0020 的改动后复跑通过 |
+| analyze_vis.py | EXP-0015：A′+B+V 与 A、A′+B 在 POPE、MME 上的比较 | code/output/EXP-0015/analysis |
+| analyze_0016.py、analyze_0017.py | EXP-0016（固定切分对照、128 档）与 EXP-0017（192 档）的分析 | code/output/EXP-0016/analysis、EXP-0017/analysis |
+| analyze_0018.py | EXP-0018：VQAv2 test 上的 VQA 准确率与按图像重抽的配对差（按答案类型） | code/output/EXP-0018/analysis（a909c868…） |
+| squeeze_0018.py、squeeze_0018_boxes.py | SQZ-EXP-0018（事后探索）：按查询名额、题型、是否点名 COCO 物体分解差异，按题目首词路由的事后估计；查询选的 token 是否落在被点名物体的框内 | code/output/EXP-0018/squeeze、squeeze_boxes |
+| check_route.py | EXP-0020 的 CPU 自检：`--fastv-route yesno_howmany` 下，路由的题与 query_vis、不路由的题与强对照的保留集合相同（两者交替时也一样），记录正确；真实 tokenizer 下从 prompt ids 得到的决定与题目文字上的规则逐题相同，POPE 与 MME 感知子任务全部被路由 | CPU 已运行，17 项通过（2026-10-25） |
+| analyze_0020.py | EXP-0020：路由与 A、A′+B+V 在 test2 上的比较及实现核对；运行前已在 EXP-0018 的输出上空跑 | code/output/EXP-0020/analysis |
 | probes/*.py | 三个仓库的代码级探针和 FLOPs 计算 | CPU 已运行，输出见 EXP-0001 |
 
 SparseVLM 也通过 `run_eval.py` 运行：在 `sparsevlm` 环境里用 `--method sparsevlm --retained-tokens <预算>`。它调用 SparseVLM 自带的 model_vqa_loader，剪枝由 SparseVLM 的模型代码执行；`run_eval.py` 会检查加载的确实是 SparseVLM 的版本。
