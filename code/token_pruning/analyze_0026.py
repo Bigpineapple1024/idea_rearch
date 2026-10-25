@@ -1,12 +1,14 @@
-"""EXP-0026 (plan v1): IDEA-0005's locate-then-cover on the development sets VQAv2 dev2 and GQA val400 at the 64 budget.
+"""EXP-0026 (plan v1.1): IDEA-0005's locate-then-cover on the development sets VQAv2 dev2 and GQA val400 at the 64 budget.
 
   python analyze_0026.py      # writes code/output/EXP-0026/analysis/{0026.md,0026.json}
 
 Runs of EXP-0024 are reused as references with their configs unchanged: the K = 2 router (R02, R03), the K = 1 router
 (R06, R07) and cover 16 at K = 2 (R18, R17). New in EXP-0026: cover 16 with the centred box at K = 2 and at K = 1, cover
-16 at K = 1, cover 8 at K = 2. The selection rule, the verdicts and the checks were written before any EXP-0026 run
-(plan v1). Per-question scores are recomputed from answers.jsonl as analyze_0024.py does; paired differences resample
-images with replacement (1000 draws, seed 0) within each set.
+16 at K = 1, cover 8 at K = 2 (plan v1), and the per-token relevance controls of plan v1.1: query_vis on every question
+(R09, R10) and the no-box cover, the 16 tokens most similar to the question kept anywhere (R11, R12). The selection rule,
+the verdicts, the attribution rule and the checks were written before any EXP-0026 run; the v1.1 runs are optional
+here (reported as not tested when absent). Per-question scores are recomputed from answers.jsonl as analyze_0024.py
+does; paired differences resample images with replacement (1000 draws, seed 0) within each set.
 """
 import csv
 import json
@@ -22,14 +24,16 @@ import analyze_0024 as a24  # noqa: E402
 BENCHES = a24.BENCHES
 QFILES = {"vqav2_dev2": ("D:/6CJNM007/data/llava_eval/vqav2_val/llava_vqav2_val_dev2.jsonl", "D:/6CJNM007/data/coco/val2014"),
           "gqa_val400": ("D:/6CJNM007/data/llava_eval/gqa/llava_gqa_val400.jsonl", "D:/6CJNM007/data/gqa/images_val400")}
-# method -> (experiment, run IDs on vqav2_dev2 and gqa_val400)
+# method -> (experiment, run IDs on vqav2_dev2 and gqa_val400); k1_c16ctr on vqav2_dev2 is R13, the rerun of R05, which
+# exited before its first answer (EXP-0026 record, main a776e95)
 RUNS = {"router": ("EXP-0024", ("R02", "R03")), "router_k1": ("EXP-0024", ("R06", "R07")), "c16": ("EXP-0024", ("R18", "R17")),
-        "c16ctr": ("EXP-0026", ("R01", "R02")), "k1_c16": ("EXP-0026", ("R03", "R04")), "k1_c16ctr": ("EXP-0026", ("R05", "R06")),
-        "c8": ("EXP-0026", ("R07", "R08"))}
-# method -> (same-K router, keep, cover n, centred box)
+        "c16ctr": ("EXP-0026", ("R01", "R02")), "k1_c16": ("EXP-0026", ("R03", "R04")), "k1_c16ctr": ("EXP-0026", ("R13", "R06")),
+        "c8": ("EXP-0026", ("R07", "R08")), "qvis": ("EXP-0026", ("R09", "R10")), "t16": ("EXP-0026", ("R11", "R12"))}
+OPTIONAL = ("qvis", "t16")                    # plan v1.1; reported as not tested when absent
+# method -> (same-K router, keep, cover n, centred box); qvis has no cover record (query_vis on every question)
 SPEC = {"router": (None, 30, 0, False), "router_k1": (None, 47, 0, False), "c16": ("router", 30, 16, False),
         "c16ctr": ("router", 30, 16, True), "k1_c16": ("router_k1", 47, 16, False), "k1_c16ctr": ("router_k1", 47, 16, True),
-        "c8": ("router", 30, 8, False)}
+        "c8": ("router", 30, 8, False), "qvis": ("router", 30, 0, False), "t16": ("router", 30, 16, False)}
 CANDIDATES = ("c16", "c8", "k1_c16")          # also the tie order
 CENTRED = {"c16": ("c16", "c16ctr"), "c8": ("c16", "c16ctr"), "k1_c16": ("k1_c16", "k1_c16ctr")}   # c8 borrows K = 2's pair
 TIE = 0.1
@@ -41,10 +45,12 @@ def runs_rows():
     for exp in ("EXP-0024", "EXP-0026"):
         with open(f"{a24.OUT}/{exp}/runs.tsv") as f:
             rows.update({x["run_id"]: x for x in csv.DictReader(f, delimiter="\t")})
-    for meth, (exp, ids) in RUNS.items():
-        for rid in ids:
-            if rows.get(f"{exp}-{rid}", {}).get("status") != "completed":
-                sys.exit(f"{exp}-{rid} ({meth}) is not completed")
+    for meth, (exp, ids) in list(RUNS.items()):
+        done = [rows.get(f"{exp}-{rid}", {}).get("status") == "completed" for rid in ids]
+        if meth in OPTIONAL and not any(done):
+            del RUNS[meth]                                     # not run (plan v1.1): reported as not tested
+        elif not all(done):
+            sys.exit(f"{exp}-{ids} ({meth}) not completed")
     return rows
 
 
@@ -106,10 +112,27 @@ def main():
                 zoom[meth] = z["records"]
         centres = content_centres(bench, b)
         for meth, (ref, keep, cov, ctr) in SPEC.items():
+            if meth not in RUNS:
+                continue
             checks[f"{bench} {meth}: {keep} image tokens kept in every prefill"] = float(np.mean([len(x) == keep for x in kept[meth]]))
             if ref is None:
                 continue
+            if meth == "qvis":                                 # no cover: only the routed questions are pinned
+                same = [ans[meth][i] == ans[ref][i] for i in range(n) if routed[i]]
+                checks[f"{bench} qvis: answers on the routed questions = router's"] = float(np.mean(same)) if same else 1.0
+                continue
             recs = zoom[meth]
+            if meth == "t16":                                  # the region is the logged set of 16 positions, not a box
+                ok = [len(x["cover_top"]) == 16 and set(x["cover_top"]) <= set(kept[meth][i]) and x["in_box"] == 16
+                      for i, x in enumerate(recs) if x["cover"]]
+                checks[f"{bench} t16: the 16 logged most-similar tokens all kept, in-region count 16"] = float(np.mean(ok)) if ok else 0.0
+                covered = np.array([bool(x["cover"]) for x in recs])
+                checks[f"{bench} t16: routed questions untouched, every unrouted one covered"] = float(
+                    np.mean([(x.get("skip") == "routed") == bool(rt) for x, rt in zip(recs, routed)]) * ((covered == ~routed).mean() >= 0.99))
+                same = [ans[meth][i] == ans[ref][i] for i in range(n) if routed[i]]
+                checks[f"{bench} t16: answers on the routed questions = router's"] = float(np.mean(same)) if same else 1.0
+                res["in_box"][f"{bench} t16"] = {"mean_changed": float(np.mean([x["changed"] for x in recs if x["cover"]]))}
+                continue
             covered = np.array([bool(x["cover"]) for x in recs])
             checks[f"{bench} {meth}: routed questions untouched, every unrouted one covered"] = float(
                 np.mean([(x.get("skip") == "routed") == bool(rt) for x, rt in zip(recs, routed)]) * ((covered == ~routed).mean() >= 0.99))
@@ -154,6 +177,8 @@ def main():
                                                          ("c16", "c16ctr"), ("k1_c16", "k1_c16ctr"), ("c16ctr", "router"),
                                                          ("k1_c16ctr", "router_k1"), ("k1_c16", "c16"), ("router_k1", "router"),
                                                          ("c16", "c8")]
+        pairs += [p for p in (("c16", "t16"), ("t16", "router"), ("qvis", "router"), ("c16", "qvis"))
+                  if p[0] in RUNS and p[1] in RUNS]
         for x, y in dict.fromkeys(pairs):
             key = f"{x} - {y}"
             res["pairs"][f"{bench} {key}"] = paired(x, y)
@@ -195,14 +220,16 @@ def main():
         verdict = "unlikely"
     else:
         verdict = "intermediate"
+    region = mean2("c16 - t16") if "c16 - t16" in delta else None       # plan v1.1's attribution rule
     res["selection"] = {"total_mean_delta": total, "selected": best, "cover_delta": cover_d, "localisation_pair": list(loc_pair),
                         "localisation_mean_delta": loc_mean, "cover_mean_delta": {c: mean2(f"{c} - {SPEC[c][0]}") for c in CANDIDATES},
-                        "verdict": verdict}
+                        "verdict": verdict, "region_vs_relevance_mean_delta": region,
+                        "region_attributed": None if region is None else region > 0}
     res["checks"] = checks
     os.makedirs(out_dir)
     json.dump(res, open(f"{out_dir}/0026.json", "w"), indent=2, ensure_ascii=False)
     fmt = lambda x: f"{x[0]:+.2f} [{x[1]:+.2f}, {x[2]:+.2f}]（{x[3]}）" if x else "—"   # noqa: E731
-    L = ["# EXP-0026（计划 v1）：定位后覆盖，开发集（VQAv2 dev2、GQA val400，64 档）", "", "## 核对", ""]
+    L = ["# EXP-0026（计划 v1.1）：定位后覆盖，开发集（VQAv2 dev2、GQA val400，64 档）", "", "## 核对", ""]
     L += [f"- {k}: {100 * x:.1f}%" for k, x in checks.items()]
     for bench in BENCHES:
         t = res["table"][bench]
@@ -226,6 +253,11 @@ def main():
     names = {"promising": "有希望（进入确认）", "concentration": "集中而非定位（交用户决定）", "unlikely": "不像", "intermediate": "中间情况（交用户决定）"}
     L += ["", f"**选中**：{best}；覆盖的增益（− {ref}）：VQAv2 {cover_d['vqav2_dev2']:+.2f}，GQA {cover_d['gqa_val400']:+.2f}；"
               f"定位的增益（{loc_pair[0]} − {loc_pair[1]}，两集平均）{loc_mean:+.2f}；判读：{names[verdict]}。"]
+    if region is None:
+        L += ["", "**归因（计划 v1.1）**：区域还是逐 token 相关性：未检验（不围框的运行 R11、R12 没有运行）。"]
+    else:
+        L += ["", f"**归因（计划 v1.1）**：覆盖 16 − 不围框（两集平均）{region:+.2f} → "
+                  f"{'按区域多留比按 token 相似度多留更好（区域的作用）' if region > 0 else '增益来自题目相关的 token 本身，不需要框'}。"]
     open(f"{out_dir}/0026.md", "w", encoding="utf-8").write("\n".join(L) + "\n")
     print("\n".join(L))
 

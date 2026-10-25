@@ -51,7 +51,8 @@ content rows and columns with pick "grid" (EXP-0025); with centre the box keeps 
 (the controls). The inserted tokens are never pruned and the stage keeps keep - n image tokens, so
 the visual tokens after the stage are still keep. With cover (IDEA-0004, unrouted questions only), the strong
 baseline's own count of kept tokens inside the box plus cover is taken inside the box (by its score, in blocks) and the
-rest outside. fastv_zoom_log holds one record per prefill. Without zoom and cover nothing changes.
+rest outside; with cover_top (EXP-0026 v1.1, the no-box control) the region is instead the cover_top non-padding tokens
+most similar to the query. fastv_zoom_log holds one record per prefill. Without zoom and cover nothing changes.
 """
 import math
 import types
@@ -391,10 +392,17 @@ def _zoom(model, lm, result):
                                   centre=cfg.get("centre", False), native=native)
     rec.update(grid_box=list(grid), pixel_box=[round(v, 1) for v in pixels], **info)
     if cfg.get("cover"):
-        r0, c0, r1, c1 = grid
-        box = torch.zeros(side, side, dtype=torch.bool)
-        box[r0:r1 + 1, c0:c1 + 1] = True
-        lm.fastv_cover_mask = box.ravel()
+        if cfg.get("cover_top"):                               # no-box control: the tokens most similar to the query
+            top = cos.float().masked_fill(~allowed, float("-inf")).topk(min(cfg["cover_top"], int(allowed.sum()))).indices
+            mask = torch.zeros(side * side, dtype=torch.bool)
+            mask[top.cpu()] = True
+            lm.fastv_cover_mask = mask
+            rec["cover_top"] = sorted(top.tolist())
+        else:
+            r0, c0, r1, c1 = grid
+            box = torch.zeros(side, side, dtype=torch.bool)
+            box[r0:r1 + 1, c0:c1 + 1] = True
+            lm.fastv_cover_mask = box.ravel()
         rec["cover"] = True
     n = cfg.get("n", 0)
     if n:

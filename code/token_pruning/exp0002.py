@@ -233,6 +233,9 @@ CONFIGS["fastv64_qroute_c16ctr"] = ("tp", CONFIGS["fastv64_qroute_c16"][1] + ["-
 CONFIGS["fastv64_qroute_c8s0"] = ("tp", CONFIGS["fastv64_qroute"][1] + ["--fastv-cover", "8", "--fastv-zoom-smin", "0"])
 CONFIGS["fastv64k1_qroute_c16"] = ("tp", CONFIGS["fastv64k1_qroute"][1] + ["--fastv-cover", "16", "--fastv-zoom-smin", "0"])
 CONFIGS["fastv64k1_qroute_c16ctr"] = ("tp", CONFIGS["fastv64k1_qroute_c16"][1] + ["--fastv-zoom-centre"])
+# EXP-0026 v1.1, the no-box control: the 16 tokens most similar to the question are kept anywhere, the rest by the
+# baseline's rule outside them (the cover rule with that set as its region).
+CONFIGS["fastv64_qroute_t16"] = ("tp", CONFIGS["fastv64_qroute_c16"][1] + ["--fastv-cover-top", "16"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic

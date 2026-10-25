@@ -43,12 +43,13 @@ def under(path, folder):
 
 
 def run(workdir, img_path, after, idf, decisions, n=0, pick="grid", on="unrouted", cover=0, source="crop", centre=False,
-        kept_log=False, k=2, keep=KEEP):
+        kept_log=False, k=2, keep=KEEP, cover_top=0):
     m = argparse.Namespace(method="fastv", fastv_k=k, fastv_keep=keep, fastv_schedule=None, fastv_score_prior=f"{workdir}/prior_zoom.npy",
                            fastv_stratify=BLOCKS, text_rows_log=None, fastv_score="query_vis", fastv_exclude_padding=True,
                            fastv_mix_question=None, fastv_contrast_ids=None, fastv_idf=idf, fastv_visibility=f"{workdir}/vis_zoom.npy",
                            fastv_route="yesno_howmany", fastv_zoom=n, fastv_zoom_pick=pick, fastv_zoom_on=on, fastv_zoom_box="8,8,16",
-                           fastv_zoom_smin=0.0, fastv_cover=cover, fastv_zoom_source=source, fastv_zoom_centre=centre)
+                           fastv_zoom_smin=0.0, fastv_cover=cover, fastv_zoom_source=source, fastv_zoom_centre=centre,
+                           fastv_cover_top=cover_top)
     model = run_eval.apply_method(build_tiny_llava(workdir), m, Pieces(after.tolist()))
     lm = model.get_model()
     flag = [None]
@@ -218,13 +219,18 @@ def main():
     checks["cover: logged, keep tokens, no zoom tokens"] = (rec["cover"] and not rec["zoom"] and got["cover_count"][0] == n_c
                                                            and len(got["kept"][0]) == KEEP and got["len0"] == [base_len])
 
-    def cover_expect(got, rec, keep, n_cover):
+    def cover_expect(got, rec, keep, n_cover, region=None):
         """The offline cover rule for one prefill: the baseline's own in-box count plus n_cover inside the logged box (by its
-        score, in blocks), the rest outside with the blocks already filled."""
-        r0, c0, r1, c1 = rec["grid_box"]
-        bx = torch.zeros(24, 24, dtype=torch.bool)
-        bx[r0:r1 + 1, c0:c1 + 1] = True
-        bx = bx.ravel()
+        score, in blocks), the rest outside with the blocks already filled. region: a list of positions used instead of
+        the box (the no-box control)."""
+        if region is None:
+            r0, c0, r1, c1 = rec["grid_box"]
+            bx = torch.zeros(24, 24, dtype=torch.bool)
+            bx[r0:r1 + 1, c0:c1 + 1] = True
+            bx = bx.ravel()
+        else:
+            bx = torch.zeros(576, dtype=torch.bool)
+            bx[region] = True
         sc = got["scores"][0].float() / torch.from_numpy(np.load(f"{a.workdir}/prior_zoom.npy")).float()
         bs = pos[_stratified_top(sc[pos], keep, pos, 24, BLOCKS)]
         a_n = int(bx[bs].sum())
@@ -255,6 +261,18 @@ def main():
     checks["K = 1 cover 16: 47 kept = baseline's in-box count + 16 inside the box by its rule, the rest outside"] = (
         rec["cover"] and len(got["kept"][0]) == 47 and got["kept"][0] == want_k1 and rec["in_box"] == n_k1
         and rec["baseline_in_box"] == a_k1 and got["len2"] == [SYS_LEN + 47 + TEXT_LEN])
+
+    # D4. the no-box control (EXP-0026 v1.1): the 16 non-padding tokens most similar to the query are all kept, the other
+    # 14 by the baseline's rule outside them
+    model, lm, got = run(a.workdir, img_path, after, idf, [False], cover=16, cover_top=16)
+    rec, e = lm.fastv_zoom_log[0], got["embeds"][0][0].float()
+    cos = query_cos(lm, after, e, start, n_img, 0)
+    top16 = sorted(cos.masked_fill(~allowed, float("-inf")).topk(16).indices.tolist())
+    want_t, a_t, n_t = cover_expect(got, rec, KEEP, 16, region=top16)
+    checks["no-box cover: the 16 tokens most similar to the query all kept, the other 14 by the baseline's rule outside them"] = (
+        rec["cover"] and not rec["zoom"] and rec.get("cover_top") == top16 and n_t == 16 and got["kept"][0] == want_t
+        and set(top16) <= set(got["kept"][0]) and rec["in_box"] == 16 and rec["baseline_in_box"] == a_t
+        and len(got["kept"][0]) == KEEP)
 
     # G. pooled crop: block means of the crop's tokens over 4 x 4 blocks
     model, lm, got = run(a.workdir, img_path, after, idf, [False], n=16, pick="pool")
@@ -356,11 +374,14 @@ def main():
     checks["--fastv-zoom-source full with pick query refused"] = refused(base + r + ["--fastv-zoom", "16", "--fastv-zoom-pick", "query", "--fastv-zoom-source", "full", "--fastv-zoom-log", "z"])
     checks["--fastv-zoom-source full without --fastv-zoom refused"] = refused(base + r + ["--fastv-cover", "8", "--fastv-zoom-source", "full", "--fastv-zoom-log", "z"])
     checks["--fastv-zoom-centre without zoom refused"] = refused(base + r + ["--fastv-zoom-centre"])
+    checks["--fastv-cover-top without --fastv-cover refused"] = refused(base + r + ["--fastv-zoom", "16", "--fastv-cover-top", "16", "--fastv-zoom-log", "z"])
+    checks["--fastv-cover-top with --fastv-zoom-centre refused"] = refused(base + r + ["--fastv-cover", "16", "--fastv-cover-top", "16", "--fastv-zoom-centre", "--fastv-zoom-log", "z"])
     for extra in (["--fastv-zoom", "16"], ["--fastv-cover", "8"], ["--fastv-zoom", "16", "--fastv-zoom-pick", "pool"],
                   ["--fastv-zoom", "16", "--fastv-zoom-pick", "pool", "--fastv-zoom-source", "full"],
                   ["--fastv-zoom", "16", "--fastv-zoom-pick", "grid", "--fastv-zoom-source", "full"],
                   ["--fastv-zoom", "16", "--fastv-zoom-centre"], ["--fastv-zoom", "16", "--fastv-zoom-pick", "grid", "--fastv-zoom-centre"],
-                  ["--fastv-cover", "16", "--fastv-zoom-smin", "0"], ["--fastv-cover", "16", "--fastv-zoom-smin", "0", "--fastv-zoom-centre"]):
+                  ["--fastv-cover", "16", "--fastv-zoom-smin", "0"], ["--fastv-cover", "16", "--fastv-zoom-smin", "0", "--fastv-zoom-centre"],
+                  ["--fastv-cover", "16", "--fastv-zoom-smin", "0", "--fastv-cover-top", "16"]):
         checks[f"accepted with the router: {' '.join(extra)}"] = not refused(base + r + extra + ["--fastv-zoom-log", "z"])
     C = exp0002.CONFIGS
     for b in (64, 128, 192):
@@ -385,9 +406,12 @@ def main():
             "fastv64_qroute_c16ctr": q + ["--fastv-cover", "16", "--fastv-zoom-smin", "0", "--fastv-zoom-centre"],
             "fastv64_qroute_c8s0": q + ["--fastv-cover", "8", "--fastv-zoom-smin", "0"],
             "fastv64k1_qroute_c16": k1 + ["--fastv-cover", "16", "--fastv-zoom-smin", "0"],
-            "fastv64k1_qroute_c16ctr": k1 + ["--fastv-cover", "16", "--fastv-zoom-smin", "0", "--fastv-zoom-centre"]}
+            "fastv64k1_qroute_c16ctr": k1 + ["--fastv-cover", "16", "--fastv-zoom-smin", "0", "--fastv-zoom-centre"],
+            "fastv64_qroute_t16": q + ["--fastv-cover", "16", "--fastv-zoom-smin", "0", "--fastv-cover-top", "16"]}
     for name, args in want.items():
         checks[f"exp0002 {name} (and _kl) as planned"] = C[name][1] == args and C[f"{name}_kl"][1] == args
+    checks["exp0002 fastv64_qvis (and _kl) = the router without the route (EXP-0026 v1.1, R09-R10)"] = (
+        q == C["fastv64_qvis"][1] + ["--fastv-route", "yesno_howmany"] and C["fastv64_qvis_kl"][1] == C["fastv64_qvis"][1])
     checks["exp0002 fastv64k1_scores = plain FastV at K 1, keep 47"] = C["fastv64k1_scores"][1] == ["--method", "fastv", "--fastv-k", "1", "--fastv-keep", "47"]
     checks["budgets: K1 keep 47 = 63.5, + 16 zoom tokens = 64.0; K2 keep 30 + 16 zoom tokens = 65.1 per layer"] = (
         abs((576 + 31 * 47) / 32 - 63.53) < 0.01 and abs((592 + 31 * 47) / 32 - 64.03) < 0.01 and abs((2 * 592 + 30 * 30) / 32 - 65.125) < 1e-9)

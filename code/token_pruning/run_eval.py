@@ -118,6 +118,9 @@ def parse():
     ours.add_argument("--fastv-cover", type=int, default=0,
                       help="fastv, query_vis (IDEA-0004), unrouted questions: keep the strong baseline's own count of "
                            "tokens inside the box plus this many, the rest outside")
+    ours.add_argument("--fastv-cover-top", type=int, default=0,
+                      help="with --fastv-cover (EXP-0026 v1.1, the no-box control): the region is this many non-padding "
+                           "image tokens most similar to the question query instead of the box")
     ours.add_argument("--fastv-zoom-log", default=None, help="write one zoom / cover record per prefill (JSON)")
     ours.add_argument("--fastv-mix-question", type=int, default=None,
                       help="fastv, --fastv-score mix: number of kept tokens chosen by the object-name cosine")
@@ -184,6 +187,9 @@ def parse():
         ours.error("--fastv-zoom-source full needs --fastv-zoom n and --fastv-zoom-pick pool or grid")
     if method_args.fastv_zoom_centre and not zoom_on:
         ours.error("--fastv-zoom-centre needs --fastv-zoom or --fastv-cover")
+    if method_args.fastv_cover_top and (not method_args.fastv_cover or method_args.fastv_zoom or method_args.fastv_zoom_centre
+                                        or method_args.fastv_cover_top < 0):
+        ours.error("--fastv-cover-top n needs --fastv-cover, without --fastv-zoom or --fastv-zoom-centre")
     if method_args.vocab_visibility_log and method_args.method in ("visionzip", "sparsevlm"):
         ours.error("--vocab-visibility-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     if (method_args.fastv_score == "mix") != (method_args.fastv_mix_question is not None):
@@ -231,7 +237,8 @@ def apply_method(model, m, tokenizer=None):
             zoom = {"n": getattr(m, "fastv_zoom", 0), "pick": getattr(m, "fastv_zoom_pick", "grid"),
                     "on": getattr(m, "fastv_zoom_on", "unrouted"), "top_m": top_m, "min_side": min_side,
                     "max_side": max_side, "s_min": getattr(m, "fastv_zoom_smin", 0.2), "cover": bool(cover),
-                    "source": getattr(m, "fastv_zoom_source", "crop"), "centre": bool(getattr(m, "fastv_zoom_centre", False))}
+                    "source": getattr(m, "fastv_zoom_source", "crop"), "centre": bool(getattr(m, "fastv_zoom_centre", False)),
+                    "cover_top": getattr(m, "fastv_cover_top", 0)}
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule, score_prior=prior,
                            stratify=getattr(m, "fastv_stratify", None),
                            log_text_rows=bool(getattr(m, "text_rows_log", None)), score_kind=score_kind,
