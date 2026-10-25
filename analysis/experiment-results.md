@@ -31,6 +31,7 @@
 | EXP-0023 | （新模块的诊断） | 开放式题的答案在哪里：答案物体相对题目点名物体的位置，A 与 A′+B+V 的保留位置，剂量（CPU，只读已封存的输出与 COCO 框；test1 与 dev） | [EXP-0023_record](实验报告/EXP-0023_record.md)（计划 v1、v1.1） | 记录内 | completed（CPU，事后探索：邻域法按写定规则不满足“有希望”，放大法满足；A′+B+V 的损失集中在挤掉答案物体 token 的题上，F44～F46） |
 | EXP-0024 | IDEA-0004 | 预算内放大的开发集运行：池化放大、lattice 放大（K = 2）与池化放大（K = 1）对同 K 的路由，三个对照（全图池化、居中框、覆盖 16）；VQAv2 dev2、GQA val400，18 次（17 次 + R16 的重跑 R18；EXP-0022 收尾时补登） | [EXP-0024_record](实验报告/EXP-0024_record.md)（计划 v1、v1.1，结果） | [SQZ-EXP-0024](实验报告/EXP-0024_squeeze.md)；分析 code/output/EXP-0024/analysis（af76abaa…） | completed（2026-10-25 20:59；判读“不像”，DEC-0039） |
 | EXP-0025 | IDEA-0004 | 预算内放大的确认：所选变体对同 K 的路由，TextVQA（不给 OCR 为主、给 OCR 作参照）与 V\*，归因对照与 vanilla 参照；VQAv2 test3、GQA testdev 只在开发集判读为“有希望”时运行 | [EXP-0025_record](实验报告/EXP-0025_record.md)（计划 v0：看细节部分的判据在开发结果之前写定；v1 在任何确认运行之前写定，main 01c1c02） | — | running（2026-10-25 21:08 起，代码 7eeafd9；R09、R10 在对照代码提交后运行） |
+| EXP-0026 | IDEA-0005 | 定位后覆盖的开发集运行：居中框覆盖（K = 2、K = 1）、覆盖 16（K = 1）、覆盖 8（K = 2），复用 EXP-0024 的路由与覆盖 16；VQAv2 dev2、GQA val400，8 次 | [EXP-0026_record](实验报告/EXP-0026_record.md)（计划 v1） | — | planned（EXP-0025 之后运行，DEC-0040） |
 
 ## 全部运行
 
