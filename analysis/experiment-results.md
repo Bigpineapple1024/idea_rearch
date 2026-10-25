@@ -34,6 +34,7 @@
 | EXP-0026 | IDEA-0005 | 定位后覆盖的开发集运行：居中框覆盖（K = 2、K = 1）、覆盖 16（K = 1）、覆盖 8（K = 2），复用 EXP-0024 的路由与覆盖 16；VQAv2 dev2、GQA val400，13 次（v1 8 次 + v1.1 4 次 + R05 的重跑） | [EXP-0026_record](实验报告/EXP-0026_record.md)（计划 v1、v1.1，结果） | 记录内深挖（F53、F54）；分析 code/output/EXP-0026/analysis（6d7cc3db…） | completed（2026-10-26 02:47；R05 失败、R13 重跑；判读“有希望”，DEC-0042） |
 | EXP-0027 | IDEA-0005 | 定位后覆盖的确认：K = 1 + 覆盖 16 对 K = 1 路由（主）、K = 2 路由，VisionZip-64 参照；VQAv2 test3、GQA testdev，6 次（GQA 上复用 EXP-0022 的三次运行） | [EXP-0027_record](实验报告/EXP-0027_record.md)（计划 v1、结果） | — | completed（2026-10-26 03:41–05:51，代码 d785aa2；分析 6dfc3f5；Q1 部分成立、Q2 成立，DEC-0045） |
 | EXP-0028 | IDEA-0006 | VisionZip-64 上的定位后覆盖，开发集：VisionZip-64、覆盖 16、居中框覆盖 16、覆盖 32、每题覆盖 16，不围框对照（v1.1）；VQAv2 dev2、GQA val400，12 次 | [EXP-0028_record](实验报告/EXP-0028_record.md)（计划 v1、v1.1） | — | running（2026-10-26 05:52 开始，代码 15e75ed；DEC-0044） |
+| EXP-0029 | IDEA-0006 | VisionZip-64 上的定位后覆盖的确认（只在 EXP-0028 判读“有希望”时运行）：所选 vs VisionZip-64（Q1，主），定位（Q2）、区域（Q3）的对照，TextVQA 上的描述（Q4）；VQAv2 test3、GQA testdev、TextVQA（不给 OCR），8～10 次 | [EXP-0029_record](实验报告/EXP-0029_record.md)（计划 v1） | — | planned（DEC-0046；条件：EXP-0028 判读“有希望”） |
 
 ## 全部运行
 
