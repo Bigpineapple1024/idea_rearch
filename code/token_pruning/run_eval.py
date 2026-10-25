@@ -53,6 +53,21 @@ def parse():
                       help="fastv/random: prune in stages 'layer:keep,layer:keep,...' instead of --fastv-k/--fastv-keep")
     ours.add_argument("--dominant", type=int, default=54)
     ours.add_argument("--contextual", type=int, default=10)
+    ours.add_argument("--vz-cover", type=int, default=0,
+                      help="visionzip (IDEA-0006): the question's IDF x visibility query locates a box (as --fastv-cover); "
+                           "VisionZip's own count of dominant patches inside it plus this many are taken inside, the rest "
+                           "outside, both by CLS attention")
+    ours.add_argument("--vz-cover-on", choices=["unrouted", "all"], default="unrouted",
+                      help="cover the questions EXP-0020's router (yes/no, how many) does not route, or every question")
+    ours.add_argument("--vz-cover-centre", action="store_true",
+                      help="control: the box keeps its side but sits at the centre of the image's content band")
+    ours.add_argument("--vz-cover-box", default="8,8,16", help="top_m,min_side,max_side of the box, as --fastv-zoom-box")
+    ours.add_argument("--vz-cover-top", type=int, default=0,
+                      help="with --vz-cover (EXP-0028 v1.1, the no-box control): the region is this many non-padding "
+                           "patches most similar to the question query instead of the box")
+    ours.add_argument("--vz-visibility", default=None,
+                      help="--vz-cover: .npy with one visibility in [0, 1] per vocabulary id (EXP-0015)")
+    ours.add_argument("--vz-log", default=None, help="--vz-cover: write one record per prefill (JSON)")
     ours.add_argument("--retained-tokens", type=int, default=None, help="sparsevlm: 32-layer average budget")
     ours.add_argument("--attn-implementation", choices=["eager", "sdpa"], default=None,
                       help="load the LLM with this attention kernel (default: transformers' choice, sdpa in 4.37)")
@@ -190,6 +205,19 @@ def parse():
     if method_args.fastv_cover_top and (not method_args.fastv_cover or method_args.fastv_zoom or method_args.fastv_zoom_centre
                                         or method_args.fastv_cover_top < 0):
         ours.error("--fastv-cover-top n needs --fastv-cover, without --fastv-zoom or --fastv-zoom-centre")
+    if method_args.vz_cover and method_args.method != "visionzip":
+        ours.error("--vz-cover needs --method visionzip")
+    if method_args.vz_cover < 0:
+        ours.error("--vz-cover must be positive")
+    if bool(method_args.vz_cover) != bool(method_args.vz_visibility):
+        ours.error("--vz-cover and --vz-visibility go together")
+    if (method_args.vz_log is not None) != bool(method_args.vz_cover):
+        ours.error("--vz-log goes with --vz-cover")
+    if (method_args.vz_cover_centre or method_args.vz_cover_on != "unrouted"
+            or method_args.vz_cover_box != "8,8,16" or method_args.vz_cover_top) and not method_args.vz_cover:
+        ours.error("--vz-cover-centre, --vz-cover-on, --vz-cover-box and --vz-cover-top need --vz-cover")
+    if method_args.vz_cover_top < 0 or (method_args.vz_cover_top and method_args.vz_cover_centre):
+        ours.error("--vz-cover-top must be positive and does not go with --vz-cover-centre")
     if method_args.vocab_visibility_log and method_args.method in ("visionzip", "sparsevlm"):
         ours.error("--vocab-visibility-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     if (method_args.fastv_score == "mix") != (method_args.fastv_mix_question is not None):
@@ -255,7 +283,17 @@ def apply_method(model, m, tokenizer=None):
         if root:
             sys.path.insert(0, root)
         from visionzip import visionzip
-        return visionzip(model, dominant=m.dominant, contextual=m.contextual)
+        model = visionzip(model, dominant=m.dominant, contextual=m.contextual)
+        if getattr(m, "vz_cover", 0):                          # IDEA-0006: locate-then-cover on VisionZip
+            import visionzip_cover
+            idf = getattr(m, "fastv_idf", None) or question_idf(tokenizer, m.question_file, getattr(m, "conv_mode", "vicuna_v1"))
+            m.fastv_idf = idf
+            top_m, min_side, max_side = (int(x) for x in getattr(m, "vz_cover_box", "8,8,16").split(","))
+            visionzip_cover.apply(model, m.vz_cover, lambda ids: [idf["idf"].get(t, idf["unseen"]) for t in ids],
+                                  np.load(m.vz_visibility), route=lambda ids: routes_to_query(tokenizer.decode(ids)),
+                                  on=getattr(m, "vz_cover_on", "unrouted"), centre=bool(getattr(m, "vz_cover_centre", False)),
+                                  box=(top_m, min_side, max_side), top=getattr(m, "vz_cover_top", 0))
+        return model
     return model
 
 
@@ -574,6 +612,8 @@ def main():
             if llava_args.num_chunks != 1:
                 raise SystemExit("--fastv-zoom / --fastv-cover assume one chunk (prefills follow the question file)")
             _ZOOM_MODEL.append(lm)
+        if method_args.vz_cover:                                 # IDEA-0006: its log is written at the end
+            _VZ_MODEL.append(model)
         if method_args.layer_token_log:
             times["n_layers"] = len(model.get_model().layers)
             for i, layer in enumerate(model.get_model().layers):
@@ -663,9 +703,14 @@ def main():
         with open(method_args.fastv_zoom_log, "w") as f:
             json.dump({"n_prefills": len(log), "n_zoomed": sum(r["zoom"] for r in log),
                        "n_covered": sum(r["cover"] for r in log), "records": log}, f)
+    if method_args.vz_log:                                      # IDEA-0006: one record per prefill
+        log = _VZ_MODEL[0].vz_cover_log if _VZ_MODEL else []
+        with open(method_args.vz_log, "w") as f:
+            json.dump({"n_prefills": len(log), "n_covered": sum(r["cover"] for r in log), "records": log}, f)
 
 
 _ZOOM_MODEL = []
+_VZ_MODEL = []
 
 
 if __name__ == "__main__":

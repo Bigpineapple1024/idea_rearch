@@ -236,6 +236,17 @@ CONFIGS["fastv64k1_qroute_c16ctr"] = ("tp", CONFIGS["fastv64k1_qroute_c16"][1] +
 # EXP-0026 v1.1, the no-box control: the 16 tokens most similar to the question are kept anywhere, the rest by the
 # baseline's rule outside them (the cover rule with that set as its region).
 CONFIGS["fastv64_qroute_t16"] = ("tp", CONFIGS["fastv64_qroute_c16"][1] + ["--fastv-cover-top", "16"])
+# IDEA-0006 (EXP-0028): locate-then-cover on VisionZip-64 (CLS + 53 dominant patches, 10 contextual tokens). On the
+# questions the router does not route, the question query's box (IDEA-0005's) takes VisionZip's own count of dominant
+# patches inside it plus 16 (c16) or 32 (c32), the rest outside; c16ctr keeps c16's side but centres the box; c16all
+# covers every question.
+CONFIGS["visionzip64_c16"] = ("tp", CONFIGS["visionzip64"][1] + ["--vz-cover", "16", "--vz-visibility", VISIBILITY])
+CONFIGS["visionzip64_c16ctr"] = ("tp", CONFIGS["visionzip64_c16"][1] + ["--vz-cover-centre"])
+CONFIGS["visionzip64_c32"] = ("tp", CONFIGS["visionzip64"][1] + ["--vz-cover", "32", "--vz-visibility", VISIBILITY])
+CONFIGS["visionzip64_c16all"] = ("tp", CONFIGS["visionzip64_c16"][1] + ["--vz-cover-on", "all"])
+# EXP-0028 v1.1, the no-box control (as EXP-0026's fastv64_qroute_t16): the 16 patches most similar to the question are
+# kept wherever they lie, the other 37 dominant ones by CLS attention outside them.
+CONFIGS["visionzip64_t16"] = ("tp", CONFIGS["visionzip64_c16"][1] + ["--vz-cover-top", "16"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
@@ -331,6 +342,8 @@ def run_one(run_id, config, bench):
         method_args = method_args + ["--score-log", f"{run_dir}/scores.npy"]
     if "--fastv-zoom" in method_args or "--fastv-cover" in method_args:     # IDEA-0004: one record per prefill
         method_args = method_args + ["--fastv-zoom-log", f"{run_dir}/zoom.json"]
+    if "--vz-cover" in method_args:                                         # IDEA-0006: one record per prefill
+        method_args = method_args + ["--vz-log", f"{run_dir}/vz.json"]
     if config.endswith("_names"):
         method_args = method_args + ["--answer-logit-log", f"{run_dir}/answer_logits.json",
                                      "--name-cos-log", f"{run_dir}/name_cos.npz"]
