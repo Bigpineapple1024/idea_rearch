@@ -29,9 +29,10 @@ from squeeze_0018 import COCO_INSTANCES, EVAL_DATA, OUT, plural_forms   # noqa: 
 
 LLAVA = "D:/6CJNM007/idea_rearch/source/LLaVA"
 BENCHES = ("vqav2_dev2", "gqa_val400")
-# method -> run IDs of the plan's run table (R01 is the K = 1 prior's blank-image run, not analysed here)
+# method -> run IDs of the plan's run table (R01 is the K = 1 prior's blank-image run, not analysed here); c16 on
+# vqav2_dev2 is R18, the rerun of R16, which failed before its first answer (EXP-0024 record, main ffc380d)
 RUNS = {"router": ("R02", "R03"), "z16p": ("R04", "R05"), "router_k1": ("R06", "R07"), "k1_z16p": ("R08", "R09"),
-        "z16g": ("R10", "R11"), "p16full": ("R12", "R13"), "z16pctr": ("R14", "R15"), "c16": ("R16", "R17")}
+        "z16g": ("R10", "R11"), "p16full": ("R12", "R13"), "z16pctr": ("R14", "R15"), "c16": ("R18", "R17")}
 # method -> same-K router, zoom tokens, keep, zoomed on every question
 SPEC = {"router": (None, 0, 30, False), "router_k1": (None, 0, 47, False), "z16p": ("router", 16, 30, True),
         "k1_z16p": ("router_k1", 16, 47, True), "z16g": ("router", 16, 30, True), "p16full": ("router", 16, 30, True),
