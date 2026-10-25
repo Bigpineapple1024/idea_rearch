@@ -106,3 +106,12 @@ route_share_gqa.py（不读答案）：
 - `exp0002.py`：数据集 `gqa_testdev`。
 - `score_pope_mme.py`：`gqa_testdev` 计分（按 LLaVA 的口径完全匹配，逐题分数写入 `gqa_scores.jsonl`）。
 - `analyze_0022.py`（新）：判据、实现核对与同时报告的各项。
+
+## 运行中的偏差（2026-10-25）
+
+- **R03 失败**：`fastv64_qvis_kl` × gqa_testdev，12:36:37 开始，模型加载完、刚开始第一题，12:37:10 退出，eval exit 127，stdout 没有 traceback。Windows 的应用程序与系统事件日志在这段时间没有记录。
+  - 与 EXP-0018-R01（vanilla，VQAv2 test1）的失败症状相同：约 30 秒后退出，退出码 127，没有 traceback。两次的配置完全不同；同样用到题目查询的 R02（路由）成功。判断为与配置无关的偶发硬退出，原因未知。
+  - 失败的文件夹与备份按规则保留。runner 接着运行 R04～R08。
+- **重跑**：同一配置用新编号 **R09**，在 R08 之后运行（`D:\6CJNM007\tmp\chain_0022b.sh`），用掉计划预留的 1 次失败重跑。候选 1 共 68 次，不超上限。
+  - 重跑时环境变量 `PYTHONFAULTHANDLER=1`：进程若再硬退出，会打印 Python 的调用栈。它不改变任何计算。
+- **分析脚本**：`analyze_0022.py` 中 A′+B+V-64 的运行号由 R03 改为 R09。只改这一处运行号，在 R09 完成、GPU 空闲后提交；判据与其余代码不变。
