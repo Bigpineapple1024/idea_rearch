@@ -23,16 +23,19 @@ from llava.constants import IMAGE_TOKEN_INDEX
 from fastv_llava import _padding_mask, zoom_box
 
 
-def _cover(state, hidden_states, cls_sum, own):
+def _cover(state, hidden_states, cls_sum, own, dtype):
     """The dominant patches (indices 0..n_img-1) of one image: VisionZip's own count inside the located box plus
-    state["cover"] taken inside it by CLS attention, the rest outside it by CLS attention. own: VisionZip's choice."""
+    state["cover"] taken inside it by CLS attention, the rest outside it by CLS attention. own: VisionZip's choice.
+    dtype: the images' dtype, to which plain LLaVA casts layer -2 before the projector (CLIPVisionTower.forward)."""
     if hidden_states.shape[0] != 1:
         raise ValueError("visionzip_cover covers one image per prefill")
     own, d = own[0], own.shape[1]
     n_img = hidden_states.shape[1] - 1
     side = round(n_img ** 0.5)
     width, height = state["size"]
-    proj = state["projector"](hidden_states[:, 1:])[0].float()      # the patches' LLM input embeddings
+    # the patches' LLM input embeddings, as plain LLaVA computes them: with device_map="auto" the vision tower stays in
+    # float32 (llava/model/builder.py) and its features are cast to the images' dtype (float16) before the projector
+    proj = state["projector"](hidden_states[:, 1:].to(dtype))[0].float()
     cos = torch.nn.functional.cosine_similarity(proj, state["query"].to(proj.device), dim=-1)
     allowed = ~_padding_mask(width, height, side).to(proj.device)
     top_m, min_side, max_side = state["box"]
@@ -84,7 +87,7 @@ def _forward(self, images):
     topk_indices = cls_attention_sum.topk(dominant_num, dim=1).indices + 1
     state = self.vz_cover
     if state["query"] is not None:                       # IDEA-0006: the located box takes its share of the patches
-        topk_indices = _cover(state, hidden_states, cls_attention_sum, topk_indices - 1) + 1
+        topk_indices = _cover(state, hidden_states, cls_attention_sum, topk_indices - 1, images.dtype) + 1
     elif state["record"] is not None:
         state["record"]["dominant"] = sorted((topk_indices[0] - 1).tolist())
     all_indices = torch.cat([torch.zeros((hidden_states.shape[0], 1), dtype=topk_indices.dtype, device=topk_indices.device), topk_indices], dim=1)

@@ -2,12 +2,15 @@
 
   python analyze_0028.py      # writes code/output/EXP-0028/analysis/{0028.md,0028.json}
 
+v1.2 (plan v1.2): the cover runs R03-R12 failed before their first scored answer (a dtype error in visionzip_cover,
+fixed); they are rerun as R13-R22 in the same order, and only the run table below changes. VisionZip-64 stays R01, R02.
+
 Selection: of cover 16, cover 32 and cover 16 on every question, the candidate with the largest two-set mean of
 candidate - VisionZip-64; within 0.1 of the largest, the first in that order. Verdict: promising when the selected one
 is above VisionZip-64 on both sets and cover 16 is above its centred-box control (two-set mean); concentration, not
 localisation, when only the second fails; not like when no candidate's two-set mean is above 0; otherwise
 intermediate. Attribution (plan v1.1, not part of the selection or verdict): cover 16 - the no-box control (the 16
-patches most similar to the question kept wherever they lie; R11, R12), two-set mean: above 0 means the region helps
+patches most similar to the question kept wherever they lie; R21, R22), two-set mean: above 0 means the region helps
 more than per-token relevance. Described alongside: EXP-0026's selected configuration (FastV K = 1 + cover 16; R03, R04) and EXP-0024's
 K = 2 router (IDEA-0003; R02, R03). EXP-0026's cover boxes are an implementation check of the box (it depends on the
 input embeddings only, so VisionZip's cover must locate the same one). Per-question scores are recomputed from
@@ -36,11 +39,11 @@ FILES = {"vqav2_dev2": (f"{EVAL_DATA}/vqav2_val/llava_vqav2_val_dev2.jsonl", f"{
                         "D:/6CJNM007/data/gqa/images_val400")}
 # (bench, method) -> (experiment, run ID)
 RUNS = {("vqav2_dev2", "vz"): ("EXP-0028", "R01"), ("gqa_val400", "vz"): ("EXP-0028", "R02"),
-        ("vqav2_dev2", "c16"): ("EXP-0028", "R03"), ("gqa_val400", "c16"): ("EXP-0028", "R04"),
-        ("vqav2_dev2", "c16ctr"): ("EXP-0028", "R05"), ("gqa_val400", "c16ctr"): ("EXP-0028", "R06"),
-        ("vqav2_dev2", "c32"): ("EXP-0028", "R07"), ("gqa_val400", "c32"): ("EXP-0028", "R08"),
-        ("vqav2_dev2", "c16all"): ("EXP-0028", "R09"), ("gqa_val400", "c16all"): ("EXP-0028", "R10"),
-        ("vqav2_dev2", "t16"): ("EXP-0028", "R11"), ("gqa_val400", "t16"): ("EXP-0028", "R12"),
+        ("vqav2_dev2", "c16"): ("EXP-0028", "R13"), ("gqa_val400", "c16"): ("EXP-0028", "R14"),
+        ("vqav2_dev2", "c16ctr"): ("EXP-0028", "R15"), ("gqa_val400", "c16ctr"): ("EXP-0028", "R16"),
+        ("vqav2_dev2", "c32"): ("EXP-0028", "R17"), ("gqa_val400", "c32"): ("EXP-0028", "R18"),
+        ("vqav2_dev2", "c16all"): ("EXP-0028", "R19"), ("gqa_val400", "c16all"): ("EXP-0028", "R20"),
+        ("vqav2_dev2", "t16"): ("EXP-0028", "R21"), ("gqa_val400", "t16"): ("EXP-0028", "R22"),
         ("vqav2_dev2", "fk1c16"): ("EXP-0026", "R03"), ("gqa_val400", "fk1c16"): ("EXP-0026", "R04"),
         ("vqav2_dev2", "router"): ("EXP-0024", "R02"), ("gqa_val400", "router"): ("EXP-0024", "R03")}
 COVER = {"c16": 16, "c16ctr": 16, "c32": 32, "c16all": 16, "t16": 16}       # VisionZip cover runs and their n
