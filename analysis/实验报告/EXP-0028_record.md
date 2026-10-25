@@ -1,6 +1,6 @@
 # EXPERIMENT_RECORD：VisionZip 上的定位后覆盖，开发集运行（IDEA-0006）
 
-状态：计划 v1（2026-10-26 4 点）与 v1.1（4 点半），都在 EXP-0028 的任何运行之前写定；写计划时 EXP-0027 正在运行，没有看过 EXP-0027 的任何结果。v1.1 只在 R10 之后加 2 次运行和一条归因规则，见文末“计划 v1.1”。
+状态：计划 v1（2026-10-26 4 点）与 v1.1（4 点半），都在 EXP-0028 的任何运行之前写定；写计划时 EXP-0027 正在运行，没有看过 EXP-0027 的任何结果。v1.1 只在 R10 之后加 2 次运行和一条归因规则，见“计划 v1.1”。运行中：R01、R02 completed；R03–R12 因代码错误失败，修正后按计划 v1.2 以 R13–R22 重跑（见文末，DEC-0047）。
 
 - 实验 ID：EXP-0028。
 - IDEA ID：[IDEA-0006](../IDEA-0006_强底座上的定位后覆盖.md)；DEC-0043、DEC-0044。
@@ -133,3 +133,45 @@ v1 提交之后做了查新（Claude 自己检索网页与摘要，没有开子�
 ### 预算
 
 - EXP-0028 共 12 次（v1 的 10 次 + 2 次），约 3 GPU 小时；IDEA-0006 的上限 30 次不变。
+
+## 运行中的记录与偏差（2026-10-26）
+
+- **开始**：EXP-0027 结束后，排队脚本 `D:\6CJNM007\tmp\chain_0028.sh` 核对 `D:\6CJNM007\tmp\exp0028\MANIFEST_v11` 的 sha256，提交 analyze_0027.py（6dfc3f5）与 IDEA-0006 的代码（15e75ed），确认计划在 main 上，05:52:00 开始 R01。每次运行都设了 PYTHONFAULTHANDLER=1（不改变计算）。
+- **R01、R02**（VisionZip-64，不覆盖）：completed（05:52–06:18）。这两个配置不加载 visionzip_cover，不受下面的错误影响。
+- **R03–R12 全部失败（06:19–06:25）**：
+  - 每次在开始后约 31 秒退出，eval_exit 1，stdout.log 里是同一个错误：`RuntimeError: mat1 and mat2 must have the same dtype, but got Float and Half`，位置在 visionzip_cover._cover 调用投影层的一行。
+  - VQAv2 dev2 的 5 次与 R10（每题覆盖，GQA）在第一题出错，answers.jsonl 为空；R04、R06、R08、R12（GQA val400）的第一题被路由（不覆盖），写出 1 个答案后在第二题出错。这 4 个答案没有看，也没有计分。
+  - 这是代码错误，与以前的偶发退出（exit 127、没有 traceback）不同。
+- **原因**：
+  - LLaVA 按 `device_map="auto"` 加载时，视觉塔保持 float32（llava/model/builder.py 只在其他 device_map 下才转成 float16），投影层与 LLM 是 float16。
+  - 普通 LLaVA 在投影之前把第 −2 层的特征转成图像的 dtype（CLIPVisionTower.forward 的 `.to(images.dtype)`），VisionZip 输出前也这样转；`_cover` 却把 float32 的第 −2 层直接送进了 float16 的投影层。
+  - check_vzcover.py 的小模型全是 float32，所以没有发现。
+- **修正**：`_cover` 多一个参数，取图像的 dtype，在投影之前转换，与普通 LLaVA 的算法相同。其他代码不变。
+- **核对（都在重跑之前）**：
+  - check_vzcover.py 用修正后的代码重跑 45/45（`D:\6CJNM007\tmp\exp0028b\check_vzcover4.log`）。
+  - 新的 check_vzcover_dtype.py 11/11（`check_vzcover_dtype.log`）：小模型按真实的 dtype 布局设置（视觉塔 float32；投影层、LLM、图像用 bfloat16 代替 float16，因为 CPU 上没有 float16 的矩阵乘）。已提交的版本在这个布局上报与 GPU 相同的错，修正版能运行；被路由的题与 VisionZip 相同；框等于按普通 LLaVA 的做法算出的图像输入 embedding 上的框；主导 token 按规则；LLM 收到的 CLS 与主导 token 逐值相同，上下文 token 在 bfloat16 的舍入内相同。
+  - GPU 冒烟测试（不是实验运行，不计分，`D:\6CJNM007\tmp\exp0028b\gpu_smoke\`）：修正后的代码在 LLaVA-1.5-7B 上跑 VQAv2 dev2 的前 20 题（覆盖 16，IDF 按完整的 dev2 题目文件）。被覆盖的 10 题的框与 EXP-0026-R03 的框 10/10 相同，被路由的题一致，每题 53 个主导 token 不重复，框内个数 = VisionZip 的框内个数 + 16（上限 53）。答案没有看。第一次尝试因驱动脚本缺少 `__main__` 保护（Windows 上 DataLoader 用 spawn 启动子进程）而卡住，手动结束，没有产生记录。
+- **没有看过 R01、R02 的任何 headline**：进度检查只显示运行号与状态。
+
+## 计划 v1.2（2026-10-26 6 点半，重跑之前写定）
+
+- **重跑**：R03–R12 用新编号 R13–R22 重跑，配置、数据、顺序都不变。
+
+| 重跑 | 原运行 | 配置 | 数据 |
+| --- | --- | --- | --- |
+| R13 | R03 | `visionzip64_c16` | vqav2_dev2 |
+| R14 | R04 | `visionzip64_c16` | gqa_val400 |
+| R15 | R05 | `visionzip64_c16ctr` | vqav2_dev2 |
+| R16 | R06 | `visionzip64_c16ctr` | gqa_val400 |
+| R17 | R07 | `visionzip64_c32` | vqav2_dev2 |
+| R18 | R08 | `visionzip64_c32` | gqa_val400 |
+| R19 | R09 | `visionzip64_c16all` | vqav2_dev2 |
+| R20 | R10 | `visionzip64_c16all` | gqa_val400 |
+| R21 | R11 | `visionzip64_t16` | vqav2_dev2 |
+| R22 | R12 | `visionzip64_t16` | gqa_val400 |
+
+- 失败的 10 次保留，文件夹与 runs.tsv 的行都不动。VisionZip-64 仍用 R01、R02（它们不经过修正的代码）。
+- **代码**：修正后的 visionzip_cover.py、check_vzcover_dtype.py（新）、analyze_0028.py v1.2 一起提交到 code/token-pruning；提交前 check_vzcover.py 45/45、check_vzcover_dtype.py 11/11。
+- **分析**：analyze_0028.py v1.2 只把运行表中覆盖运行的编号从 R03–R12 改为 R13–R22；选择规则、判读、归因与实现核对不变。用替身数据重新空跑通过（114 项核对都 100%，`D:\6CJNM007\tmp\exp0028b\dry.log`）。
+- **若重跑又失败**：偶发退出（exit 127、没有 traceback）按以前的做法用 R23 起的新编号重跑一次；若是代码错误，就停下排查。
+- **预算**：EXP-0028 共 22 次（12 次 + 10 次重跑）。失败的 10 次合计用了约 5 分钟 GPU，没有产生计分的答案。IDEA-0006 的运行数怎样计见 DEC-0047。
