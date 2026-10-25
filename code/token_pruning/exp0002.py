@@ -226,6 +226,13 @@ CONFIGS["fastv64_qroute_g16full_all0"] = ("tp", CONFIGS["fastv64_qroute"][1] + [
     "--fastv-zoom", "16", "--fastv-zoom-pick", "grid", "--fastv-zoom-source", "full"] + ALL0)
 CONFIGS["fastv64_qroute_z16gctr_all0"] = ("tp", CONFIGS["fastv64_qroute"][1] + [
     "--fastv-zoom", "16", "--fastv-zoom-pick", "grid", "--fastv-zoom-centre"] + ALL0)
+# IDEA-0005 (EXP-0026): locate-then-cover on the unrouted questions. c16ctr keeps cover 16's side but centres the box (the
+# localisation control); c8s0 moves fewer tokens into the box (cover 8, s_min 0 like c16; the older c8 keeps s_min 0.2);
+# the K = 1 versions take the router at K = 1, keep 47 (63.5 tokens per layer).
+CONFIGS["fastv64_qroute_c16ctr"] = ("tp", CONFIGS["fastv64_qroute_c16"][1] + ["--fastv-zoom-centre"])
+CONFIGS["fastv64_qroute_c8s0"] = ("tp", CONFIGS["fastv64_qroute"][1] + ["--fastv-cover", "8", "--fastv-zoom-smin", "0"])
+CONFIGS["fastv64k1_qroute_c16"] = ("tp", CONFIGS["fastv64k1_qroute"][1] + ["--fastv-cover", "16", "--fastv-zoom-smin", "0"])
+CONFIGS["fastv64k1_qroute_c16ctr"] = ("tp", CONFIGS["fastv64k1_qroute_c16"][1] + ["--fastv-zoom-centre"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
