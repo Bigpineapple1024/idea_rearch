@@ -1,6 +1,6 @@
 # Experiment Results：实验详细数据总表
 
-状态（2026-10-25 补）：EXP-0018（VQAv2 验证集）已完成，一般题目上差异不显著，答案类型上效应相反；EXP-0019 已完成（审计的两项补充）；EXP-0020（按题目句式路由，VQAv2 test2）已完成，64、128 档都显著高于强对照（预注册），第 ⑫ 步的计划目标在 64 档达到；EXP-0021（192 档与 128 档参照）运行中；“全部运行”补上了此前漏登的 EXP-0016～EXP-0020（从各 runs.tsv 与 git.txt 生成）。原状态行（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 已完成（D3 成立），第 3 轮 EXP-0013（误报）已完成（没有修正通过），第 ⑫ 步的 EXP-0014 已完成（POPE 提升，MME 未提升）；时序预测有 iTransformer 的 GPU 复现（EXP-0004，56 次运行）、验证期预测（EXP-0009，48 次运行）、对照的 GPU 重跑（EXP-0005）和 ETTh1 上的 CPU 复现（EXP-0003），候选 1 的 CPU 诊断 EXP-0012 已完成（之后时序方向暂停，DEC-0020、DEC-0021）。空表表示无数据，绝不表示数值为零。
+状态（2026-10-25 补）：EXP-0018（VQAv2 验证集）已完成，一般题目上差异不显著，答案类型上效应相反；EXP-0019 已完成（审计的两项补充）；EXP-0020（按题目句式路由，VQAv2 test2）已完成，64、128 档都显著高于强对照（预注册），第 ⑫ 步的计划目标在 64 档达到；EXP-0021（192 档与 128 档参照）已完成；EXP-0022（GQA，第三个 benchmark）已登记；“全部运行”补上了此前漏登的 EXP-0016～EXP-0020（从各 runs.tsv 与 git.txt 生成）。原状态行（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 已完成（D3 成立），第 3 轮 EXP-0013（误报）已完成（没有修正通过），第 ⑫ 步的 EXP-0014 已完成（POPE 提升，MME 未提升）；时序预测有 iTransformer 的 GPU 复现（EXP-0004，56 次运行）、验证期预测（EXP-0009，48 次运行）、对照的 GPU 重跑（EXP-0005）和 ETTh1 上的 CPU 复现（EXP-0003），候选 1 的 CPU 诊断 EXP-0012 已完成（之后时序方向暂停，DEC-0020、DEC-0021）。空表表示无数据，绝不表示数值为零。
 
 ## 实验登记
 
@@ -25,7 +25,8 @@
 | EXP-0017 | IDEA-0002 | 192 档复验 A′+B+V 与 A（POPE、MME） | [EXP-0017_record](实验报告/EXP-0017_record.md)（计划 v1） | 记录内（三档汇总见 DEC-0029） | completed（192 档 POPE +2.29，MME −20.6 不显著） |
 | EXP-0018 | IDEA-0002 | VQAv2 验证集子集（5246 题）上的一般题目检验：A′+B+V 与 A（64、128 档）及参照 | [EXP-0018_record](实验报告/EXP-0018_record.md)（计划 v1） | [SQZ-EXP-0018](实验报告/EXP-0018_squeeze.md) | completed（Q1、Q2 不成立：64 档 −0.74 [−1.70, +0.20]、128 档 −0.20，差异不显著；64 档 yes/no +1.70、other −3.43，F38～F40；R01 vanilla 失败，R09 重跑 76.69） |
 | EXP-0020 | IDEA-0003 | 按题目句式路由（助动词或 how many 开头 → A′+B+V，其余 → A）在新抽的 VQAv2 test2（5415 题）上的预注册确认（64、128 档），加参照 | [EXP-0020_record](实验报告/EXP-0020_record.md)（计划 v1～v1.2） | [SQZ-EXP-0020](实验报告/EXP-0020_squeeze.md) | completed（Q1、Q2、Q3 都成立：路由 − A 64 档 +1.22 [+0.58, +1.82]、128 档 +0.72 [+0.29, +1.15]；仍低于 VisionZip-64（−2.17），F42、F43） |
-| EXP-0021 | IDEA-0003 | VQAv2 test2 的补全：192 档路由与 A，128 档 VisionZip、SparseVLM 参照（只作描述） | [EXP-0021_record](实验报告/EXP-0021_record.md)（计划 v1） | 待做 | running（2026-10-25 10:12 起，代码 commit 9ceacd1） |
+| EXP-0021 | IDEA-0003 | VQAv2 test2 的补全：192 档路由与 A，128 档 VisionZip、SparseVLM 参照（只作描述） | [EXP-0021_record](实验报告/EXP-0021_record.md)（计划 v1） | 记录内 | completed（只作描述：路由-192 − A-192 +0.42 [+0.01, +0.82]；128 档路由与 VisionZip-128、SparseVLM-128 无可检出差别，+0.48、−0.04） |
+| EXP-0022 | IDEA-0003 | 按题目句式路由（规则冻结）在 GQA testdev-balanced（12578 题）上的预注册检验：A、路由、A′+B+V（64），A、路由（128），vanilla、VisionZip-64、SparseVLM-64 | [EXP-0022_record](实验报告/EXP-0022_record.md)（计划 v1） | 待做 | planned（排在 EXP-0021 之后） |
 | EXP-0019 | IDEA-0002 | 审计补充：A+B 的无先验对照；最终方法的 margin AUC（POPE） | [EXP-0019_record](实验报告/EXP-0019_record.md)（计划 v1） | 记录内 | completed（A+B − A₀ +0.56 [−0.70, +1.96]：适配必要得到支持；A′+B+V 的 AUC 比 vanilla 低 0.018～0.034、比 A 高，误报偏多，F41） |
 
 ## 全部运行
@@ -324,6 +325,10 @@
 | EXP-0020-R07 | vanilla × vqav2_test2（vanilla） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 76.57 | — | 0.271 秒/题，14.51 GiB | `code/output/EXP-0020/EXP-0020-R07/`，4bb02078…；备份同名目录 |
 | EXP-0020-R08 | visionzip64 × vqav2_test2（VisionZip-64） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 70.70 | — | 0.159 秒/题，14.35 GiB | `code/output/EXP-0020/EXP-0020-R08/`，f5693f76…；备份同名目录 |
 | EXP-0020-R09 | sparsevlm64 × vqav2_test2（SparseVLM-64） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 68.70 | — | 0.186 秒/题，18.11 GiB | `code/output/EXP-0020/EXP-0020-R09/`，f69c338b…；备份同名目录 |
+| EXP-0021-R01 | fastv192_prior_strat_nopad_kl × vqav2_test2（A-192） | 9ceacd1；无未提交改动 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 75.48 | — | 0.196 秒/题，14.10 GiB | `code/output/EXP-0021/EXP-0021-R01/`，a71ba1b4…；备份同名目录 |
+| EXP-0021-R02 | fastv192_qroute_kl × vqav2_test2（路由-192） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 75.90 | — | 0.196 秒/题，14.10 GiB | `code/output/EXP-0021/EXP-0021-R02/`，a979658e…；备份同名目录 |
+| EXP-0021-R03 | visionzip128 × vqav2_test2（VisionZip-128） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 74.11 | — | 0.177 秒/题，14.35 GiB | `code/output/EXP-0021/EXP-0021-R03/`，78967add…；备份同名目录 |
+| EXP-0021-R04 | sparsevlm128 × vqav2_test2（SparseVLM-128） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 74.63 | — | 0.205 秒/题，18.10 GiB | `code/output/EXP-0021/EXP-0021-R04/`，ffcaf906…；备份同名目录 |
 
 ## 汇总与比较
 
