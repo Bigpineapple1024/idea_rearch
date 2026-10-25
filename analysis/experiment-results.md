@@ -28,7 +28,7 @@
 | EXP-0020 | IDEA-0003 | 按题目句式路由（助动词或 how many 开头 → A′+B+V，其余 → A）在新抽的 VQAv2 test2（5415 题）上的预注册确认（64、128 档），加参照 | [EXP-0020_record](实验报告/EXP-0020_record.md)（计划 v1～v1.2） | [SQZ-EXP-0020](实验报告/EXP-0020_squeeze.md) | completed（Q1、Q2、Q3 都成立：路由 − A 64 档 +1.22 [+0.58, +1.82]、128 档 +0.72 [+0.29, +1.15]；仍低于 VisionZip-64（−2.17），F42、F43） |
 | EXP-0021 | IDEA-0003 | VQAv2 test2 的补全：192 档路由与 A，128 档 VisionZip、SparseVLM 参照（只作描述） | [EXP-0021_record](实验报告/EXP-0021_record.md)（计划 v1） | 记录内 | completed（只作描述：路由-192 − A-192 +0.42 [+0.01, +0.82]；128 档路由与 VisionZip-128、SparseVLM-128 无可检出差别，+0.48、−0.04） |
 | EXP-0022 | IDEA-0003 | 按题目句式路由（规则冻结）在 GQA testdev-balanced（12578 题）上的预注册检验：A、路由、A′+B+V（64），A、路由（128），vanilla、VisionZip-64、SparseVLM-64 | [EXP-0022_record](实验报告/EXP-0022_record.md)（计划 v1） | 待做 | running（2026-10-25 11:27 起，代码 commit 1d95df0） |
-| EXP-0023 | （新模块的诊断） | 开放式题的答案在哪里：答案物体相对题目点名物体的位置，A 与 A′+B+V 的保留位置，剂量（CPU，只读已封存的输出与 COCO 框；test1 与 dev） | [EXP-0023_record](实验报告/EXP-0023_record.md)（计划 v1） | 待做 | planned（CPU，不占 GPU 预算） |
+| EXP-0023 | （新模块的诊断） | 开放式题的答案在哪里：答案物体相对题目点名物体的位置，A 与 A′+B+V 的保留位置，剂量（CPU，只读已封存的输出与 COCO 框；test1 与 dev） | [EXP-0023_record](实验报告/EXP-0023_record.md)（计划 v1、v1.1） | 记录内 | completed（CPU，事后探索：邻域法按写定规则不满足“有希望”，放大法满足；A′+B+V 的损失集中在挤掉答案物体 token 的题上，F44～F46） |
 
 ## 全部运行
 
