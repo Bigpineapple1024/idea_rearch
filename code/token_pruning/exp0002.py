@@ -65,6 +65,12 @@ BENCHES = {
                     "image_folder": f"{DATA}/coco/val2014",
                     "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test2_annotations.jsonl"],
                     "archives_sha256": f"{DATA}/downloads/vqav2/SHA256SUMS"},
+    # EXP-0022: GQA testdev-balanced (LLaVA's question file from eval.zip; answers and the 398 images from the official
+    # GQA archives by make_gqa_set.py; the images' checksums are in gqa/images_SHA256SUMS), scored by score_pope_mme.py
+    "gqa_testdev": {"question_file": f"{DATA}/llava_eval/gqa/llava_gqa_testdev_balanced.jsonl",
+                    "image_folder": f"{DATA}/gqa/images",
+                    "annotations": [f"{DATA}/llava_eval/gqa/llava_gqa_testdev_balanced_annotations.jsonl"],
+                    "archives_sha256": f"{DATA}/downloads/gqa/SHA256SUMS"},
 }
 # Budgets are 32-layer averages of visual tokens (code/token_pruning/README.md, "预算的口径").
 FASTV_KEEP = {192: 166, 128: 98, 64: 30}
@@ -331,7 +337,9 @@ def run_one(run_id, config, bench):
     files = sorted(os.path.relpath(os.path.join(d, n), run_dir).replace("\\", "/")
                    for d, _, names in os.walk(run_dir) for n in names)
     sums = {p: sha256(f"{run_dir}/{p}") for p in files}
-    with open(f"{run_dir}/SHA256SUMS", "w") as f:
+    # LF line endings (from EXP-0022 on): earlier runs wrote CRLF in text mode, and Git Bash's `sha256sum -c` needs
+    # `tr -d '\r' < SHA256SUMS | sha256sum -c -` for those (full drift check, 2026-10-25)
+    with open(f"{run_dir}/SHA256SUMS", "w", newline="\n") as f:
         f.writelines(f"{h}  {p}\n" for p, h in sums.items())
     backup = f"{BACKUP}/{experiment(run_id)}/{run_id}"
     shutil.copytree(run_dir, backup)
@@ -353,6 +361,7 @@ def run_one(run_id, config, bench):
         if new:
             f.write("run_id\tconfig\tbench\tstatus\theadline\teval_s\ts_per_answer\tpeak_gib\tstart\tend\tsha256sums_sha256\n")
         f.write("\t".join(row) + "\n")
+    shutil.copyfile(f"{out}/runs.tsv", f"{BACKUP}/{experiment(run_id)}/runs.tsv")   # runs.tsv had no backup before EXP-0022
     print("\t".join(row), flush=True)
     return status["status"]
 

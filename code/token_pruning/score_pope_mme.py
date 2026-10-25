@@ -1,8 +1,12 @@
-"""Score LLaVA answers on POPE, MME or the VQAv2 val subsets and write metrics.json.
+"""Score LLaVA answers on POPE, MME, the VQAv2 val subsets or GQA testdev-balanced and write metrics.json.
 
   python score_pope_mme.py pope <answers.jsonl> <out_dir>
   python score_pope_mme.py mme  <answers.jsonl> <out_dir> [--tag NAME]
   python score_pope_mme.py vqav2_test <answers.jsonl> <out_dir>    # or vqav2_dev (EXP-0018), vqav2_test2 (EXP-0020)
+  python score_pope_mme.py gqa_testdev <answers.jsonl> <out_dir>   # EXP-0022
+
+GQA follows LLaVA's scripts/convert_gqa_for_eval.py (answer.rstrip('.').lower()) and the official eval.py accuracy for
+--tier testdev_balanced (exact match with the single gold answer); per-question scores go to <out_dir>/gqa_scores.jsonl.
 
 VQAv2 uses LLaVA's m4c TextVQAAccuracyEvaluator (EvalAI normalisation, which also drops commas, unlike the official
 vqaEval.py; leave-one-out min(1, matches / 3)); per-question scores go to <out_dir>/vqa_scores.jsonl.
@@ -96,9 +100,35 @@ def score_vqav2(answers, out_dir, split, log):
             "n_scored": len(rows), "by_answer_type": {t: {"n": len(v), "accuracy": 100 * sum(v) / len(v)} for t, v in by_type.items()}}
 
 
+def score_gqa(answers, out_dir, log):
+    """GQA testdev-balanced accuracy: LLaVA's conversion (strip a final '.', lower-case) and exact match with the gold
+    answer, as the official eval.py does; per-question scores go to <out_dir>/gqa_scores.jsonl."""
+    gts = {}
+    for line in open(f"{EVAL_DATA}/gqa/llava_gqa_testdev_balanced_annotations.jsonl", encoding="utf-8"):
+        a = json.loads(line)
+        gts[a["question_id"]] = a
+    preds = [json.loads(line) for line in open(answers)]
+    if sorted(str(p["question_id"]) for p in preds) != sorted(gts):
+        raise SystemExit("answers do not cover the question set exactly")
+    groups, rows = {}, []
+    with open(f"{out_dir}/gqa_scores.jsonl", "w") as f:
+        for p in preds:
+            g = gts[str(p["question_id"])]
+            s = float(p["text"].rstrip(".").lower() == g["answer"])
+            kind = "yes/no" if g["answer"] in ("yes", "no") else "other"
+            for key in (f"answer:{kind}", f"structural:{g['structural']}"):
+                groups.setdefault(key, []).append(s)
+            rows.append(s)
+            f.write(json.dumps({"question_id": str(p["question_id"]), "image": g["image"], "answer_kind": kind,
+                                "structural": g["structural"], "score": s}) + "\n")
+    log.write(f"GQA testdev-balanced: {len(rows)} questions scored by exact match after rstrip('.').lower()\n")
+    return {"benchmark": "gqa_testdev", "headline": "accuracy", "accuracy": 100 * sum(rows) / len(rows), "n_scored": len(rows),
+            "by_group": {k: {"n": len(v), "accuracy": 100 * sum(v) / len(v)} for k, v in sorted(groups.items())}}
+
+
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("bench", choices=["pope", "mme", "vqav2_test", "vqav2_dev", "vqav2_test2"])
+    p.add_argument("bench", choices=["pope", "mme", "vqav2_test", "vqav2_dev", "vqav2_test2", "gqa_testdev"])
     p.add_argument("answers")
     p.add_argument("out_dir")
     p.add_argument("--tag", help="MME working name (default: the out_dir name)")
@@ -112,6 +142,8 @@ def main():
             metrics = score_pope(answers, log)
         elif a.bench.startswith("vqav2_"):
             metrics = score_vqav2(answers, a.out_dir, a.bench.split("_", 1)[1], log)
+        elif a.bench == "gqa_testdev":
+            metrics = score_gqa(answers, a.out_dir, log)
         else:
             metrics = score_mme(answers, a.out_dir, a.tag or os.path.basename(os.path.abspath(a.out_dir)), log)
     metrics["n_answers"] = n_answers

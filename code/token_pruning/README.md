@@ -2,7 +2,9 @@
 
 方向 T1（见 [毕业选题候选](../../analysis/毕业选题候选.md)）。三篇论文的分析见 analysis/论文笔记/PAPER-0004～0006，代码级核验记录见 [EXP-0001](../../analysis/实验报告/EXP-0001_record.md)，GPU 复现见 [EXP-0002](../../analysis/实验报告/EXP-0002_record.md) 与 [SQZ-EXP-0002](../../analysis/实验报告/EXP-0002_squeeze.md)。
 
-**状态（2026-10-24）**：EXP-0002 已在实验室 RTX 3090 上用真实 LLaVA-1.5-7B 权重跑完 POPE、MME（vanilla、FastV、VisionZip、SparseVLM、同预算随机 × 192/128/64，共 49 次运行，含失败）。CPU 自检脚本仍可用随机小模型运行。
+**状态（2026-10-25）**：视觉方向的全部 GPU 运行（EXP-0002～EXP-0021，含失败）都由 exp0002.py 执行；EXP-0022 在 GQA testdev-balanced 上检验按题目句式路由。CPU 自检脚本仍可用随机小模型运行。原状态行（2026-10-24）：EXP-0002 已在实验室 RTX 3090 上用真实 LLaVA-1.5-7B 权重跑完 POPE、MME（49 次运行，含失败）。
+
+**校验和**：EXP-0021 及以前的运行目录中，SHA256SUMS 是 Windows 文本模式写的 CRLF 行尾，Git Bash 中要用 `tr -d '\r' < SHA256SUMS | sha256sum -c -` 核对（直接 `sha256sum -c` 会因文件名末尾的 \r 报“找不到文件”；2026-10-25 的跑偏检查全部核对通过）。EXP-0022 起改为 LF，并在每次运行后把 runs.tsv 复制到备份目录（此前的 runs.tsv 已于同日补备份）。
 
 ## 文件
 
@@ -10,13 +12,13 @@
 | --- | --- | --- |
 | fastv_llava.py | 用于官方 LLaVA 的 FastV（KV cache，K 与保留数可调）；给定 `seed` 时改为同数量的均匀随机选择。诊断选项：`schedule` 多段剪枝（EXP-0007）、`score_prior` 分数除以位置曲线（EXP-0008）、`stratify` 把排序分到 n×n 个图像块里轮流取（EXP-0010）、`log_text_rows` 记录打分层上图像之后各文本 token 的注意力行（EXP-0011）；`score_kind="object_cos"` 改用图像 token 的输入 embedding 与物体名 embedding 的余弦相似度打分（只适用于 POPE 式题目），`exclude_padding` 不保留完全落在填充区的 patch（EXP-0011 D3）；`score_kind="mix"` 把名额分成两份，`mix_question` 个按物体名余弦、其余按 FastV 分数，第二轮先填空块；`score_kind="contrast_max"` / `"contrast_mean"` 用物体名余弦减去同一 token 与其他类名余弦的最大值 / 均值（`contrast_ids` 给出词表，EXP-0013）；都不设置时计算与原来相同 | 与 FastV 官方 lmms-eval 实现在随机小模型上逐步输出一致（相对误差 ≤3e-7），且不重复写入 KV cache；EXP-0002 |
 | run_eval.py | 在 LLaVA 的 model_vqa_loader 评测里切换 vanilla / FastV / VisionZip / 随机 / SparseVLM；Windows 上的 DataLoader worker；`--layer-token-log` 记录每层输入的 token 数；`--text-rows-log` 保存图像之后各文本 token 的注意力行（.npz），`--answer-logit-log` 记录第一个回答 token 为 Yes/No 的对数概率（EXP-0011）；`--layer-rows-log`（只用于 vanilla）在每次 prefill 记录几层的 head 平均行、第 0～1 层的逐 head 行和 hidden state 余弦相似度（EXP-0011 D2b；这次 prefill 改用 eager 注意力）；`--fastv-score object_cos`、`--fastv-exclude-padding`（EXP-0011 D3）；`--fastv-score mix / contrast_max / contrast_mean`、`--fastv-mix-question`（对比打分的词表是 80 个 COCO 类名，按 POPE 题目的写法取 token），以及 `--name-cos-log`（每张图记录图像 token 与 80 个 COCO 类名的输入 embedding 余弦，EXP-0013） | EXP-0002；EXP-0011、EXP-0013 的选项在 CPU 上自检（check_text_rows_log.py、check_layer_rows_log.py、check_object_cos.py、check_mix_names.py） |
-| exp0002.py | EXP-0002 的运行器：每次运行写 cmd、config、git、seed、env、gpu、stdout、答案、metrics、status 和 SHA256SUMS，复制到备份并核对校验和，追加到 runs.tsv；拒绝复用已有的 run ID | EXP-0002 的 49 次运行 |
+| exp0002.py | 全部视觉实验的运行器（名字沿用 EXP-0002）：每次运行写 cmd、config、git、seed、env、gpu、stdout、答案、metrics、status 和 SHA256SUMS，复制到备份并核对校验和，追加到 runs.tsv（EXP-0022 起同时备份 runs.tsv）；拒绝复用已有的 run ID。配置与 benchmark（含 `gqa_testdev`，EXP-0022）的列表在文件开头 | EXP-0002～EXP-0021 的全部运行 |
 | sparsevlm_sdpa.py | Windows 上把 SparseVLM 的 FlashAttention-2 调用换成 PyTorch SDPA（运行时替换，不改仓库文件） | 自检：与显式 softmax 注意力的差 ≤2.1e-07；EXP-0002-R36～R41 |
-| score_pope_mme.py | 用官方 eval_pope.py 与 MME 的 convert_answer_to_mme.py、calculation.py 打分，写 metrics.json；VQAv2 子集（vqav2_test、vqav2_dev、vqav2_test2）用 LLaVA 的 m4c 评估器，逐题分数写 vqa_scores.jsonl | 给 LLaVA-1.5-13B 官方预测打分，与 MODEL_ZOO 一致 |
+| score_pope_mme.py | 用官方 eval_pope.py 与 MME 的 convert_answer_to_mme.py、calculation.py 打分，写 metrics.json；VQAv2 子集（vqav2_test、vqav2_dev、vqav2_test2）用 LLaVA 的 m4c 评估器，逐题分数写 vqa_scores.jsonl；GQA testdev-balanced（`gqa_testdev`，EXP-0022）按 LLaVA 的 convert_gqa_for_eval.py 与官方 eval.py 的口径（去掉句末句点、小写、与标准答案完全匹配），逐题分数写 gqa_scores.jsonl | 给 LLaVA-1.5-13B 官方预测打分，与 MODEL_ZOO 一致 |
 | bootstrap_ci.py | 一次运行的指标或两次运行之差的 bootstrap 95% 区间（POPE 按子集重采样题目，MME 按子任务重采样图像） | EXP-0002 |
 | analyze_exp0002.py | 从运行目录生成 EXP-0002 的全部分析表（code/output/EXP-0002/analysis/） | EXP-0002 |
 | squeeze_exp0002.py | SQZ-EXP-0002 的探索性检查：答案格式、FastV 与随机的逐题对照、按物体的召回率 | EXP-0002 |
-| analyze_object_boxes.py、analyze_object_boxes_extra.py | 用 COCO val2014 物体框分析已有 POPE 运行（不跑模型）：①按物体大小、竖直位置统计漏答率；② pope_img20 上保留的 patch 落在填充区与被问物体上的比例；③ COCO 中没有同名实例的正样本。图像按 LLaVA 的 `expand2square` 映射到 24×24 网格。在 Windows 控制台用 `python -I -X utf8` 运行 | 第 ⑧ 步的分析：code/output/EXP-0002/deepdive3（1A4B-0003） |
+| analyze_object_boxes.py、analyze_object_boxes_extra.py | 用 COCO val2014 物体框分析已有 POPE 运行（不跑模型；被漏掉的 POPE 正样本的大小、位置、填充区，C10；extra 为看过第一版结果后补的检查）：①按物体大小、竖直位置统计漏答率；② pope_img20 上保留的 patch 落在填充区与被问物体上的比例；③ COCO 中没有同名实例的正样本。图像按 LLaVA 的 `expand2square` 映射到 24×24 网格。在 Windows 控制台用 `python -I -X utf8` 运行 | 第 ⑧ 步的分析：code/output/EXP-0002/deepdive3（1A4B-0003） |
 | analyze_repope.py | 用 RePOPE（YanNeu/RePOPE@bcf22e56）的修订标注重算全部已完成的 POPE 运行：三个 split 的 F1 均值、配对差的 bootstrap 区间；先用原始标注复现每次运行登记的主指标作自检 | code/output/EXP-0002/deepdive4（DEC-0017） |
 | prepare_eval_data.sh | 下载并校验 POPE 标注、COCO val2014、MME 图像和 LLaVA eval.zip | 实验室电脑已运行 |
 | run_pope_mme.sh | 早期的批量评测脚本 | 只检查过 DRY_RUN 输出；EXP-0002 改用 exp0002.py |
@@ -35,7 +37,6 @@
 | check_mix_names.py | EXP-0013 选项的 CPU 自检：`--fastv-score mix` 的保留集合等于离线两轮规则（混合 30 = object_cos，混合 0 = 强对照 + 排除填充区）；对比打分等于重算值、排除与被问物体同拼写的类名；`--name-cos-log` 的数值与去重；coco_dev3 全部 prompt 的物体名 id（真实 tokenizer）；参数检查 | CPU 已运行，38 项通过（2026-10-24）；同时复跑了其余 check（FastV 等价相对差 ≤ 3.13e-7）与 smoke_test |
 | analyze_kept_tokens.py | EXP-0006：FastV 与随机选择保留了图像的哪些位置 | code/output/EXP-0006 |
 | analyze_missed_objects.py | SQZ-EXP-0002 补充：各剪枝方法是否漏掉同一批 POPE 物体（F10） | code/output/EXP-0002 |
-| analyze_object_boxes.py、analyze_object_boxes_extra.py | 按 COCO 框看被漏掉的 POPE 正样本：物体大小、位置、填充区（C10）；extra 为看过第一版结果后补的检查 | code/output/EXP-0002/deepdive3 |
 | analyze_score_prior.py | EXP-0008：FastV 打分在空白图与真实图上的位置曲线，写出校正用的位置先验 | code/output/EXP-0008/analysis |
 | make_pope_subset.py、make_blank_questions.py | pope_img20 诊断子集（20 张图的全部 POPE 题）与同一批题配一张灰色空白图（EXP-0008） | 已生成 |
 | check_layer_profile.py | 批量运行前检查 `_layers` 诊断运行的逐层视觉 token 数是否符合预期，不符合就停止 | EXP-0007 用过 |
@@ -46,10 +47,18 @@
 | check_query_vis.py | EXP-0015 的 CPU 自检：`--fastv-score query_vis` 的保留集合等于离线两轮规则，可视性 1 / 0 时分别退化为 query_idf / 强对照，`--vocab-visibility-log` 与 make_visibility.py | CPU 已运行，14 项通过；EXP-0020 的改动后复跑通过 |
 | analyze_vis.py | EXP-0015：A′+B+V 与 A、A′+B 在 POPE、MME 上的比较 | code/output/EXP-0015/analysis |
 | analyze_0016.py、analyze_0017.py | EXP-0016（固定切分对照、128 档）与 EXP-0017（192 档）的分析 | code/output/EXP-0016/analysis、EXP-0017/analysis |
+| squeeze_0017.py | EXP-0017 的深挖（2026-10-25 跑偏检查时补做，探索性）：64 / 128 / 192 三档的 POPE 按子集的 F1、召回、yes 比例、误报，题目查询的名额，MME 感知子任务的差 | code/output/EXP-0017/squeeze |
 | analyze_0018.py | EXP-0018：VQAv2 test 上的 VQA 准确率与按图像重抽的配对差（按答案类型） | code/output/EXP-0018/analysis（a909c868…） |
 | squeeze_0018.py、squeeze_0018_boxes.py | SQZ-EXP-0018（事后探索）：按查询名额、题型、是否点名 COCO 物体分解差异，按题目首词路由的事后估计；查询选的 token 是否落在被点名物体的框内 | code/output/EXP-0018/squeeze、squeeze_boxes |
 | check_route.py | EXP-0020 的 CPU 自检：`--fastv-route yesno_howmany` 下，路由的题与 query_vis、不路由的题与强对照的保留集合相同（两者交替时也一样），记录正确；真实 tokenizer 下从 prompt ids 得到的决定与题目文字上的规则逐题相同，POPE 与 MME 感知子任务全部被路由 | CPU 已运行，17 项通过（2026-10-25） |
+| analyze_0019.py | EXP-0019：A+B 与无先验强对照 A₀ 的 POPE 比较（按图像重抽），最终方法、vanilla、A、A₀ 的 margin AUC 与误报 | code/output/EXP-0019/analysis（a17545fa…） |
 | analyze_0020.py | EXP-0020：路由与 A、A′+B+V 在 test2 上的比较及实现核对；运行前已在 EXP-0018 的输出上空跑 | code/output/EXP-0020/analysis |
+| squeeze_0020.py、squeeze_0020_hybrid.py | SQZ-EXP-0020（事后探索）：路由增益的分解、按开头词与题型的差（含 test1→test2 的复现）、与 VisionZip-64 的差距、逐题 oracle、yes/no 的答案偏向；追加的 do 开头子集与拼接组合（由已有运行拼出）。GPU 运行期间从 D:/6CJNM007/tmp 运行，提交时只把 CRLF 换成 LF | code/output/EXP-0020/squeeze、squeeze_hybrid |
+| analyze_0021.py | EXP-0021：192 档路由与 A，128 档 VisionZip、SparseVLM 与 EXP-0020 的 128 档运行在 test2 上的比较（只作描述）；运行前用 EXP-0020 的输出空跑 | code/output/EXP-0021/analysis |
+| make_main_table.py | 论文主表草稿：方法 × 预算 × benchmark（POPE 原始标注与 RePOPE、MME-P、VQAv2 test2），每格回链运行 ID，只读已封存的输出 | code/output/PAPER-20261025/main_table |
+| make_gqa_set.py | EXP-0022：从官方 GQA 压缩包写出 testdev-balanced 的逐题标注（答案、结构类型），取出 LLaVA 题目文件用到的 398 张图并记录 sha256；可读本地 images.zip，也可用 HTTP 分段请求只读同一官方文件的目录与这 398 个成员（CRC 校验）；核对题号、图像名与题目文字和 LLaVA 的文件一致 | 已运行（data/llava_eval/gqa/、data/gqa/） |
+| analyze_0022.py | EXP-0022：GQA 上路由与 A、A′+B+V 的比较（判据 Q1～Q3）、按答案类型与结构类型、二选一题、oracle、yes 比例与参照；运行前用合成的替身运行空跑 | code/output/EXP-0022/analysis |
+| sealed_copies/ | 只封存在 code/output 的分析文件夹里、此前从未提交的一次性脚本与 shell 包装（2026-10-25 跑偏检查时收集，去掉 CR 后原样提交；MANIFEST.tsv 列出来源文件夹与封存时的 sha256）。其中两份是后来改过的脚本的第一版：EXP-0002/analysis_v1/analyze_exp0002.py、EXP-0011/d2b_coco_dev/analyze_layer_rows.py | 与封存副本逐字节相同（除 CR） |
 | probes/*.py | 三个仓库的代码级探针和 FLOPs 计算 | CPU 已运行，输出见 EXP-0001 |
 
 SparseVLM 也通过 `run_eval.py` 运行：在 `sparsevlm` 环境里用 `--method sparsevlm --retained-tokens <预算>`。它调用 SparseVLM 自带的 model_vqa_loader，剪枝由 SparseVLM 的模型代码执行；`run_eval.py` 会检查加载的确实是 SparseVLM 的版本。
