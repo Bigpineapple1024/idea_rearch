@@ -115,6 +115,7 @@
 | [analysis/实验报告/EXP-0020_record.md](../analysis/实验报告/EXP-0020_record.md) | EXPERIMENT_RECORD：按题目句式路由在新抽的 VQAv2 test2 上的预注册确认（第 ⑫ 步第六轮） |
 | [analysis/实验报告/EXP-0021_record.md](../analysis/实验报告/EXP-0021_record.md) | EXPERIMENT_RECORD：VQAv2 test2 的补全（192 档路由；128 档参照） |
 | [analysis/实验报告/EXP-0022_record.md](../analysis/实验报告/EXP-0022_record.md) | EXPERIMENT_RECORD：按题目句式路由在 GQA 上的预注册检验（第三个 benchmark） |
+| [analysis/实验报告/EXP-0023_record.md](../analysis/实验报告/EXP-0023_record.md) | EXPERIMENT_RECORD：开放式题的答案在哪里（为新模块做的 CPU 诊断） |
 | [analysis/实验报告/EXP-0020_squeeze.md](../analysis/实验报告/EXP-0020_squeeze.md) | SQUEEZE_REPORT：EXP-0020（增益来自 yes/no 与 number F42；与 VisionZip 的差距在开放式题，是底座的差距 F43） |
 | [analysis/论文主张与证据_草稿.md](../analysis/论文主张与证据_草稿.md) | 论文主张与证据对照（草稿）：可以写的主张 CL-1～CL-10、不能写的主张、共同的限定 |
 | [analysis/实验报告/EXP-0018_squeeze.md](../analysis/实验报告/EXP-0018_squeeze.md) | SQUEEZE_REPORT：EXP-0018（答案类型上效应相反 F38；损失集中在问点名物体属性的题 F39；一般题目上 FastV 一族低于 VisionZip F40） |
