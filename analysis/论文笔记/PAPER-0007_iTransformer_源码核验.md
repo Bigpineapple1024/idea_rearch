@@ -2,7 +2,7 @@
 
 > 本文件是源码核验补充；原文笔记见 [PAPER-0007_iTransformer](PAPER-0007_iTransformer.md)。两份冲突时以能追溯到原文页码或源码行号的一方为准。
 
-状态：partial（代码已核验；GPU 复现见 EXP-0004，完成后补入 E-IT-C11 起的条目）。paper_id PAPER-0007 / 2026-10-23 / 分析者 Claude Code 实验室会话 / 输入：代码 thuml/iTransformer@c2426e68ca13f74aaec08045c5c724d8ad328124、官方 ETT 脚本、arXiv:2310.06625v4。
+状态：partial（代码已核验；GPU 复现 EXP-0004 已完成：16 个组合中 6 个落在 ±2 SD 内，与论文的差在 −0.0080～+0.0090 之间（SQZ-EXP-0004），记为偏差、继续使用（DEC-0018）。复现结果见 [EXP-0004_record](../实验报告/EXP-0004_record.md) 与 [SQZ-EXP-0004](../实验报告/EXP-0004_squeeze.md)，没有另补 E-IT-C11 起的条目；下文结构化交接包与“交接 Deep Read”中“待 EXP-0004”的写法是当时的状态，保留不改（2026-10-25 跑偏检查补注）。原写：GPU 复现见 EXP-0004，完成后补入 E-IT-C11 起的条目）。paper_id PAPER-0007 / 2026-10-23 / 分析者 Claude Code 实验室会话 / 输入：代码 thuml/iTransformer@c2426e68ca13f74aaec08045c5c724d8ad328124、官方 ETT 脚本、arXiv:2310.06625v4。
 
 ## 结构化交接包
 

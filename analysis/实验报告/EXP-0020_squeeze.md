@@ -10,7 +10,7 @@
 - 输出：
   - `code/output/EXP-0020/squeeze/`（SHA256SUMS 的 sha256 5b2d0102…），脚本 `squeeze_0020.py`；
   - `code/output/EXP-0020/squeeze_hybrid/`（c4e9b051…），脚本 `squeeze_0020_hybrid.py`，**看过前者的输出后写**。
-  - 两个脚本在 GPU 运行期间放在 `D:\6CJNM007\tmp\exp0020\`，EXP-0021 结束、GPU 空闲后再提交到 code/token_pruning（尚未提交；内容不变，只把行尾 CRLF 换成 LF，提交前去掉 CR 后与输出文件夹中的副本比对）。
+  - 两个脚本在 GPU 运行期间放在 `D:\6CJNM007\tmp\exp0020\`，EXP-0021 结束、GPU 空闲后再提交到 code/token_pruning（原写“尚未提交”，已于 code/token-pruning 的 1d95df0 提交；内容不变，只把行尾 CRLF 换成 LF，提交前去掉 CR 后与输出文件夹中的副本比对）。
   - squeeze_0020.md 第 5 节的表格把方法对写成“X | Y”，每行多出一格；数字按列序排在这两格之后，json 中相同。按“结果不改写”保留原样，见文件夹内 notes.md。
 
 ## 1. 事实与证据边界
@@ -37,7 +37,7 @@
 | 编号 | 维度 | 发现 | 证据 | 稳健性 |
 | --- | --- | --- | --- | --- |
 | S1 | 分解 | 64 档：路由 − A = 0.506 × 被路由题上的 A′+B+V − A（+2.41 [+1.15, +3.63]）。贡献：yes/no +0.63，number +0.61，被路由的 other（148 题）−0.02。不路由的题若也用 A′+B+V 会 −4.19 [−5.69, −2.77]（贡献 −2.07），路由避开的正是这部分。128 档：被路由的题 +1.42，不路由的题 −0.83 [−1.94, +0.11]；不路由的 number（98 题，如 what time）在 128 档 +4.29、64 档 −3.06，两档相反 | squeeze_0020.md §1 | 高（分解是恒等式）；子集数字中 |
-| S2 | 复现（题型） | A′+B+V − A 按题型的效应从 test1 到 test2 大体复现：两边都 ≥40 题的 35 个题型，相关 0.63（Spearman 0.57），同号 71%；test1 上 |差| ≥3 的 17 个题型 15 个同号。例：what is the man −16.6 → −11.0，is there +10.7 → +9.9，how many +3.3 → +5.6，what does the −7.5 → −17.4 | squeeze_0020.md §3 | 中（单题型 40～521 题） |
+| S2 | 复现（题型） | A′+B+V − A 按题型的效应从 test1 到 test2 大体复现：两边都 ≥40 题的 35 个题型，相关 0.63（Spearman 0.57），同号 71%；test1 上差的绝对值 ≥3 的 17 个题型 15 个同号。例：what is the man −16.6 → −11.0，is there +10.7 → +9.9，how many +3.3 → +5.6，what does the −7.5 → −17.4 | squeeze_0020.md §3 | 中（单题型 40～521 题） |
 | S3 | 异质性（开头词） | 被路由的题按开头词：are +4.26 [+1.60, +7.10]，how many +5.47，is +1.51 [−0.08, +3.07]；do −11.80 [−20.19, −2.89]（61 题）。**do 不稳定**：test1 上同一子集 +8.75 [+0.00, +19.45]（48 题），符号相反。test2 上 is this a −3.93 [−7.94, −0.23]，test1 −0.22，也不复现。没有证据支持更细的规则 | squeeze_0020.md §2、§3；squeeze_hybrid（a） | 低（小子集，事后） |
 | S4 | 参照（VisionZip） | 路由-64 − VisionZip-64 −2.17，按答案类型 yes/no −0.25 [−1.83, +1.19]、number +0.43、other −4.25（贡献 −2.13）；A-64 在 other 上比 VisionZip-64 低 4.21，vanilla 高 6.14。差距大的题型：what does the（VisionZip − A +15.6；61 题中 36 题问标志或文字写了什么，按题目文字中的 say / read / sign / write 检索）、what is this +12.8、what are the +9.4、what color is the +8.4。**拼接组合**（被路由的题用 A′+B+V-64，其余用 VisionZip-64）与 VisionZip-64 无可检出差别：test1 −0.32 [−0.98, +0.34]，test2 +0.05 [−0.64, +0.75]，三类题都无可检出差别（test1 的 number −1.82 [−4.85, +1.38]） | squeeze_0020.md §3、§4；squeeze_hybrid（b） | 中（两个子集一致；组合未运行） |
 | S5 | 上界 | 逐题 oracle 很松：A-64 与 A′+B+V-64 +6.90（19.1% 的题得分不同），A-64 与 VisionZip-64 +9.07，与 SparseVLM-64 +7.65，与 A-128 +8.91，VisionZip-64 与 SparseVLM-64 +4.95。任两种方法都有这种逐题的互有胜负，oracle 不代表还能挖出的路由收益 | squeeze_0020.md §5 | 高 |

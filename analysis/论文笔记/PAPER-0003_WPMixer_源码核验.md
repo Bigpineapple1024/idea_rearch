@@ -71,3 +71,5 @@ unresolved_questions: [去掉 drop_last 并改为验证集调参后，WPMixer �
 ## 交接 Deep Read
 
 候选 P-TS1（评测协议）← E-WP-C03、E-WP-C04；P-TS2（时间尺度的作用）← E-WP-C01。F-TS2（drop_last 改变分数与排名）← E-WP-C07、E-WP-C08；F-TS3（测试集调参）← E-WP-C04。
+
+（2026-10-25 跑偏检查补注）P-TS1、P-TS2 和 F-TS3 只是本分析包当时给的候选标签，[MODE_C-0003](../MODE_C-0003_时序预测.md) 和[现象台账](../已发现的实验现象.md)都没有定义它们；这里不改号。MODE_C-0003 实际用的问题编号是 P1～P9，现象编号是 F-TS2、F-TS4、F-TS5、F-TS7～F-TS15 和 F-L1（F-TS7 在 2026-10-25 跑偏检查时从台账补登）。与本文件有关的是 F-TS2（drop_last 丢掉的正是更难的末尾窗口，编号与这里一致）、P1（测试集 drop_last 使报告值偏低）和 P5（按测试集损失调参，即 E-WP-C04；F-TS3 的内容在 MODE_C-0003 中记为 P5）。

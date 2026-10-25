@@ -1,6 +1,6 @@
 # 项目文档索引
 
-状态（2026-10-25，DEC-0012～0026）：视觉 token 剪枝方向完成第 ⑧ 步第 3 轮（EXP-0013，压误报，没有修正通过），第 ⑨～⑫ 步：IDF 加权的题目查询在 POPE 上提升、MME 上未提升（EXP-0014，DEC-0026），回到第 ⑨ 步处理词的可视性；时序预测方向在第 ⑦ 步后暂停（DEC-0020、DEC-0021）。七篇论文已有原文笔记与源码核验补充。实验室电脑是原生 Windows，文件只放在 D:\6CJNM007。流程规范为[研究流程 v2.1](研究流程.md)。新增、移动或归档文档时同步本索引。（此前这一行停在 DEC-0014 时的状态，2026-10-24 的跑偏检查中更新。）
+状态（2026-10-25 跑偏检查更新，DEC-0012～0034）：视觉 token 剪枝方向在候选 1 的第 ⑫ 步，**计划目标在 64 档达到**（DEC-0033）。POPE 上 A′+B+V − A 在 64、128、192 三档都显著（+15.84、+5.21、+2.29，按图像重抽的区间 [13.88, 17.82]、[3.94, 6.47]、[1.38, 3.22]，DEC-0030）；VQAv2 test2 上按题目句式路由 − A 在 64 档 +1.22 [+0.58, +1.82]、128 档 +0.72 [+0.29, +1.15]（EXP-0020）；MME-P 的差异都不显著。EXP-0021（VQAv2 test2 的 192 档与 128 档参照，只作描述）已完成；EXP-0022（GQA testdev-balanced，预注册的第三个 benchmark，DEC-0034）运行中。候选 1 的运行上限为 68 次（DEC-0034；此前 DEC-0028 为 60 次，默认 30 次）。时序预测方向在第 ⑦ 步后暂停（DEC-0020、DEC-0021）。九篇论文（PAPER-0001～0009）已有原文笔记，其中七篇（PAPER-0001～0007）另有源码核验补充（PAPER-0008 CLASP、PAPER-0009 VIP-Router 只读原文，代码未下载），另有领域 B 两篇问答论文的原文核对；MinerU 解析的全文在 literature/processed（2026-10-24，flash 档，只有文本）。实验室电脑是原生 Windows，文件只放在 D:\6CJNM007。流程规范为[研究流程 v2.1](研究流程.md)。新增、移动或归档文档时同步本索引。（2026-10-25 跑偏检查更新本行，并在“全部现有文档”补上漏列的文件。）原状态行（2026-10-25，DEC-0012～0026）：视觉 token 剪枝方向完成第 ⑧ 步第 3 轮（EXP-0013，压误报，没有修正通过），第 ⑨～⑫ 步：IDF 加权的题目查询在 POPE 上提升、MME 上未提升（EXP-0014，DEC-0026），回到第 ⑨ 步处理词的可视性；时序预测方向在第 ⑦ 步后暂停（DEC-0020、DEC-0021）。七篇论文已有原文笔记与源码核验补充。实验室电脑是原生 Windows，文件只放在 D:\6CJNM007。流程规范为[研究流程 v2.1](研究流程.md)。新增、移动或归档文档时同步本索引。（此前这一行停在 DEC-0014 时的状态，2026-10-24 的跑偏检查中更新。）
 
 ## 当前工作入口
 
@@ -10,7 +10,7 @@
 | 实验室电脑新会话的交接 | [实验室会话交接](实验室会话交接.md) |
 | 视觉 token 剪枝：六篇总结与趋势（原文） | [六篇论文总结与视觉Token压缩趋势](六篇论文总结与视觉Token压缩趋势.md) |
 | 视觉 token 剪枝：三篇共性、差异与 baseline（FastV） | [所有论文在baseline骨架的改进内容](专题分析/所有论文在baseline骨架的改进内容.md) |
-| 问题—现象—机制矩阵（合并版，回流 EXP-0002） | [MODE_C-0002](MODE_C-0002_视觉token剪枝.md)；旧版保留：[视觉Token压缩_ModeC](视觉Token压缩_ModeC.md)（原文）、[MODE_C-0001](MODE_C-0001_视觉token剪枝.md)（源码与探针） |
+| 问题—现象—机制矩阵（合并版，回流 EXP-0002；之后回流 1～13，2026-10-25 跑偏检查补注） | [MODE_C-0002](MODE_C-0002_视觉token剪枝.md)；旧版保留：[视觉Token压缩_ModeC](视觉Token压缩_ModeC.md)（原文）、[MODE_C-0001](MODE_C-0001_视觉token剪枝.md)（源码与探针） |
 | 论文全文（MinerU 解析，只有文本） | [literature/processed](../literature/processed/README.md) |
 | 候选方案（待 baseline 复现与组合实验后重新排序） | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
 | **视觉方向第 ⑨～⑫ 步：IDF 加权的题目查询（DEC-0025）** | [IDEA-0002](IDEA-0002_题目词按信息量加权.md)（迁移方案）；[EXP-0014](实验报告/EXP-0014_record.md)、[SQZ-EXP-0014](实验报告/EXP-0014_squeeze.md)（A / A′ / A′+B / A+B：POPE 提升，MME 未提升，F34、F35） |
@@ -56,6 +56,9 @@
 | [PAPER-0006_VisionZip](论文笔记/PAPER-0006_VisionZip.md) | dominant/contextual压缩及边界 |
 | [PAPER-0007_iTransformer](论文笔记/PAPER-0007_iTransformer.md) | 变量 token 与倒置 Transformer；ETT 上的报告值与限制 |
 | [analysis/论文笔记/PAPER-0007_iTransformer_源码核验.md](../analysis/论文笔记/PAPER-0007_iTransformer_源码核验.md) | 源码核验补充：iTransformer（日历特征 token、脚本超参数与论文网格的出入） |
+| [analysis/论文笔记/PAPER-0008_CLASP.md](../analysis/论文笔记/PAPER-0008_CLASP.md) | 原文笔记：CLASP（按 9 类意图调预算比例与层融合；最接近的前人工作，与本项目逐项对照） |
+| [analysis/论文笔记/PAPER-0009_VIP-Router.md](../analysis/论文笔记/PAPER-0009_VIP-Router.md) | 原文笔记：VIP-Router（学习逐样本在五种剪枝策略之间选择；与本项目对照） |
+| [analysis/论文笔记/domainB_原文核对_LiRoth_Moldovan.md](../analysis/论文笔记/domainB_原文核对_LiRoth_Moldovan.md) | 领域 B 原文核对：Li & Roth（COLING 2002）、Moldovan 等（ACL 2000）对 IDEA-0003 的支持程度 |
 | [.claude/README.md](../.claude/README.md) | Claude Code 运行时支持 |
 | [AGENTS.md](../AGENTS.md) | 研究工作区协作规则 |
 | [analysis/archied/README.md](../analysis/archied/README.md) | 归档方案 |
@@ -75,7 +78,8 @@
 | [analysis/archied/2026-10-23_SOP-v1_从论文到融合方案.md](../analysis/archied/2026-10-23_SOP-v1_从论文到融合方案.md) | 已归档：SOP v1（被研究流程 v2.0 取代） |
 | [analysis/实验室会话交接.md](../analysis/实验室会话交接.md) | 实验室电脑新会话的交接说明 |
 | [analysis/MODE_C-0001_视觉token剪枝.md](../analysis/MODE_C-0001_视觉token剪枝.md) | MODE_C_PACKAGE：多模态大模型视觉 token 剪枝（历史版本，已由 MODE_C-0002 取代） |
-| [analysis/MODE_C-0002_视觉token剪枝.md](../analysis/MODE_C-0002_视觉token剪枝.md) | MODE_C_PACKAGE：视觉 token 剪枝合并版（原文版 + 源码版 + EXP-0001/0002 回流） |
+| [analysis/MODE_C-0002_视觉token剪枝.md](../analysis/MODE_C-0002_视觉token剪枝.md) | MODE_C_PACKAGE：视觉 token 剪枝合并版（原文版 + 源码版 + EXP-0001/0002 回流；之后回流 1～13，2026-10-25 跑偏检查补注） |
+| [analysis/MODE_C-0003_时序预测.md](../analysis/MODE_C-0003_时序预测.md) | MODE_C-0003：时序预测的问题—现象—机制矩阵（iTransformer 为 baseline） |
 | [analysis/IDEA-0002_题目词按信息量加权.md](../analysis/IDEA-0002_题目词按信息量加权.md) | 跨领域迁移方案：用 IDF 给题目加权，构造图像 token 的查询（第 ⑨～⑪ 步，领域 B 信息检索，领域 C BERTScore / SIF） |
 | [analysis/IDEA-0001_编码器侧压缩的位置编号.md](../analysis/IDEA-0001_编码器侧压缩的位置编号.md) | IDEA_PACKAGE：编码器侧压缩的位置编号（融合路线候选，deferred） |
 | [analysis/论文笔记/PAPER-0004_FastV_源码核验.md](../analysis/论文笔记/PAPER-0004_FastV_源码核验.md) | 源码核验补充：FastV |
@@ -85,6 +89,8 @@
 | [analysis/实验报告/EXP-0001_squeeze.md](../analysis/实验报告/EXP-0001_squeeze.md) | SQUEEZE_REPORT：EXP-0001 的跨平台复验与预算口径 |
 | [analysis/实验报告/EXP-0002_record.md](../analysis/实验报告/EXP-0002_record.md) | EXPERIMENT_RECORD：视觉 token 剪枝 GPU 复现（LLaVA-1.5-7B，POPE、MME，49 次运行） |
 | [analysis/实验报告/EXP-0002_squeeze.md](../analysis/实验报告/EXP-0002_squeeze.md) | SQUEEZE_REPORT：EXP-0002（随机优于 FastV、“no”偏置、SparseVLM 实测 token） |
+| [analysis/实验报告/EXP-0004_record.md](../analysis/实验报告/EXP-0004_record.md) | EXPERIMENT_RECORD：iTransformer 在 ETT 上的 GPU 复现（主 baseline，DEC-0012） |
+| [analysis/实验报告/EXP-0004_squeeze.md](../analysis/实验报告/EXP-0004_squeeze.md) | SQUEEZE_REPORT：EXP-0004（iTransformer 在 ETT 上的 GPU 复现，阶段 A + B） |
 | [analysis/实验报告/EXP-0005_record.md](../analysis/实验报告/EXP-0005_record.md) | EXPERIMENT_RECORD：DUET、TQNet、WPMixer 在统一协议下的 GPU 重跑（ETTh1）与 TFB 数据核对 |
 | [analysis/实验报告/EXP-0005_squeeze.md](../analysis/实验报告/EXP-0005_squeeze.md) | SQUEEZE_REPORT：EXP-0005（四种架构在同一批窗口上出错、验证集分不出长预测的好坏种子） |
 | [analysis/实验报告/EXP-0006_record.md](../analysis/实验报告/EXP-0006_record.md) | EXPERIMENT_RECORD：FastV 与随机选择保留了图像的哪些位置（F8 的机制诊断） |
@@ -104,6 +110,7 @@
 | [analysis/实验报告/EXP-0014_record.md](../analysis/实验报告/EXP-0014_record.md) | EXPERIMENT_RECORD：IDF 加权的题目查询，第 ⑫ 步的 A / A′ / A′+B / A+B（POPE、MME） |
 | [analysis/实验报告/EXP-0014_squeeze.md](../analysis/实验报告/EXP-0014_squeeze.md) | SQUEEZE_REPORT：EXP-0014（POPE 上复现物体名查询 F34；MME 名字类受损 F35） |
 | [analysis/审计记录_第12步_2026-10-25.md](../analysis/审计记录_第12步_2026-10-25.md) | 第 ⑫ 步结论的独立审计与修正（DEC-0030） |
+| [analysis/跑偏检查_2026-10-25.md](../analysis/跑偏检查_2026-10-25.md) | 跑偏检查记录（2026-10-25）：对照研究流程、paper-plan 与 index 的全仓库检查，发现的问题与修正 |
 | [analysis/IDEA-0003_按题目句式路由.md](../analysis/IDEA-0003_按题目句式路由.md) | IDEA_PACKAGE：按题目句式路由（助动词或 how many 开头的题用题目查询，其余用强对照；P11） |
 | [analysis/实验报告/EXP-0020_record.md](../analysis/实验报告/EXP-0020_record.md) | EXPERIMENT_RECORD：按题目句式路由在新抽的 VQAv2 test2 上的预注册确认（第 ⑫ 步第六轮） |
 | [analysis/实验报告/EXP-0021_record.md](../analysis/实验报告/EXP-0021_record.md) | EXPERIMENT_RECORD：VQAv2 test2 的补全（192 档路由；128 档参照） |
@@ -114,13 +121,15 @@
 | [analysis/实验报告/EXP-0019_record.md](../analysis/实验报告/EXP-0019_record.md) | EXPERIMENT_RECORD：审计要求的补充（A+B 的对照；最终方法的区分力） |
 | [analysis/实验报告/EXP-0018_record.md](../analysis/实验报告/EXP-0018_record.md) | EXPERIMENT_RECORD：VQAv2 验证集子集上的一般题目检验（第 ⑫ 步第五轮） |
 | [analysis/实验报告/EXP-0017_record.md](../analysis/实验报告/EXP-0017_record.md) | EXPERIMENT_RECORD：192 档复验（第 ⑫ 步第四轮） |
-| [analysis/实验报告/EXP-0015-0016_squeeze.md](../analysis/实验报告/EXP-0015-0016_squeeze.md) | SQUEEZE_REPORT：EXP-0015、EXP-0016（收益主要来自切分；POPE 提升随预算缩小 F37） |
+| [analysis/实验报告/EXP-0015-0016_squeeze.md](../analysis/实验报告/EXP-0015-0016_squeeze.md) | SQUEEZE_REPORT：EXP-0015、EXP-0016（收益主要来自切分；POPE 提升随预算缩小 F37）（审计修正，DEC-0030 AU-12：应为“在切分之外，可视性没有可检出的贡献”；2026-10-25 跑偏检查补注） |
 | [analysis/实验报告/EXP-0016_record.md](../analysis/实验报告/EXP-0016_record.md) | EXPERIMENT_RECORD：可视性与切分的拆分，以及 128 档复验（第 ⑫ 步第三轮） |
 | [analysis/实验报告/EXP-0015_record.md](../analysis/实验报告/EXP-0015_record.md) | EXPERIMENT_RECORD：按词的可视性分配名额的题目查询（第 ⑨～⑫ 步第二轮，P10） |
 | [analysis/1a-4b_FastV不如随机选择.md](../analysis/1a-4b_FastV不如随机选择.md) | 1a–4b 机制分析：同预算下 FastV 为什么不如随机选择（第 1 轮，到 2b） |
 | [analysis/1a-4b_选择与题目无关漏掉被问的小物体.md](../analysis/1a-4b_选择与题目无关漏掉被问的小物体.md) | 1a–4b 机制分析（第 ⑧ 步，候选 1）：选择与题目无关时，被问的小物体为什么被删掉（第 1 轮，到 2b；COCO 物体框） |
 | [analysis/1a-4b_四种架构在同一批窗口上出错.md](../analysis/1a-4b_四种架构在同一批窗口上出错.md) | 1a–4b 机制分析：时序四种架构为什么在同一批窗口上出错（第 1 轮，到 2b；误差的水平/形状拆分） |
-| [analysis/实验报告/EXP-0009_record.md](../analysis/实验报告/EXP-0009_record.md) | EXPERIMENT_RECORD：iTransformer 检查点在验证期上的预测（不训练；计划） |
+| [analysis/第7步_改进方向排序.md](../analysis/第7步_改进方向排序.md) | 第 ⑦ 步：改进方向排序（视觉与时序两个方向的候选排序） |
+| [analysis/实验报告/EXP-0009_record.md](../analysis/实验报告/EXP-0009_record.md) | EXPERIMENT_RECORD：iTransformer 检查点在验证期上的预测（不训练；已完成，48 次运行；原写“计划”，2026-10-25 跑偏检查补注） |
+| [analysis/实验报告/EXP-0009_squeeze.md](../analysis/实验报告/EXP-0009_squeeze.md) | SQUEEZE_REPORT：EXP-0009（iTransformer 检查点在验证期上的预测，四个 ETT 数据集） |
 | [code/token_pruning/README.md](../code/token_pruning/README.md) | 视觉 token 剪枝 baseline 复现与代码级核验 |
 | [analysis/论文笔记/PAPER-0001_DUET_源码核验.md](../analysis/论文笔记/PAPER-0001_DUET_源码核验.md) | 源码核验补充：DUET |
 | [analysis/论文笔记/PAPER-0002_TQNet_源码核验.md](../analysis/论文笔记/PAPER-0002_TQNet_源码核验.md) | 源码核验补充：TQNet |

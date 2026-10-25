@@ -29,7 +29,7 @@
 ### 数据准备的实际情况（2026-10-25，任何 GQA 运行之前）
 
 - `questions1.2.zip` 下载完整（1498616372 字节，与 HEAD 一致；sha256 cffe9277…）。
-- **398 张图**：用 HTTP 分段请求从同一个官方 `images.zip` 读出目录和这 398 个成员（`make_gqa_set.py`），每个成员都经 zipfile 的 CRC-32 校验。逐张 sha256 在 `D:\6CJNM007\data\gqa\images_SHA256SUMS`（该文件的 sha256 9fcfa63b…），398 张都能用 PIL 打开（宽 288～640 像素）。这样做是为了不让 GPU 空等完整包下载。完整的 `images.zip`（21.8 GB）仍在后台下载，下完后核对大小、记录 sha256，并逐张比对两条路径取到的图（结果补记在本节）。
+- **398 张图**：用 HTTP 分段请求从同一个官方 `images.zip` 读出目录和这 398 个成员（`make_gqa_set.py`），每个成员都经 zipfile 的 CRC-32 校验。逐张 sha256 在 `D:\6CJNM007\data\gqa\images_SHA256SUMS`（该文件的 sha256 9fcfa63b…），398 张都能用 PIL 打开（宽 288～640 像素）。这样做是为了不让 GPU 空等完整包下载。完整的 `images.zip`（21.8 GB）仍在后台下载，下完后核对大小、记录 sha256，并逐张比对两条路径取到的图（结果补记在本节）。**补记（2026-10-25 12:07）**：完整的 images.zip 下载完成，21817965542 字节（与 HEAD 一致），sha256 02ce5c49…；从中读出的 398 张图与分段取到的逐张 sha256 都相同（398 / 398，`D:\6CJNM007\tmp\exp0022\verify_full_zip.py`）。
 - **数据核对全部通过**：官方答案覆盖 LLaVA 题目文件的 12578 个 question_id，一一对应；图像名与题目文字逐题相同。
 - 逐题标注 `llava_gqa_testdev_balanced_annotations.jsonl`，sha256 23a5c89c…；LLaVA 题目文件的 sha256 515aab31…。
 - **只由标注得到的事实**（不涉及任何模型输出）：

@@ -4,17 +4,18 @@
 
 记录核心任务、方法架构、关键贡献、实验结果、与自身实验的关系、论文现象、优缺点、可借鉴内容与核心总结；同时核验设计、材料、测量、原文位置与结论边界。
 
-| paper_id | 标题 / 年份 | 原文来源 | 解析全文 | 分析包 | 核验状态 |
-| --- | --- | --- | --- | --- | --- |
 | paper_id | 标题 / 年份 | 原文来源 | 原文笔记 | 源码核验补充 | 核验状态 |
 | --- | --- | --- | --- | --- | --- |
 | PAPER-0001 | DUET / KDD2025 | arXiv 2412.10859v3；代码 decisionintelligence/DUET@dcc6e678 | [AP-DUET](PAPER-0001_DUET.md) | [DUET 源码核验](PAPER-0001_DUET_源码核验.md) | 原文+源码；ETTh1 已在 CPU 复现（EXP-0003） |
 | PAPER-0002 | TQNet / ICML2025 | arXiv 2505.12917v2；代码 ACAT-SCUT/TQNet@15e19cb2 | [AP-TQNet](PAPER-0002_TQNet.md) | [TQNet 源码核验](PAPER-0002_TQNet_源码核验.md) | 原文+源码；ETTh1 已在 CPU 复现（EXP-0003） |
 | PAPER-0003 | WPMixer / AAAI2025 | arXiv 2412.17176v1；代码 Secure-and-Intelligent-Systems-Lab/WPMixer@74104c9d | [AP-WPMixer](PAPER-0003_WPMixer.md) | [WPMixer 源码核验](PAPER-0003_WPMixer_源码核验.md) | 原文+源码；ETTh1 已在 CPU 运行，drop_last 影响已量化（EXP-0003） |
-| PAPER-0004 | FastV / ECCV2024 | arXiv 2403.06764v3；代码 pkunlp-icler/FastV@d1659729 | [AP-FastV](PAPER-0004_FastV.md) | [FastV 源码核验](PAPER-0004_FastV_源码核验.md) | 原文+源码；CPU 随机权重核验（EXP-0001），GPU 复现待执行 |
-| PAPER-0005 | SparseVLM / ICML2025 | arXiv 2410.04417v4；代码 Gumpest/SparseVLMs v1.5@734d9003、main@a9e71427 | [AP-SparseVLM](PAPER-0005_SparseVLM.md) | [SparseVLM 源码核验](PAPER-0005_SparseVLM_源码核验.md) | 原文+源码（核验补充含 SparseVLM+）；GPU 复现待执行 |
-| PAPER-0006 | VisionZip / CVPR2025 | 正式论文+补充；代码 dvlab-research/VisionZip@8f86b55c | [AP-VisionZip](PAPER-0006_VisionZip.md) | [VisionZip 源码核验](PAPER-0006_VisionZip_源码核验.md) | 原文+源码；GPU 复现待执行 |
+| PAPER-0004 | FastV / ECCV2024 | arXiv 2403.06764v3；代码 pkunlp-icler/FastV@d1659729 | [AP-FastV](PAPER-0004_FastV.md) | [FastV 源码核验](PAPER-0004_FastV_源码核验.md) | 原文+源码；CPU 随机权重核验（EXP-0001）；GPU 复现已完成（EXP-0002；原写“GPU 复现待执行”，2026-10-25 跑偏检查补注） |
+| PAPER-0005 | SparseVLM / ICML2025 | arXiv 2410.04417v4；代码 Gumpest/SparseVLMs v1.5@734d9003、main@a9e71427 | [AP-SparseVLM](PAPER-0005_SparseVLM.md) | [SparseVLM 源码核验](PAPER-0005_SparseVLM_源码核验.md) | 原文+源码（核验补充含 SparseVLM+）；GPU 复现已完成（EXP-0002；原写“GPU 复现待执行”，2026-10-25 跑偏检查补注） |
+| PAPER-0006 | VisionZip / CVPR2025 | 正式论文+补充；代码 dvlab-research/VisionZip@8f86b55c | [AP-VisionZip](PAPER-0006_VisionZip.md) | [VisionZip 源码核验](PAPER-0006_VisionZip_源码核验.md) | 原文+源码；GPU 复现已完成（EXP-0002；原写“GPU 复现待执行”，2026-10-25 跑偏检查补注） |
 | PAPER-0007 | iTransformer / ICLR2024 | arXiv 2310.06625v4；代码 thuml/iTransformer@c2426e68 | [AP-iTransformer](PAPER-0007_iTransformer.md) | [iTransformer 源码核验](PAPER-0007_iTransformer_源码核验.md) | 原文+源码（实验室会话按 analyze-paper 写成）；GPU 复现见 EXP-0004 |
+| PAPER-0008 | CLASP / arXiv 2026-04 | arXiv 2604.12767v1（papers/CLASP-arxiv-2604.12767.pdf，sha256 534da994…） | [CLASP](PAPER-0008_CLASP.md) | 无（代码未下载、未核验，需许可） | 原文（2026-10-25，按 PDF 逐页阅读，另一代理逐页核验；未用 MinerU） |
+| PAPER-0009 | VIP-Router / arXiv 2026-09 | arXiv 2609.10346v1（papers/VIP-Router-arxiv-2609.10346.pdf，sha256 0d598900…） | [VIP-Router](PAPER-0009_VIP-Router.md) | 无（论文没有给代码链接） | 原文（同上） |
+| —（领域 B） | Li & Roth / COLING 2002；Moldovan 等 / ACL 2000 | ACL Anthology C02-1150、P00-1071（papers/，sha256 6133941c…、5a35e1c1…） | [领域 B 原文核对](domainB_原文核对_LiRoth_Moldovan.md) | — | 原文核对 IDEA-0003 的引用（2026-10-25）；Lally 等 2012 只有付费版，未读 |
 
 两类笔记的分工：
 
