@@ -1,6 +1,6 @@
 # Experiment Results：实验详细数据总表
 
-状态（2026-10-25 补）：EXP-0018（VQAv2 验证集）已完成，一般题目上差异不显著，答案类型上效应相反；EXP-0019 已完成（审计的两项补充）；EXP-0020（按题目句式路由，VQAv2 test2）已完成，64、128 档都显著高于强对照（预注册），第 ⑫ 步的计划目标在 64 档达到；EXP-0021（192 档与 128 档参照）已完成；EXP-0022（GQA，第三个 benchmark）运行中（2026-10-25 11:27 起）；“全部运行”补上了此前漏登的 EXP-0016～EXP-0020（从各 runs.tsv 与 git.txt 生成）。原状态行（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 已完成（D3 成立），第 3 轮 EXP-0013（误报）已完成（没有修正通过），第 ⑫ 步的 EXP-0014 已完成（POPE 提升，MME 未提升）；时序预测有 iTransformer 的 GPU 复现（EXP-0004，56 次运行）、验证期预测（EXP-0009，48 次运行）、对照的 GPU 重跑（EXP-0005）和 ETTh1 上的 CPU 复现（EXP-0003），候选 1 的 CPU 诊断 EXP-0012 已完成（之后时序方向暂停，DEC-0020、DEC-0021）。空表表示无数据，绝不表示数值为零。
+状态（2026-10-25 补）：EXP-0018（VQAv2 验证集）已完成，一般题目上差异不显著，答案类型上效应相反；EXP-0019 已完成（审计的两项补充）；EXP-0020（按题目句式路由，VQAv2 test2）已完成，64、128 档都显著高于强对照（预注册），第 ⑫ 步的计划目标在 64 档达到；EXP-0021（192 档与 128 档参照）已完成；EXP-0022（GQA，第三个 benchmark）已完成，64、128 档都显著高于强对照（预注册，Q3 不成立）；EXP-0024（IDEA-0004 的开发集运行）2026-10-25 16:33 起运行中；“全部运行”补上了此前漏登的 EXP-0016～EXP-0020（从各 runs.tsv 与 git.txt 生成）。原状态行（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 已完成（D3 成立），第 3 轮 EXP-0013（误报）已完成（没有修正通过），第 ⑫ 步的 EXP-0014 已完成（POPE 提升，MME 未提升）；时序预测有 iTransformer 的 GPU 复现（EXP-0004，56 次运行）、验证期预测（EXP-0009，48 次运行）、对照的 GPU 重跑（EXP-0005）和 ETTh1 上的 CPU 复现（EXP-0003），候选 1 的 CPU 诊断 EXP-0012 已完成（之后时序方向暂停，DEC-0020、DEC-0021）。空表表示无数据，绝不表示数值为零。
 
 ## 实验登记
 
@@ -27,8 +27,9 @@
 | EXP-0019 | IDEA-0002 | 审计补充：A+B 的无先验对照；最终方法的 margin AUC（POPE） | [EXP-0019_record](实验报告/EXP-0019_record.md)（计划 v1） | 记录内 | completed（A+B − A₀ +0.56 [−0.70, +1.96]：适配必要得到支持；A′+B+V 的 AUC 比 vanilla 低 0.018～0.034、比 A 高，误报偏多，F41） |
 | EXP-0020 | IDEA-0003 | 按题目句式路由（助动词或 how many 开头 → A′+B+V，其余 → A）在新抽的 VQAv2 test2（5415 题）上的预注册确认（64、128 档），加参照 | [EXP-0020_record](实验报告/EXP-0020_record.md)（计划 v1～v1.2） | [SQZ-EXP-0020](实验报告/EXP-0020_squeeze.md) | completed（Q1、Q2、Q3 都成立：路由 − A 64 档 +1.22 [+0.58, +1.82]、128 档 +0.72 [+0.29, +1.15]；仍低于 VisionZip-64（−2.17），F42、F43） |
 | EXP-0021 | IDEA-0003 | VQAv2 test2 的补全：192 档路由与 A，128 档 VisionZip、SparseVLM 参照（只作描述） | [EXP-0021_record](实验报告/EXP-0021_record.md)（计划 v1） | 记录内 | completed（只作描述：路由-192 − A-192 +0.42 [+0.01, +0.82]；128 档路由与 VisionZip-128、SparseVLM-128 无可检出差别，+0.48、−0.04） |
-| EXP-0022 | IDEA-0003 | 按题目句式路由（规则冻结）在 GQA testdev-balanced（12578 题）上的预注册检验：A、路由、A′+B+V（64），A、路由（128），vanilla、VisionZip-64、SparseVLM-64 | [EXP-0022_record](实验报告/EXP-0022_record.md)（计划 v1） | 待做 | running（2026-10-25 11:27 起，代码 commit 1d95df0） |
+| EXP-0022 | IDEA-0003 | 按题目句式路由（规则冻结）在 GQA testdev-balanced（12578 题）上的预注册检验：A、路由、A′+B+V（64），A、路由（128），vanilla、VisionZip-64、SparseVLM-64 | [EXP-0022_record](实验报告/EXP-0022_record.md)（计划 v1） | [SQZ-EXP-0022](实验报告/EXP-0022_squeeze.md) | completed（Q1、Q2 成立，Q3 不成立：路由 − A 64 档 +0.87 [+0.37, +1.40]、128 档 +0.68 [+0.30, +1.08]；与 VisionZip-64 无可检出差别（+0.29）；R03 失败，R09 重跑；F47、F48） |
 | EXP-0023 | （新模块的诊断） | 开放式题的答案在哪里：答案物体相对题目点名物体的位置，A 与 A′+B+V 的保留位置，剂量（CPU，只读已封存的输出与 COCO 框；test1 与 dev） | [EXP-0023_record](实验报告/EXP-0023_record.md)（计划 v1、v1.1） | 记录内 | completed（CPU，事后探索：邻域法按写定规则不满足“有希望”，放大法满足；A′+B+V 的损失集中在挤掉答案物体 token 的题上，F44～F46） |
+| EXP-0024 | IDEA-0004 | 预算内放大的开发集运行：池化放大、lattice 放大（K = 2）与池化放大（K = 1）对同 K 的路由，三个对照（全图池化、居中框、覆盖 16）；VQAv2 dev2、GQA val400，17 次（EXP-0022 收尾时补登） | [EXP-0024_record](实验报告/EXP-0024_record.md)（计划 v1、v1.1） | 待做 | running（2026-10-25 16:33 起，代码 commit bfff4bc） |
 
 ## 全部运行
 
@@ -332,6 +333,15 @@
 | EXP-0021-R02 | fastv192_qroute_kl × vqav2_test2（路由-192） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 75.90 | — | 0.196 秒/题，14.10 GiB | `code/output/EXP-0021/EXP-0021-R02/`，a979658e…；备份同名目录 |
 | EXP-0021-R03 | visionzip128 × vqav2_test2（VisionZip-128） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 74.11 | — | 0.177 秒/题，14.35 GiB | `code/output/EXP-0021/EXP-0021-R03/`，78967add…；备份同名目录 |
 | EXP-0021-R04 | sparsevlm128 × vqav2_test2（SparseVLM-128） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 74.63 | — | 0.205 秒/题，18.10 GiB | `code/output/EXP-0021/EXP-0021-R04/`，ffcaf906…；备份同名目录 |
+| EXP-0022-R01 | fastv64_prior_strat_nopad_kl × gqa_testdev（A-64） | 1d95df0；无未提交改动 | `tp` | GQA testdev-balanced 12578 题 | — | completed | 准确率 54.60 | — | 0.165 秒/题，13.95 GiB | `code/output/EXP-0022/EXP-0022-R01/`，277043a8…；备份同名目录 |
+| EXP-0022-R02 | fastv64_qroute_kl × gqa_testdev（路由-64） | 同上 | `tp` | GQA testdev-balanced 12578 题 | — | completed | 准确率 55.47 | — | 0.163 秒/题，13.95 GiB | `code/output/EXP-0022/EXP-0022-R02/`，93284e18…；备份同名目录 |
+| EXP-0022-R03 | fastv64_qvis_kl × gqa_testdev（A′+B+V-64） | 同上 | `tp` | GQA testdev-balanced 12578 题 | — | failed（开始约 30 秒后 eval exit 127，没有 traceback；原因未知） | NA | — | — | `code/output/EXP-0022/EXP-0022-R03/`，d9739b66…；备份同名目录 |
+| EXP-0022-R04 | fastv128_prior_strat_nopad_kl × gqa_testdev（A-128） | 同上 | `tp` | GQA testdev-balanced 12578 题 | — | completed | 准确率 59.26 | — | 0.171 秒/题，14.03 GiB | `code/output/EXP-0022/EXP-0022-R04/`，885ec8eb…；备份同名目录 |
+| EXP-0022-R05 | fastv128_qroute_kl × gqa_testdev（路由-128） | 同上 | `tp` | GQA testdev-balanced 12578 题 | — | completed | 准确率 59.95 | — | 0.174 秒/题，14.03 GiB | `code/output/EXP-0022/EXP-0022-R05/`，c86b3357…；备份同名目录 |
+| EXP-0022-R06 | vanilla × gqa_testdev（vanilla） | 同上 | `tp` | GQA testdev-balanced 12578 题 | — | completed | 准确率 61.96 | — | 0.272 秒/题，14.52 GiB | `code/output/EXP-0022/EXP-0022-R06/`，03e97f82…；备份同名目录 |
+| EXP-0022-R07 | visionzip64 × gqa_testdev（VisionZip-64） | 同上 | `tp` | GQA testdev-balanced 12578 题 | — | completed | 准确率 55.18 | — | 0.153 秒/题，14.35 GiB | `code/output/EXP-0022/EXP-0022-R07/`，8e0cc5a3…；备份同名目录 |
+| EXP-0022-R08 | sparsevlm64 × gqa_testdev（SparseVLM-64） | 同上 | `tp` | GQA testdev-balanced 12578 题 | — | completed | 准确率 53.78 | — | 0.175 秒/题，18.11 GiB | `code/output/EXP-0022/EXP-0022-R08/`，4c784793…；备份同名目录 |
+| EXP-0022-R09 | fastv64_qvis_kl × gqa_testdev（A′+B+V-64，R03 的重跑） | 同上 | `tp`，PYTHONFAULTHANDLER=1（不改变计算） | GQA testdev-balanced 12578 题 | — | completed | 准确率 55.01 | — | 0.164 秒/题，13.95 GiB | `code/output/EXP-0022/EXP-0022-R09/`，d1b96cc9…；备份同名目录 |
 
 ## 汇总与比较
 
@@ -369,5 +379,7 @@
 | C-0019-1 | Q1：EXP-0014-R03（A+B）vs EXP-0019-R01（A₀），R01 vs R02（A₀ − A）；Q2：EXP-0015-R03（A′+B+V）、EXP-0019-R02（A）、R03（vanilla）的对数概率 | POPE 8910 题，各 1 次；层平均 64 | POPE F1 配对差与 margin AUC 配对差，都按图像重抽 2000 次（记录本身已按 DEC-0030 的新规则） | Q1：A+B − A₀ +0.56 [−0.70, +1.96]（RePOPE +1.12 [−0.14, +2.51]）；A₀ − A −0.85 [−2.57, +0.83]。Q2（adversarial / popular / random）：A′+B+V − vanilla 的 AUC −0.0344 / −0.0275 / −0.0176（区间都在 0 以下）；A′+B+V − A +0.0341 / +0.0093 [−0.0009, +0.0193] / +0.0394 | 计划 v1：Q1 按区间在 0 以上、含 0、在 0 以下三种读法；Q2 只作描述 | 无 | Q1 区间含 0：IDF 加权（B）只在适配到输入 embedding 空间后起作用，“适配是必要的”得到支持（AU-2 关闭）；Q2：AUC 比 vanilla 低、比 A 高（popular 上区间含 0），误报比 vanilla 多 26%～57%（F41，AU-16 关闭）（2026-10-25 跑偏检查补注） |
 | C-0020-1 | EXP-0020-R02 vs R01、R05 vs R04（路由 vs A）；R03 vs R01、R06 vs R04（A′+B+V vs A） | VQAv2 test2 5415 题、1000 张图，各 1 次（贪心解码） | VQA 准确率（m4c 评估器），逐题配对差 | 64 档 +1.22 [+0.58, +1.82]，128 档 +0.72 [+0.29, +1.15]（按图像重抽 1000 次，种子 0）；A′+B+V − A 64 档 yes/no +1.65、other −4.03 | 预注册：Q1、Q2 的区间在 0 以上；Q3 的 yes/no 区间在 0 以上、other 区间在 0 以下 | 无 | Q1、Q2、Q3 成立；LLaVA-1.5-7B，规则在 test1 上选、test2 上确认 |
 | C-0020-2 | EXP-0020-R02 vs R08、R09、R07（路由-64 vs VisionZip-64、SparseVLM-64、vanilla） | 同上 | 同上 | −2.17 [−3.22, −1.25]、−0.17 [−1.08, +0.84]、−8.04 [−9.01, −7.07]；与 VisionZip 的差几乎全在 other（−4.25） | 只作描述 | 无 | VQAv2 上不高于 VisionZip-64；POPE 上相反（F40、F43） |
+| C-0022-1 | EXP-0022-R02 vs R01、R05 vs R04（路由 vs A）；R09 vs R01（A′+B+V vs A） | GQA testdev-balanced 12578 题、398 张图，各 1 次（贪心解码） | 完全匹配准确率（LLaVA 的 GQA 口径），逐题配对差 | 64 档 +0.87 [+0.37, +1.40]，128 档 +0.68 [+0.30, +1.08]（按图像重抽 1000 次，种子 0）；A′+B+V − A 64 档 yes/no +1.61 [+0.28, +2.90]、other −0.26 [−1.12, +0.64] | 预注册：Q1、Q2 的区间在 0 以上；Q3 的 yes/no 区间在 0 以上、other 区间在 0 以下 | R03 失败，以新 ID R09 重跑 | Q1、Q2 成立，Q3 不成立；规则冻结，在第三个 benchmark 上复现（F47） |
+| C-0022-2 | EXP-0022-R02 vs R07、R08、R06（路由-64 vs VisionZip-64、SparseVLM-64、vanilla） | 同上 | 同上 | +0.29 [−0.70, +1.22]、+1.69 [+0.83, +2.42]、−6.49 [−7.37, −5.63]；A-64 − VisionZip-64 −0.58 [−1.52, +0.39] | 只作描述 | 无 | GQA 上与 VisionZip-64 无可检出差别，高于 SparseVLM-64；VQAv2 上的底座差距（F43）在 GQA 上基本不出现（F48） |
 
 指标较多时在单次记录中使用长表，或引用可恢复的 CSV/JSON 并登记 schema、计算命令与校验和。缺失写 NA 及原因，未运行不写成失败或通过。见[事实记录模板](templates/EXPERIMENT_RECORD.md)。
