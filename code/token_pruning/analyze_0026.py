@@ -104,7 +104,10 @@ def main():
             k = json.load(open(f"{d}/kept_tokens.json"))
             kept[meth] = k["kept"]
             checks[f"{bench} {meth}: one kept record per question"] = float(k["n_prefills"] == n)
-            checks[f"{bench} {meth}: logged route decisions equal the rule on the question text"] = float(np.mean(np.array(k["routed"]) == routed))
+            if meth == "qvis":                                 # no route: query_vis on every question, nothing to log
+                checks[f"{bench} qvis: no route decisions logged (the config does not route)"] = float("routed" not in k)
+            else:
+                checks[f"{bench} {meth}: logged route decisions equal the rule on the question text"] = float(np.mean(np.array(k["routed"]) == routed))
             if os.path.exists(f"{d}/zoom.json"):
                 z = json.load(open(f"{d}/zoom.json"))
                 checks[f"{bench} {meth}: one cover record per question, in order"] = float(
