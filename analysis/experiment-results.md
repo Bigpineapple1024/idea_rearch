@@ -32,6 +32,7 @@
 | EXP-0024 | IDEA-0004 | 预算内放大的开发集运行：池化放大、lattice 放大（K = 2）与池化放大（K = 1）对同 K 的路由，三个对照（全图池化、居中框、覆盖 16）；VQAv2 dev2、GQA val400，18 次（17 次 + R16 的重跑 R18；EXP-0022 收尾时补登） | [EXP-0024_record](实验报告/EXP-0024_record.md)（计划 v1、v1.1，结果） | [SQZ-EXP-0024](实验报告/EXP-0024_squeeze.md)；分析 code/output/EXP-0024/analysis（af76abaa…） | completed（2026-10-25 20:59；判读“不像”，DEC-0039） |
 | EXP-0025 | IDEA-0004 | 预算内放大的确认：所选变体对同 K 的路由，TextVQA（不给 OCR 为主、给 OCR 作参照）与 V\*，归因对照与 vanilla 参照；VQAv2 test3、GQA testdev 只在开发集判读为“有希望”时运行 | [EXP-0025_record](实验报告/EXP-0025_record.md)（计划 v0：看细节部分的判据在开发结果之前写定；v1 在任何确认运行之前写定，main 01c1c02） | 记录内深挖（F52）；分析 code/output/EXP-0025/analysis（e5f2c6e3…） | completed（2026-10-25 23:52；T1～T3 不成立，DEC-0041） |
 | EXP-0026 | IDEA-0005 | 定位后覆盖的开发集运行：居中框覆盖（K = 2、K = 1）、覆盖 16（K = 1）、覆盖 8（K = 2），复用 EXP-0024 的路由与覆盖 16；VQAv2 dev2、GQA val400，13 次（v1 8 次 + v1.1 4 次 + R05 的重跑） | [EXP-0026_record](实验报告/EXP-0026_record.md)（计划 v1、v1.1，结果） | 记录内深挖（F53、F54）；分析 code/output/EXP-0026/analysis（6d7cc3db…） | completed（2026-10-26 02:47；R05 失败、R13 重跑；判读“有希望”，DEC-0042） |
+| EXP-0027 | IDEA-0005 | 定位后覆盖的确认：K = 1 + 覆盖 16 对 K = 1 路由（主）、K = 2 路由，VisionZip-64 参照；VQAv2 test3、GQA testdev，6 次（GQA 上复用 EXP-0022 的三次运行） | [EXP-0027_record](实验报告/EXP-0027_record.md)（计划 v1） | — | planned（DEC-0043） |
 
 ## 全部运行
 
