@@ -98,6 +98,26 @@ def parse():
                       help="fastv, --fastv-score query_vis (EXP-0020): only questions in yes/no form (first word an "
                            "auxiliary verb) or starting with 'how many' take query_vis; the others take the strong "
                            "baseline's path (FastV's prior-divided score in blocks)")
+    ours.add_argument("--fastv-zoom", type=int, default=0,
+                      help="fastv, --fastv-score query_vis (IDEA-0004): insert this many tokens (a square) of a re-encoded "
+                           "crop of the box the question's query points at; the stage keeps that many fewer image tokens")
+    ours.add_argument("--fastv-zoom-pick", choices=["grid", "query", "pool"], default="grid",
+                      help="which crop tokens: a uniform lattice, the best query cosine per block of the crop, or block "
+                           "means of the crop's tokens")
+    ours.add_argument("--fastv-zoom-source", choices=["crop", "full"], default="crop",
+                      help="control: 'full' inserts block means of the image's own tokens instead (needs pick pool)")
+    ours.add_argument("--fastv-zoom-centre", action="store_true",
+                      help="control: the box keeps its side but sits at the image's centre")
+    ours.add_argument("--fastv-zoom-on", choices=["unrouted", "all"], default="unrouted",
+                      help="zoom / cover the router's unrouted questions only (needs --fastv-route), or every question")
+    ours.add_argument("--fastv-zoom-box", default="8,8,16",
+                      help="top_m,min_side,max_side: the box around the top_m tokens by query cosine, its side in patches")
+    ours.add_argument("--fastv-zoom-smin", type=float, default=0.2,
+                      help="locate only when the question's visible share S is at least this")
+    ours.add_argument("--fastv-cover", type=int, default=0,
+                      help="fastv, query_vis (IDEA-0004), unrouted questions: keep the strong baseline's own count of "
+                           "tokens inside the box plus this many, the rest outside")
+    ours.add_argument("--fastv-zoom-log", default=None, help="write one zoom / cover record per prefill (JSON)")
     ours.add_argument("--fastv-mix-question", type=int, default=None,
                       help="fastv, --fastv-score mix: number of kept tokens chosen by the object-name cosine")
     ours.add_argument("--fastv-exclude-padding", action="store_true",
@@ -147,6 +167,21 @@ def parse():
         ours.error("--fastv-score query_vis needs --fastv-stratify and no --text-rows-log")
     if method_args.fastv_route and method_args.fastv_score != "query_vis":
         ours.error("--fastv-route needs --fastv-score query_vis")
+    zoom_on = method_args.fastv_zoom or method_args.fastv_cover
+    if zoom_on and method_args.fastv_score != "query_vis":
+        ours.error("--fastv-zoom and --fastv-cover need --fastv-score query_vis")
+    if zoom_on and method_args.fastv_zoom_on == "unrouted" and not method_args.fastv_route:
+        ours.error("--fastv-zoom-on unrouted needs --fastv-route")
+    if method_args.fastv_zoom and round(method_args.fastv_zoom ** 0.5) ** 2 != method_args.fastv_zoom:
+        ours.error("--fastv-zoom must be a square number")
+    if (method_args.fastv_zoom_log is not None) != bool(zoom_on):
+        ours.error("--fastv-zoom-log goes with --fastv-zoom or --fastv-cover")
+    if method_args.fastv_cover and method_args.fastv_zoom_on != "unrouted":
+        ours.error("--fastv-cover works on the unrouted questions only (--fastv-zoom-on unrouted)")
+    if method_args.fastv_zoom_source == "full" and (method_args.fastv_zoom_pick != "pool" or not method_args.fastv_zoom):
+        ours.error("--fastv-zoom-source full needs --fastv-zoom n and --fastv-zoom-pick pool")
+    if method_args.fastv_zoom_centre and not zoom_on:
+        ours.error("--fastv-zoom-centre needs --fastv-zoom or --fastv-cover")
     if method_args.vocab_visibility_log and method_args.method in ("visionzip", "sparsevlm"):
         ours.error("--vocab-visibility-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     if (method_args.fastv_score == "mix") != (method_args.fastv_mix_question is not None):
@@ -188,6 +223,13 @@ def apply_method(model, m, tokenizer=None):
         route = None
         if getattr(m, "fastv_route", None) == "yesno_howmany":       # decided from the prompt text after the image
             route = lambda ids: routes_to_query(tokenizer.decode(ids))   # noqa: E731
+        zoom, cover = None, getattr(m, "fastv_cover", 0)
+        if getattr(m, "fastv_zoom", 0) or cover:                       # IDEA-0004
+            top_m, min_side, max_side = (int(x) for x in getattr(m, "fastv_zoom_box", "8,8,16").split(","))
+            zoom = {"n": getattr(m, "fastv_zoom", 0), "pick": getattr(m, "fastv_zoom_pick", "grid"),
+                    "on": getattr(m, "fastv_zoom_on", "unrouted"), "top_m": top_m, "min_side": min_side,
+                    "max_side": max_side, "s_min": getattr(m, "fastv_zoom_smin", 0.2), "cover": bool(cover),
+                    "source": getattr(m, "fastv_zoom_source", "crop"), "centre": bool(getattr(m, "fastv_zoom_centre", False))}
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, schedule=schedule, score_prior=prior,
                            stratify=getattr(m, "fastv_stratify", None),
                            log_text_rows=bool(getattr(m, "text_rows_log", None)), score_kind=score_kind,
@@ -195,7 +237,8 @@ def apply_method(model, m, tokenizer=None):
                            exclude_padding=bool(getattr(m, "fastv_exclude_padding", False)),
                            mix_question=getattr(m, "fastv_mix_question", None), contrast_ids=contrast_ids,
                            token_weights=weights,
-                           visibility=np.load(m.fastv_visibility) if score_kind == "query_vis" else None, route=route)
+                           visibility=np.load(m.fastv_visibility) if score_kind == "query_vis" else None, route=route,
+                           zoom=zoom, cover=cover)
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "visionzip":
@@ -212,6 +255,7 @@ def _give_worker_args(llava_args, worker_id):
 
 
 _LAYER_TOKENS = []           # one dict per prefill: layer index -> sequence length entering that LLM layer
+_LAYER_EXTRA = []            # IDEA-0004: zoom tokens inserted after the image in each prefill (0 without zoom)
 
 
 def _record_layer_tokens(index, module, args, kwargs):
@@ -220,26 +264,32 @@ def _record_layer_tokens(index, module, args, kwargs):
     if hidden is not None and hidden.shape[1] > 1:      # prefill only; a decode step carries one token
         if index == 0:
             _LAYER_TOKENS.append({})
+            _LAYER_EXTRA.append(int(getattr(_ZOOM_MODEL[0], "fastv_extra", 0)) if _ZOOM_MODEL else 0)
         _LAYER_TOKENS[-1][index] = int(hidden.shape[1])
 
 
 def _write_layer_tokens(path, n_layers):
-    # Visual tokens per layer = length - text tokens, with text = layer-0 length - 576: valid for methods that give
-    # layer 0 all 576 patches (vanilla, FastV, random, SparseVLM), not for VisionZip, which shrinks them before the LLM.
-    complete = [row for row in _LAYER_TOKENS if sorted(row) == list(range(n_layers))]
-    visual = [[row[i] - (row[0] - 576) for i in range(n_layers)] for row in complete]
+    # Visual tokens per layer = length - text tokens, with text = layer-0 length - 576 - zoom tokens: valid for methods
+    # that give layer 0 all 576 patches (vanilla, FastV, random, SparseVLM; with zoom, the inserted tokens count as
+    # visual), not for VisionZip, which shrinks them before the LLM.
+    rows = [(row, e) for row, e in zip(_LAYER_TOKENS, _LAYER_EXTRA) if sorted(row) == list(range(n_layers))]
+    visual = [[row[i] - (row[0] - 576 - e) for i in range(n_layers)] for row, e in rows]
     per_layer = [sum(col) / len(col) for col in zip(*visual)] if visual else []
+    record = {"n_prefills": len(_LAYER_TOKENS), "n_complete": len(rows), "n_layers": n_layers,
+              "tokens_per_layer": [[row.get(i) for i in range(n_layers)] for row in _LAYER_TOKENS],
+              "mean_visual_per_layer": per_layer,
+              "mean_visual_over_layers": sum(per_layer) / len(per_layer) if per_layer else None}
+    if _ZOOM_MODEL:
+        record["zoom_tokens"] = _LAYER_EXTRA
     with open(path, "w") as f:
-        json.dump({"n_prefills": len(_LAYER_TOKENS), "n_complete": len(complete), "n_layers": n_layers,
-                   "tokens_per_layer": [[row.get(i) for i in range(n_layers)] for row in _LAYER_TOKENS],
-                   "mean_visual_per_layer": per_layer,
-                   "mean_visual_over_layers": sum(per_layer) / len(per_layer) if per_layer else None}, f, indent=1)
+        json.dump(record, f, indent=1)
 
 
 _KEPT = []                   # one list per prefill: indices (0..n_img-1, row-major patch order) of the kept image tokens
 _KEPT_N_IMG = set()          # image-token count of each prefill (576 for LLaVA-1.5 at 336 px)
 _KEPT_QUESTION = []          # --fastv-score mix: the kept patches chosen by the object-name cosine, per prefill
 _ROUTED = []                 # --fastv-route: whether each prefill took query_vis
+_KEPT_ZOOM = []              # IDEA-0004: zoom tokens kept besides the listed image patches, per prefill
 
 
 def _record_kept(module, args, kwargs, output):
@@ -251,6 +301,8 @@ def _record_kept(module, args, kwargs, output):
             _KEPT_QUESTION.append(module.fastv_kept_question_positions.tolist())
         if getattr(module, "fastv_route", None) is not None:
             _ROUTED.append(module.fastv_routed)
+        if getattr(module, "fastv_zoom", None):
+            _KEPT_ZOOM.append(int(module.fastv_extra))
 
 
 def _write_kept(path, keep):
@@ -259,6 +311,8 @@ def _write_kept(path, keep):
         record["kept_by_object_name"] = _KEPT_QUESTION
     if _ROUTED:
         record["routed"] = _ROUTED
+    if _KEPT_ZOOM:
+        record["zoom_tokens"] = _KEPT_ZOOM
     with open(path, "w") as f:
         json.dump(record, f)
 
@@ -503,6 +557,14 @@ def main():
             kw["attn_implementation"] = method_args.attn_implementation   # LLaVA's builder forwards kwargs
         tokenizer, model, image_processor, context_len = original_load(*a, **kw)
         model = apply_method(model, method_args, tokenizer)
+        if method_args.fastv_zoom or method_args.fastv_cover:    # IDEA-0004: the original image of every prefill, in order
+            lm = model.get_model()
+            lm.fastv_image_processor = image_processor
+            with open(os.path.expanduser(llava_args.question_file)) as f:
+                lm.fastv_zoom_paths = [os.path.join(llava_args.image_folder, json.loads(line)["image"]) for line in f]
+            if llava_args.num_chunks != 1:
+                raise SystemExit("--fastv-zoom / --fastv-cover assume one chunk (prefills follow the question file)")
+            _ZOOM_MODEL.append(lm)
         if method_args.layer_token_log:
             times["n_layers"] = len(model.get_model().layers)
             for i, layer in enumerate(model.get_model().layers):
@@ -587,6 +649,14 @@ def main():
         _write_name_cos(method_args.name_cos_log, times["names"], times["name_ids"])
     if method_args.vocab_visibility_log:
         _write_vocab_visibility(method_args.vocab_visibility_log)
+    if method_args.fastv_zoom_log:                              # IDEA-0004: one record per prefill
+        log = _ZOOM_MODEL[0].fastv_zoom_log if _ZOOM_MODEL else []
+        with open(method_args.fastv_zoom_log, "w") as f:
+            json.dump({"n_prefills": len(log), "n_zoomed": sum(r["zoom"] for r in log),
+                       "n_covered": sum(r["cover"] for r in log), "records": log}, f)
+
+
+_ZOOM_MODEL = []
 
 
 if __name__ == "__main__":

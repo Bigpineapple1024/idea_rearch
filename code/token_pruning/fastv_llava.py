@@ -39,7 +39,20 @@ weighted query and the rest by FastV's (prior-divided) score, as in "mix".
 With route (EXP-0020, query_vis only), a callable on the ids after the image: a question it returns False for takes the
 strong baseline's path instead (FastV's prior-divided score taken in blocks, padding never kept), so query_vis applies
 only to the routed questions; fastv_routed records the decision of the last prefill.
+With zoom (IDEA-0004, query_vis only), a question whose query is visible enough (S >= s_min) and that zoom["on"] selects
+("unrouted": the router's other questions; "all") is located and looked at closer, inside the same budget: the image
+tokens most similar to the IDF x visibility query give a square box on the 24 x 24 grid (zoom_box: never smaller than
+the side holding the vision tower's own resolution, and kept inside the image so the crop is square); that box is
+cropped from the original image (zoom_paths, one per prefill in question order), re-encoded by the vision tower and
+projector, and n of the crop's tokens are inserted right after the image tokens: a lattice over the crop ("grid"), the
+best query cosine per block ("query"), or block means of the crop's tokens ("pool"). With source "full" the n tokens are
+instead block means of the image's own tokens (no second encoding), and with centre the box keeps its side but sits at
+the image's centre (two controls). The inserted tokens are never pruned and the stage keeps keep - n image tokens, so
+the visual tokens after the stage are still keep. With cover (IDEA-0004, unrouted questions only), the strong
+baseline's own count of kept tokens inside the box plus cover is taken inside the box (by its score, in blocks) and the
+rest outside. fastv_zoom_log holds one record per prefill. Without zoom and cover nothing changes.
 """
+import math
 import types
 
 import numpy as np
@@ -93,6 +106,104 @@ def _padding_mask(width, height, side):
     return torch.from_numpy(np.outer(cy, cx).ravel() <= 1e-9)
 
 
+def _square_geometry(width, height, side):
+    """expand2square's square: its side in pixels, the image's offset in it, and one patch's size in pixels."""
+    s = max(width, height)
+    return s, ((s - width) // 2 if height > width else 0), ((s - height) // 2 if width > height else 0), s / side
+
+
+def _content_band(width, height, side):
+    """First and last rows and columns of the side x side grid lying at least half inside a width x height image on
+    expand2square's square: (r_lo, r_hi, c_lo, c_hi), inclusive."""
+    _, ox, oy, p = _square_geometry(width, height, side)
+    edges = np.arange(side + 1) * p
+    out = []
+    for o, extent in ((oy, height), (ox, width)):
+        cover = np.clip(np.minimum(edges[1:], o + extent) - np.maximum(edges[:-1], o), 0, None) / p
+        idx = np.flatnonzero(cover >= 0.5)
+        idx = idx if idx.size else np.array([int(cover.argmax())])
+        out += [int(idx[0]), int(idx[-1])]
+    return out[0], out[1], out[2], out[3]
+
+
+def zoom_box(cos, allowed, side, width, height, top_m, min_side, max_side, centre=False, native=336):
+    """A square box on the side x side grid around the image tokens most similar to the query. Its side is the top_m
+    allowed tokens' span, clamped to [floor, max_side], floor being the larger of min_side and the side that holds
+    `native` original pixels (the crop is then never enlarged past the image's own resolution). It is centred on their
+    score-weighted centre (on the image's centre with centre=True) and kept inside the image's content band (rows and
+    columns at least half inside the image), shrunk to the band if needed, so the crop stays square; only when the band
+    is narrower than min_side (very elongated images) does the box merely stay inside the grid, its crop then carrying
+    padding. Returns the grid box (r0, c0, r1, c1), inclusive, its pixel box (x0, y0, x1, y1) on the original image and a
+    dict: span, side, band, how many of the top_m tokens and whether the top one lie inside."""
+    score = cos.float().masked_fill(~allowed, float("-inf"))
+    top = score.topk(min(top_m, int(allowed.sum()))).indices
+    rows, cols = (top // side).float(), (top % side).float()
+    w = score[top] - score[top].min() + 1e-6
+    span = int(max(rows.max() - rows.min(), cols.max() - cols.min()).item()) + 1
+    size = min(max(span, min_side, math.ceil(side * native / max(width, height))), max_side)
+    r_lo, r_hi, c_lo, c_hi = _content_band(width, height, side)
+    band = min(r_hi - r_lo + 1, c_hi - c_lo + 1)
+    if band >= min_side:
+        size = min(size, band)
+        lo_r, hi_r, lo_c, hi_c = r_lo, r_hi - size + 1, c_lo, c_hi - size + 1
+    else:
+        lo_r, hi_r, lo_c, hi_c = 0, side - size, 0, side - size
+    if centre:
+        cr, cc = (r_lo + r_hi) / 2, (c_lo + c_hi) / 2
+    else:
+        cr, cc = float((w * rows).sum() / w.sum()), float((w * cols).sum() / w.sum())
+    r0 = int(min(max(round(cr - (size - 1) / 2), lo_r), hi_r))
+    c0 = int(min(max(round(cc - (size - 1) / 2), lo_c), hi_c))
+    r1, c1 = r0 + size - 1, c0 + size - 1
+    _, ox, oy, p = _square_geometry(width, height, side)
+    x0, x1 = max(0.0, c0 * p - ox), min(float(width), (c1 + 1) * p - ox)
+    y0, y1 = max(0.0, r0 * p - oy), min(float(height), (r1 + 1) * p - oy)
+    inside = (rows >= r0) & (rows <= r1) & (cols >= c0) & (cols <= c1)
+    info = {"span": span, "side": size, "band": band, "top_inside": int(inside.sum()), "top1_inside": bool(inside[0])}
+    return (r0, c0, r1, c1), (x0, y0, x1, y1), info
+
+
+def _content_lines(pad, side):
+    """Rows and columns of a side x side token grid that are not wholly padding (pad: one bool per token, or None)."""
+    keep = torch.ones(side, side, dtype=torch.bool) if pad is None else ~pad.cpu().reshape(side, side)
+    return keep.any(1).nonzero().squeeze(1).tolist(), keep.any(0).nonzero().squeeze(1).tolist()
+
+
+def zoom_pick(n, side, how, cos=None, pad=None):
+    """n = g * g crop tokens: the centres of a g x g lattice over the crop's content ("grid"), or the best query cosine in
+    each of g x g blocks among its non-padding tokens ("query"). pad marks the tokens wholly in the padding that
+    process_images adds around a non-square crop (none for the square crops zoom_box gives inside the image)."""
+    g = round(n ** 0.5)
+    if g * g != n:
+        raise ValueError("the number of zoom tokens must be a square")
+    if how == "grid":
+        rows, cols = _content_lines(pad, side)
+        at_r = [rows[0] + int((i + 0.5) * (rows[-1] - rows[0] + 1) / g) for i in range(g)]
+        at_c = [cols[0] + int((i + 0.5) * (cols[-1] - cols[0] + 1) / g) for i in range(g)]
+        return torch.tensor([r * side + c for r in at_r for c in at_c], dtype=torch.long)
+    cand = torch.arange(side * side) if pad is None else (~pad.cpu()).nonzero().squeeze(1)
+    return cand[_stratified_top(cos.cpu()[cand], n, cand, side, g).cpu()].sort().values
+
+
+def zoom_pool(feats, n, side, pad=None):
+    """n = g * g block means of a side x side grid of tokens (feats: side * side x d), the blocks splitting its content
+    rows and columns (those not wholly padding) as evenly as possible."""
+    g = round(n ** 0.5)
+    if g * g != n:
+        raise ValueError("the number of zoom tokens must be a square")
+    rows, cols = _content_lines(pad, side)
+    if len(rows) < g or len(cols) < g:
+        rows, cols = list(range(side)), list(range(side))
+    grid = feats.reshape(side, side, -1)
+    out = []
+    for rg in np.array_split(np.array(rows), g):
+        for cg in np.array_split(np.array(cols), g):
+            r = torch.as_tensor(rg, device=feats.device)
+            c = torch.as_tensor(cg, device=feats.device)
+            out.append(grid[r][:, c].reshape(-1, grid.shape[-1]).float().mean(0))
+    return torch.stack(out).to(feats.dtype)
+
+
 def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, past_key_values=None,
                   inputs_embeds=None, use_cache=None, output_attentions=None, output_hidden_states=None,
                   return_dict=None):
@@ -126,6 +237,7 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             self.fastv_kept_question_positions = torch.zeros(0, dtype=torch.long)
     object_cos = self.fastv_score_kind == "object_cos" or contrast or query     # ranked by an input-embedding score alone
     mix = self.fastv_score_kind == "mix" or query_vis
+    extra = getattr(self, "fastv_extra", 0) if prefill else 0      # zoom tokens inserted right after the image (IDEA-0004)
     if prefill:
         start, n_img = self.fastv_image_span
         kept = torch.arange(n_img, device=hidden.device)       # original patch index of each image token still present
@@ -143,12 +255,13 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
         if query or query_vis:                                 # the weighted mean of the question's input embeddings
             h = inputs_embeds[0].float()
             w = self.fastv_query_weights
-            q = (w[:, None] * h[start + n_img:start + n_img + w.numel()]).sum(0, keepdim=True) / w.sum()
+            t0 = start + n_img + extra                         # the text after the image (and after any zoom tokens)
+            q = (w[:, None] * h[t0:t0 + w.numel()]).sum(0, keepdim=True) / w.sum()
             self.fastv_object_cos = torch.nn.functional.cosine_similarity(h[start:start + n_img], q, dim=-1)
             self.fastv_input_score = self.fastv_object_cos
         elif object_cos or mix:                                # question-aware score from the input embeddings
             span = self.fastv_object_span(self.fastv_text_after_ids)
-            obj = [start + n_img + i for i in span]
+            obj = [start + n_img + extra + i for i in span]
             h = inputs_embeds[0].float()
             self.fastv_object_cos = torch.nn.functional.cosine_similarity(
                 h[start:start + n_img], h[obj].mean(0, keepdim=True), dim=-1)
@@ -169,7 +282,8 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
                 score = self.fastv_input_score[kept]
                 self.fastv_last_scores = score
             elif self.fastv_generator is None and attn_weighted:   # weighted attention rows of the text after the image
-                rows = attn.mean(dim=1)[0, start + n_cur:start + n_cur + self.fastv_query_weights.numel(), start:start + n_cur]
+                t0 = start + n_cur + extra
+                rows = attn.mean(dim=1)[0, t0:t0 + self.fastv_query_weights.numel(), start:start + n_cur]
                 w = self.fastv_query_weights.to(rows.device)
                 score = (w[:, None] * rows.float()).sum(0) / w.sum()
                 self.fastv_last_scores = score
@@ -184,7 +298,8 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
                 score = torch.rand(n_cur, generator=self.fastv_generator, device=self.fastv_generator.device)
                 score = score.to(hidden.device)
             pos = allowed[kept].nonzero().squeeze(1)           # positions among the present image tokens that may stay
-            count = min(stages[idx], pos.numel())
+            count = min(stages[idx] - extra, pos.numel())       # zoom tokens count towards the stage's budget
+            cover = getattr(self, "fastv_cover_mask", None) if not mix else None
             if mix:                                            # part by the object name, the rest by FastV's score
                 side, blocks = round(n_img ** 0.5), self.fastv_stratify
                 n_q = round(count * self.fastv_visible_share) if query_vis else min(self.fastv_mix_question, count)
@@ -197,6 +312,23 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
                 second = rest[_stratified_top(score[rest], count - n_q, kept[rest], side, blocks, filled)]
                 top = torch.cat((first, second)).sort().values
                 self.fastv_kept_question_positions = kept[first].sort().values
+            elif cover is not None:            # IDEA-0004: the baseline's own in-box count plus `cover` taken in the box
+                side, blocks = round(n_img ** 0.5), self.fastv_stratify
+                box = cover.to(hidden.device)
+                base = pos[_stratified_top(score[pos], count, kept[pos], side, blocks)]    # the baseline's own choice
+                a_in = int(box[kept[base]].sum())
+                inside, outside = pos[box[kept[pos]]], pos[~box[kept[pos]]]
+                n_c = min(a_in + self.fastv_cover, count, inside.numel())
+                first = inside[_stratified_top(score[inside], n_c, kept[inside], side, blocks)]
+                filled = {}
+                for cell in _block_of(kept[first], side, blocks):
+                    filled[cell] = filled.get(cell, 0) + 1
+                second = outside[_stratified_top(score[outside], count - n_c, kept[outside], side, blocks, filled)]
+                top = torch.cat((first, second)).sort().values
+                self.fastv_cover_count = n_c
+                if self.fastv_zoom_log:                        # this prefill's record, written by _zoom just before
+                    self.fastv_zoom_log[-1].update(baseline_in_box=a_in, in_box=n_c,
+                                                   changed=int((~torch.isin(top, base)).sum()))
             elif self.fastv_stratify is None:
                 top = pos[score[pos].topk(count).indices].sort().values
             else:
@@ -224,6 +356,84 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
     return BaseModelOutputWithPast(last_hidden_state=hidden, past_key_values=next_cache)
 
 
+def _zoom(model, lm, result):
+    """IDEA-0004: locate the question's object with the IDF x visibility query and, for zoom, insert n tokens of a
+    re-encoded crop of that box right after the image tokens; for cover, mark the box for the stage. One record per
+    prefill in lm.fastv_zoom_log."""
+    cfg, ids = lm.fastv_zoom, lm.fastv_text_after_ids
+    index = lm.fastv_zoom_count
+    lm.fastv_zoom_count += 1
+    rec = {"index": index, "zoom": False, "cover": False}
+    if cfg["on"] == "unrouted" and lm.fastv_route(ids):
+        rec["skip"] = "routed"
+        lm.fastv_zoom_log.append(rec)
+        return result
+    idf = torch.tensor(lm.fastv_token_weights(ids), dtype=torch.float32)
+    w = idf * lm.fastv_visibility[torch.tensor(ids)].float()
+    share = float(w.sum() / idf.sum()) if float(idf.sum()) > 0 else 0.0
+    rec["S"] = share
+    if share < cfg["s_min"] or float(w.sum()) <= 0:
+        rec["skip"] = "S below s_min"
+        lm.fastv_zoom_log.append(rec)
+        return result
+    embeds = result[4]
+    start, n_img = lm.fastv_image_span
+    side = round(n_img ** 0.5)
+    width, height = lm.fastv_image_size
+    h = embeds[0].float()
+    w = w.to(h.device)
+    q = (w[:, None] * h[start + n_img:start + n_img + w.numel()]).sum(0, keepdim=True) / w.sum()
+    cos = torch.nn.functional.cosine_similarity(h[start:start + n_img], q, dim=-1)
+    allowed = ~_padding_mask(width, height, side).to(h.device)
+    native = lm.fastv_image_processor.crop_size["height"] if getattr(lm, "fastv_image_processor", None) else 336
+    grid, pixels, info = zoom_box(cos, allowed, side, width, height, cfg["top_m"], cfg["min_side"], cfg["max_side"],
+                                  centre=cfg.get("centre", False), native=native)
+    rec.update(grid_box=list(grid), pixel_box=[round(v, 1) for v in pixels], **info)
+    if cfg.get("cover"):
+        r0, c0, r1, c1 = grid
+        box = torch.zeros(side, side, dtype=torch.bool)
+        box[r0:r1 + 1, c0:c1 + 1] = True
+        lm.fastv_cover_mask = box.ravel()
+        rec["cover"] = True
+    n = cfg.get("n", 0)
+    if n:
+        if cfg.get("source", "crop") == "full":                # control: block means of the image's own tokens
+            tokens = zoom_pool(embeds[0, start:start + n_img], n, side, ~allowed)
+            rec["source"] = "full"
+        else:
+            from PIL import Image
+            from llava.mm_utils import process_images
+            crop_box = [round(v) for v in pixels]
+            with Image.open(lm.fastv_zoom_paths[index]) as im:
+                if im.size != (width, height):
+                    raise ValueError(f"zoom image {lm.fastv_zoom_paths[index]} is {im.size}, the prompt's is {(width, height)}")
+                crop = im.convert("RGB").crop(tuple(crop_box))
+            pix = process_images([crop], lm.fastv_image_processor, model.config).to(device=embeds.device, dtype=embeds.dtype)
+            with torch.no_grad():
+                feats = model.encode_images(pix)[0]
+            cpad = _padding_mask(crop.width, crop.height, side).to(feats.device)
+            rec.update(source="crop", crop_box=crop_box, crop_padding_tokens=int(cpad.sum()))
+            if cfg["pick"] == "pool":
+                tokens = zoom_pool(feats, n, side, cpad)
+            else:
+                ccos = torch.nn.functional.cosine_similarity(feats.float(), q, dim=-1) if cfg["pick"] == "query" else None
+                pick = zoom_pick(n, side, cfg["pick"], ccos, cpad).to(feats.device)
+                tokens = feats[pick]
+                rec.update(picked=pick.tolist(), picked_on_padding=int(cpad[pick].sum()))
+        cut = start + n_img
+        result = list(result)
+        result[4] = torch.cat((embeds[:, :cut], tokens[None].to(embeds.dtype), embeds[:, cut:]), dim=1)
+        if result[2] is not None:                              # attention mask and position ids, if the caller passed them
+            result[2] = torch.ones(1, result[4].shape[1], dtype=result[2].dtype, device=result[2].device)
+        if result[1] is not None:
+            result[1] = torch.arange(result[4].shape[1], device=result[1].device).unsqueeze(0)
+        result = tuple(result)
+        lm.fastv_extra = n
+        rec.update(zoom=True, n=n)
+    lm.fastv_zoom_log.append(rec)
+    return result
+
+
 def _record_image_span(model):
     lm = model.get_model()
     orig = model.prepare_inputs_labels_for_multimodal
@@ -238,6 +448,9 @@ def _record_image_span(model):
             lm.fastv_image_span = (int(hits[0, 0]), embeds.shape[1] - (input_ids.shape[1] - 1))
             lm.fastv_text_after_ids = input_ids[0, int(hits[0, 0]) + 1:].tolist()
             lm.fastv_image_size = tuple(image_sizes[0]) if image_sizes is not None else None     # (width, height)
+            lm.fastv_extra, lm.fastv_cover_mask = 0, None
+            if getattr(lm, "fastv_zoom", None):
+                result = _zoom(model, lm, result)
         return result
 
     model.prepare_inputs_labels_for_multimodal = wrapped
@@ -245,7 +458,7 @@ def _record_image_span(model):
 
 def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
                score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None,
-               token_weights=None, visibility=None, route=None):
+               token_weights=None, visibility=None, route=None, zoom=None, cover=0):
     """Turn a transformers LlamaModel into FastV in place (image span set by the caller).
 
     seed=None keeps FastV's attention ranking; an integer selects random image tokens from that seed.
@@ -276,6 +489,20 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
         raise ValueError("query_vis needs stratify; no seed, schedule or row log")
     if route is not None and score_kind != "query_vis":
         raise ValueError("route works with query_vis only")
+    if (zoom or cover) and score_kind != "query_vis":
+        raise ValueError("zoom and cover work with query_vis only (they locate with its query)")
+    if zoom and zoom["on"] == "unrouted" and route is None:
+        raise ValueError("zoom on the unrouted questions needs route")
+    if zoom and not 0 <= zoom.get("n", 0) < keep:
+        raise ValueError("zoom n must be in [0, keep)")
+    if cover and zoom and zoom["on"] != "unrouted":
+        raise ValueError("cover works on the unrouted questions only (routed ones take query_vis, which it does not change)")
+    if zoom and zoom.get("source", "crop") == "full" and zoom.get("pick") != "pool":
+        raise ValueError("zoom source 'full' is the pooled-context control: it needs pick 'pool'")
+    llama_model.fastv_zoom = zoom
+    llama_model.fastv_cover = cover
+    llama_model.fastv_zoom_count, llama_model.fastv_zoom_log = 0, []
+    llama_model.fastv_extra, llama_model.fastv_cover_mask, llama_model.fastv_cover_count = 0, None, None
     llama_model.fastv_route = route
     llama_model.fastv_routed = None
     llama_model.fastv_token_weights = token_weights
@@ -321,9 +548,9 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
 
 def apply_fastv(model, k=2, keep=288, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
                 score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None,
-                token_weights=None, visibility=None, route=None):
+                token_weights=None, visibility=None, route=None, zoom=None, cover=0):
     """Enable FastV (or its random-selection control when seed is given) on a loaded LlavaLlamaForCausalLM."""
     bind_fastv(model.get_model(), k, keep, seed, schedule, score_prior, stratify, log_text_rows, score_kind, object_span,
-               exclude_padding, mix_question, contrast_ids, token_weights, visibility, route)
+               exclude_padding, mix_question, contrast_ids, token_weights, visibility, route, zoom, cover)
     _record_image_span(model)
     return model

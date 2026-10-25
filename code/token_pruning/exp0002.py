@@ -71,6 +71,35 @@ BENCHES = {
                     "image_folder": f"{DATA}/gqa/images",
                     "annotations": [f"{DATA}/llava_eval/gqa/llava_gqa_testdev_balanced_annotations.jsonl"],
                     "archives_sha256": f"{DATA}/downloads/gqa/SHA256SUMS"},
+    # IDEA-0004 (make_dev_sets.py, drawn once before any development run): dev2 and GQA val400 for tuning the new module,
+    # test3 kept for its pre-registered confirmation. Checksums: vqav2_val/SHA256SUMS_idea0004, gqa/SHA256SUMS_val400 and,
+    # for the 400 GQA images, gqa/images_val400_SHA256SUMS (written when they were extracted)
+    "vqav2_dev2": {"question_file": f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_dev2.jsonl",
+                   "image_folder": f"{DATA}/coco/val2014",
+                   "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_dev2_annotations.jsonl"],
+                   "archives_sha256": f"{DATA}/downloads/vqav2/SHA256SUMS"},
+    "vqav2_test3": {"question_file": f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test3.jsonl",
+                    "image_folder": f"{DATA}/coco/val2014",
+                    "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test3_annotations.jsonl"],
+                    "archives_sha256": f"{DATA}/downloads/vqav2/SHA256SUMS"},
+    "gqa_val400": {"question_file": f"{DATA}/llava_eval/gqa/llava_gqa_val400.jsonl",
+                   "image_folder": f"{DATA}/gqa/images_val400",
+                   "annotations": [f"{DATA}/llava_eval/gqa/llava_gqa_val400_annotations.jsonl"],
+                   "archives_sha256": f"{DATA}/downloads/gqa/SHA256SUMS"},
+    # IDEA-0004 confirmation benchmarks (DEC-0036, make_textvqa_vstar.py): TextVQA v0.5.1 val with TextVQA's own question
+    # ids, without and with LLaVA's OCR-token line; V* Bench's 191 multiple-choice questions (revision d9ae62c9)
+    "textvqa_noocr": {"question_file": f"{DATA}/llava_eval/textvqa/llava_textvqa_val_noocr_qid.jsonl",
+                      "image_folder": f"{DATA}/textvqa/train_images",
+                      "annotations": [f"{DATA}/llava_eval/textvqa/llava_textvqa_val_annotations.jsonl"],
+                      "archives_sha256": f"{DATA}/downloads/textvqa/SHA256SUMS"},
+    "textvqa_ocr": {"question_file": f"{DATA}/llava_eval/textvqa/llava_textvqa_val_ocr_qid.jsonl",
+                    "image_folder": f"{DATA}/textvqa/train_images",
+                    "annotations": [f"{DATA}/llava_eval/textvqa/llava_textvqa_val_annotations.jsonl"],
+                    "archives_sha256": f"{DATA}/downloads/textvqa/SHA256SUMS"},
+    "vstar": {"question_file": f"{DATA}/llava_eval/vstar/llava_vstar_test.jsonl",
+              "image_folder": f"{DATA}/downloads/vstar_bench",
+              "annotations": [f"{DATA}/llava_eval/vstar/llava_vstar_test_annotations.jsonl"],
+              "archives_sha256": f"{DATA}/downloads/vstar_bench/SHA256SUMS"},
 }
 # Budgets are 32-layer averages of visual tokens (code/token_pruning/README.md, "预算的口径").
 FASTV_KEEP = {192: 166, 128: 98, 64: 30}
@@ -150,6 +179,46 @@ CONFIGS["fastv192_qvis"] = ("tp", CONFIGS["fastv192_prior_strat_nopad"][1] + [
 # EXP-0020: query_vis only for questions in yes/no form or asking "how many"; the others take the strong baseline's path
 for b in (64, 128, 192):
     CONFIGS[f"fastv{b}_qroute"] = ("tp", CONFIGS[f"fastv{b}_qvis"][1] + ["--fastv-route", "yesno_howmany"])
+# IDEA-0004 (EXP-0024): on the router's unrouted (open) questions, locate the question's object with the query and either
+# insert n tokens of a re-encoded crop of it (zoom; z16g / z16q / z9g: 16 or 9 tokens, lattice or best query cosine per
+# block) or keep the baseline's in-box count plus 8 inside its box (cover, c8); _all zooms every question. The tokens after
+# the stage stay keep; the 32-layer average rises by n * K / 32 (+1.0 for n = 16 at K = 2), and each zoom adds a vision
+# tower and projector pass on the crop.
+for b in (64, 128, 192):
+    base = CONFIGS[f"fastv{b}_qroute"][1]
+    CONFIGS[f"fastv{b}_qroute_z16g"] = ("tp", base + ["--fastv-zoom", "16", "--fastv-zoom-pick", "grid"])
+    CONFIGS[f"fastv{b}_qroute_z16q"] = ("tp", base + ["--fastv-zoom", "16", "--fastv-zoom-pick", "query"])
+    CONFIGS[f"fastv{b}_qroute_z9g"] = ("tp", base + ["--fastv-zoom", "9", "--fastv-zoom-pick", "grid"])
+    CONFIGS[f"fastv{b}_qroute_c8"] = ("tp", base + ["--fastv-cover", "8"])
+    CONFIGS[f"fastv{b}_qroute_z16g_all"] = ("tp", base + ["--fastv-zoom", "16", "--fastv-zoom-pick", "grid",
+                                                          "--fastv-zoom-on", "all"])
+# EXP-0024 (after the pre-run code and design review): the zoom configs run on every question with s_min 0, so the
+# unrouted-only result comes from splicing with the router run; z16p pools the crop's tokens into 4 x 4 block means;
+# p16full inserts block means of the image's own tokens (no second encoding, the context control); z16pctr keeps the
+# located side but centres the box (the localisation control); c16 keeps the baseline's in-box count plus 16 in the box
+# (the reallocation control). K = 1 keeps 47 tokens: (576 + 31 x 47) / 32 = 63.5 tokens per layer, 64.0 with 16 zoom
+# tokens; its position prior is the blank-image score curve at layer 0 (EXP-0024-R01, fastv64k1_scores).
+PRIOR_K1 = f"{REPO}/code/output/EXP-0024/prior_k1/position_prior.npy"
+
+
+def _at_k1(args):
+    a = list(args)
+    a[a.index("--fastv-k") + 1], a[a.index("--fastv-keep") + 1] = "1", "47"
+    a[a.index("--fastv-score-prior") + 1] = PRIOR_K1
+    return a
+
+
+ALL0 = ["--fastv-zoom-on", "all", "--fastv-zoom-smin", "0"]
+CONFIGS["fastv64k1"] = ("tp", ["--method", "fastv", "--fastv-k", "1", "--fastv-keep", "47"])
+CONFIGS["fastv64k1_qroute"] = ("tp", _at_k1(CONFIGS["fastv64_qroute"][1]))
+CONFIGS["fastv64_qroute_z16g_all0"] = ("tp", CONFIGS["fastv64_qroute"][1] + ["--fastv-zoom", "16", "--fastv-zoom-pick", "grid"] + ALL0)
+CONFIGS["fastv64_qroute_z16p_all0"] = ("tp", CONFIGS["fastv64_qroute"][1] + ["--fastv-zoom", "16", "--fastv-zoom-pick", "pool"] + ALL0)
+CONFIGS["fastv64_qroute_p16full_all0"] = ("tp", CONFIGS["fastv64_qroute"][1] + [
+    "--fastv-zoom", "16", "--fastv-zoom-pick", "pool", "--fastv-zoom-source", "full"] + ALL0)
+CONFIGS["fastv64_qroute_z16pctr_all0"] = ("tp", CONFIGS["fastv64_qroute"][1] + [
+    "--fastv-zoom", "16", "--fastv-zoom-pick", "pool", "--fastv-zoom-centre"] + ALL0)
+CONFIGS["fastv64_qroute_c16"] = ("tp", CONFIGS["fastv64_qroute"][1] + ["--fastv-cover", "16", "--fastv-zoom-smin", "0"])
+CONFIGS["fastv64k1_qroute_z16p_all0"] = ("tp", CONFIGS["fastv64k1_qroute"][1] + ["--fastv-zoom", "16", "--fastv-zoom-pick", "pool"] + ALL0)
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
@@ -243,6 +312,8 @@ def run_one(run_id, config, bench):
                                      "--answer-logit-log", f"{run_dir}/answer_logits.json"]
     if config.endswith("_ksl"):
         method_args = method_args + ["--score-log", f"{run_dir}/scores.npy"]
+    if "--fastv-zoom" in method_args or "--fastv-cover" in method_args:     # IDEA-0004: one record per prefill
+        method_args = method_args + ["--fastv-zoom-log", f"{run_dir}/zoom.json"]
     if config.endswith("_names"):
         method_args = method_args + ["--answer-logit-log", f"{run_dir}/answer_logits.json",
                                      "--name-cos-log", f"{run_dir}/name_cos.npz"]

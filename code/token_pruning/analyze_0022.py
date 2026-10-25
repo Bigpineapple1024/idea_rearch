@@ -22,7 +22,8 @@ from analyze_0016 import counts_check   # noqa: E402
 from analyze_query import row   # noqa: E402
 from analyze_repope import EVAL_DATA, OUT   # noqa: E402
 
-RUNS = {"A_64": "R01", "router_64": "R02", "A'+B+V_64": "R03", "A_128": "R04", "router_128": "R05",
+# A'+B+V_64 is R09: R03 (same configuration) failed with eval exit 127 and was rerun under a new ID (EXP-0022 record)
+RUNS = {"A_64": "R01", "router_64": "R02", "A'+B+V_64": "R09", "A_128": "R04", "router_128": "R05",
         "vanilla": "R06", "visionzip64": "R07", "sparsevlm64": "R08"}
 PAIRS = [("router_64", "A_64"), ("router_128", "A_128"), ("A'+B+V_64", "A_64"), ("router_64", "A'+B+V_64"),
          ("router_64", "visionzip64"), ("router_64", "sparsevlm64"), ("A_64", "visionzip64"), ("router_64", "vanilla")]
@@ -54,7 +55,7 @@ def main():
     struct = np.array([gts[q]["structural"] for q in qids])
     either_or = np.array([bool(re.search(r"\bor\b", text[q].split("\n")[0].lower())) for q in qids])
     routed = np.array([routed_rule[pos[q]] for q in qids])
-    checks = {"R03 counts = round(30 S)": counts_check("EXP-0022/EXP-0022-R03", qfile, 30, VIS)}
+    checks = {"R09 counts = round(30 S)": counts_check("EXP-0022/EXP-0022-R09", qfile, 30, VIS)}
     scores, answers, kept = {}, {}, {}
     for name, rid in RUNS.items():
         run = f"EXP-0022/EXP-0022-{rid}"

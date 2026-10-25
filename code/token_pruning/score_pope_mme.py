@@ -4,6 +4,7 @@
   python score_pope_mme.py mme  <answers.jsonl> <out_dir> [--tag NAME]
   python score_pope_mme.py vqav2_test <answers.jsonl> <out_dir>    # or vqav2_dev (EXP-0018), vqav2_test2 (EXP-0020)
   python score_pope_mme.py gqa_testdev <answers.jsonl> <out_dir>   # EXP-0022
+  python score_pope_mme.py textvqa_noocr <answers.jsonl> <out_dir> # or textvqa_ocr, vstar (IDEA-0004, DEC-0036)
 
 GQA follows LLaVA's scripts/convert_gqa_for_eval.py (answer.rstrip('.').lower()) and the official eval.py accuracy for
 --tier testdev_balanced (exact match with the single gold answer); per-question scores go to <out_dir>/gqa_scores.jsonl.
@@ -100,11 +101,12 @@ def score_vqav2(answers, out_dir, split, log):
             "n_scored": len(rows), "by_answer_type": {t: {"n": len(v), "accuracy": 100 * sum(v) / len(v)} for t, v in by_type.items()}}
 
 
-def score_gqa(answers, out_dir, log):
-    """GQA testdev-balanced accuracy: LLaVA's conversion (strip a final '.', lower-case) and exact match with the gold
-    answer, as the official eval.py does; per-question scores go to <out_dir>/gqa_scores.jsonl."""
+def score_gqa(answers, out_dir, log, split="testdev_balanced", bench="gqa_testdev"):
+    """GQA accuracy (testdev-balanced, or the val400 development subset of IDEA-0004): LLaVA's conversion (strip a final
+    '.', lower-case) and exact match with the gold answer, as the official eval.py does; per-question scores go to
+    <out_dir>/gqa_scores.jsonl."""
     gts = {}
-    for line in open(f"{EVAL_DATA}/gqa/llava_gqa_testdev_balanced_annotations.jsonl", encoding="utf-8"):
+    for line in open(f"{EVAL_DATA}/gqa/llava_gqa_{split}_annotations.jsonl", encoding="utf-8"):
         a = json.loads(line)
         gts[a["question_id"]] = a
     preds = [json.loads(line) for line in open(answers)]
@@ -121,14 +123,72 @@ def score_gqa(answers, out_dir, log):
             rows.append(s)
             f.write(json.dumps({"question_id": str(p["question_id"]), "image": g["image"], "answer_kind": kind,
                                 "structural": g["structural"], "score": s}) + "\n")
-    log.write(f"GQA testdev-balanced: {len(rows)} questions scored by exact match after rstrip('.').lower()\n")
-    return {"benchmark": "gqa_testdev", "headline": "accuracy", "accuracy": 100 * sum(rows) / len(rows), "n_scored": len(rows),
+    log.write(f"GQA {split}: {len(rows)} questions scored by exact match after rstrip('.').lower()\n")
+    return {"benchmark": bench, "headline": "accuracy", "accuracy": 100 * sum(rows) / len(rows), "n_scored": len(rows),
             "by_group": {k: {"n": len(v), "accuracy": 100 * sum(v) / len(v)} for k, v in sorted(groups.items())}}
+
+
+def score_textvqa(answers, out_dir, prompt, log):
+    """TextVQA v0.5.1 val (IDEA-0004, DEC-0036), with or without LLaVA's OCR-token line: LLaVA's m4c evaluator, as its
+    eval_textvqa.py, on the ten human answers; question ids are TextVQA's own (make_textvqa_vstar.py); per-question
+    scores go to <out_dir>/textvqa_scores.jsonl."""
+    sys.path.insert(0, LLAVA_ROOT)
+    from llava.eval.m4c_evaluator import TextVQAAccuracyEvaluator
+    ev = TextVQAAccuracyEvaluator()
+    gts = {str(a["question_id"]): a for a in map(json.loads, open(f"{EVAL_DATA}/textvqa/llava_textvqa_val_annotations.jsonl", encoding="utf-8"))}
+    preds = [json.loads(line) for line in open(answers)]
+    if sorted(str(p["question_id"]) for p in preds) != sorted(gts):
+        raise SystemExit("answers do not cover the question set exactly")
+    rows = []
+    with open(f"{out_dir}/textvqa_scores.jsonl", "w") as f:
+        for p in preds:
+            g = gts[str(p["question_id"])]
+            s = ev._compute_answer_scores(g["answers"]).get(ev.answer_processor(p["text"]), 0.0)
+            rows.append(s)
+            f.write(json.dumps({"question_id": str(p["question_id"]), "image": g["image"], "score": s}) + "\n")
+    log.write(f"TextVQA val ({prompt}): {len(rows)} questions scored with llava.eval.m4c_evaluator.TextVQAAccuracyEvaluator\n")
+    return {"benchmark": f"textvqa_{prompt}", "headline": "accuracy", "accuracy": 100 * sum(rows) / len(rows), "n_scored": len(rows)}
+
+
+def vstar_letter(text, n_options):
+    """The option letter of an answer to "Answer with the option's letter from the given choices directly.": a leading
+    letter (optionally in brackets or followed by '.', ':' or ')'), else the first standalone letter among the options."""
+    letters = "ABCD"[:n_options]
+    t = text.strip()
+    m = re.match(r"^\(?([A-Za-z])\)?(?:[.:)\s]|$)", t)
+    if m and m.group(1).upper() in letters:
+        return m.group(1).upper()
+    m = re.search(rf"\b([{letters}])\b", t)
+    return m.group(1) if m else None
+
+
+def score_vstar(answers, out_dir, log):
+    """V* Bench (191 multiple-choice questions, IDEA-0004, DEC-0036): the answer's option letter against the label;
+    accuracy over all 191 and per category; unparsed answers count as wrong. Per-question scores go to
+    <out_dir>/vstar_scores.jsonl."""
+    gts = {str(a["question_id"]): a for a in map(json.loads, open(f"{EVAL_DATA}/vstar/llava_vstar_test_annotations.jsonl", encoding="utf-8"))}
+    preds = [json.loads(line) for line in open(answers)]
+    if sorted(str(p["question_id"]) for p in preds) != sorted(gts):
+        raise SystemExit("answers do not cover the question set exactly")
+    by_cat, rows, unparsed = {}, [], 0
+    with open(f"{out_dir}/vstar_scores.jsonl", "w") as f:
+        for p in preds:
+            g = gts[str(p["question_id"])]
+            letter = vstar_letter(p["text"], g["n_options"])
+            unparsed += letter is None
+            s = float(letter == g["label"])
+            by_cat.setdefault(g["category"], []).append(s)
+            rows.append(s)
+            f.write(json.dumps({"question_id": str(p["question_id"]), "category": g["category"], "letter": letter, "score": s}) + "\n")
+    log.write(f"V* Bench: {len(rows)} questions, option letter vs label; {unparsed} answers without a letter\n")
+    return {"benchmark": "vstar", "headline": "accuracy", "accuracy": 100 * sum(rows) / len(rows), "n_scored": len(rows),
+            "unparsed": unparsed, "by_category": {k: {"n": len(v), "accuracy": 100 * sum(v) / len(v)} for k, v in sorted(by_cat.items())}}
 
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("bench", choices=["pope", "mme", "vqav2_test", "vqav2_dev", "vqav2_test2", "gqa_testdev"])
+    p.add_argument("bench", choices=["pope", "mme", "vqav2_test", "vqav2_dev", "vqav2_test2", "vqav2_dev2", "vqav2_test3",
+                                     "gqa_testdev", "gqa_val400", "textvqa_noocr", "textvqa_ocr", "vstar"])
     p.add_argument("answers")
     p.add_argument("out_dir")
     p.add_argument("--tag", help="MME working name (default: the out_dir name)")
@@ -144,6 +204,12 @@ def main():
             metrics = score_vqav2(answers, a.out_dir, a.bench.split("_", 1)[1], log)
         elif a.bench == "gqa_testdev":
             metrics = score_gqa(answers, a.out_dir, log)
+        elif a.bench == "gqa_val400":
+            metrics = score_gqa(answers, a.out_dir, log, split="val400", bench="gqa_val400")
+        elif a.bench.startswith("textvqa_"):
+            metrics = score_textvqa(answers, a.out_dir, a.bench.split("_", 1)[1], log)
+        elif a.bench == "vstar":
+            metrics = score_vstar(answers, a.out_dir, log)
         else:
             metrics = score_mme(answers, a.out_dir, a.tag or os.path.basename(os.path.abspath(a.out_dir)), log)
     metrics["n_answers"] = n_answers
