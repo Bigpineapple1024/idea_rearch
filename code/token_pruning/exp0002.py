@@ -219,6 +219,13 @@ CONFIGS["fastv64_qroute_z16pctr_all0"] = ("tp", CONFIGS["fastv64_qroute"][1] + [
     "--fastv-zoom", "16", "--fastv-zoom-pick", "pool", "--fastv-zoom-centre"] + ALL0)
 CONFIGS["fastv64_qroute_c16"] = ("tp", CONFIGS["fastv64_qroute"][1] + ["--fastv-cover", "16", "--fastv-zoom-smin", "0"])
 CONFIGS["fastv64k1_qroute_z16p_all0"] = ("tp", CONFIGS["fastv64k1_qroute"][1] + ["--fastv-zoom", "16", "--fastv-zoom-pick", "pool"] + ALL0)
+# EXP-0025 (plan v1): the attribution controls for the selected lattice zoom, same K and pick. g16full inserts the image's
+# own tokens at the same 4 x 4 lattice over its content (no second encoding); z16gctr keeps the located side but centres
+# the box.
+CONFIGS["fastv64_qroute_g16full_all0"] = ("tp", CONFIGS["fastv64_qroute"][1] + [
+    "--fastv-zoom", "16", "--fastv-zoom-pick", "grid", "--fastv-zoom-source", "full"] + ALL0)
+CONFIGS["fastv64_qroute_z16gctr_all0"] = ("tp", CONFIGS["fastv64_qroute"][1] + [
+    "--fastv-zoom", "16", "--fastv-zoom-pick", "grid", "--fastv-zoom-centre"] + ALL0)
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic

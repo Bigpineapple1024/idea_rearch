@@ -105,7 +105,8 @@ def parse():
                       help="which crop tokens: a uniform lattice, the best query cosine per block of the crop, or block "
                            "means of the crop's tokens")
     ours.add_argument("--fastv-zoom-source", choices=["crop", "full"], default="crop",
-                      help="control: 'full' inserts block means of the image's own tokens instead (needs pick pool)")
+                      help="control: 'full' inserts the image's own tokens instead, block means (pick pool) or the "
+                           "same lattice (pick grid, EXP-0025)")
     ours.add_argument("--fastv-zoom-centre", action="store_true",
                       help="control: the box keeps its side but sits at the image's centre")
     ours.add_argument("--fastv-zoom-on", choices=["unrouted", "all"], default="unrouted",
@@ -178,8 +179,9 @@ def parse():
         ours.error("--fastv-zoom-log goes with --fastv-zoom or --fastv-cover")
     if method_args.fastv_cover and method_args.fastv_zoom_on != "unrouted":
         ours.error("--fastv-cover works on the unrouted questions only (--fastv-zoom-on unrouted)")
-    if method_args.fastv_zoom_source == "full" and (method_args.fastv_zoom_pick != "pool" or not method_args.fastv_zoom):
-        ours.error("--fastv-zoom-source full needs --fastv-zoom n and --fastv-zoom-pick pool")
+    if method_args.fastv_zoom_source == "full" and (method_args.fastv_zoom_pick not in ("pool", "grid")
+                                                    or not method_args.fastv_zoom):
+        ours.error("--fastv-zoom-source full needs --fastv-zoom n and --fastv-zoom-pick pool or grid")
     if method_args.fastv_zoom_centre and not zoom_on:
         ours.error("--fastv-zoom-centre needs --fastv-zoom or --fastv-cover")
     if method_args.vocab_visibility_log and method_args.method in ("visionzip", "sparsevlm"):

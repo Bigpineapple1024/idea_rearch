@@ -46,8 +46,9 @@ the side holding the vision tower's own resolution, and kept inside the image so
 cropped from the original image (zoom_paths, one per prefill in question order), re-encoded by the vision tower and
 projector, and n of the crop's tokens are inserted right after the image tokens: a lattice over the crop ("grid"), the
 best query cosine per block ("query"), or block means of the crop's tokens ("pool"). With source "full" the n tokens are
-instead block means of the image's own tokens (no second encoding), and with centre the box keeps its side but sits at
-the image's centre (two controls). The inserted tokens are never pruned and the stage keeps keep - n image tokens, so
+instead the image's own tokens, no second encoding: block means with pick "pool", the same lattice over the image's
+content rows and columns with pick "grid" (EXP-0025); with centre the box keeps its side but sits at the image's centre
+(the controls). The inserted tokens are never pruned and the stage keeps keep - n image tokens, so
 the visual tokens after the stage are still keep. With cover (IDEA-0004, unrouted questions only), the strong
 baseline's own count of kept tokens inside the box plus cover is taken inside the box (by its score, in blocks) and the
 rest outside. fastv_zoom_log holds one record per prefill. Without zoom and cover nothing changes.
@@ -397,8 +398,13 @@ def _zoom(model, lm, result):
         rec["cover"] = True
     n = cfg.get("n", 0)
     if n:
-        if cfg.get("source", "crop") == "full":                # control: block means of the image's own tokens
-            tokens = zoom_pool(embeds[0, start:start + n_img], n, side, ~allowed)
+        if cfg.get("source", "crop") == "full":                # controls: the image's own tokens, no second encoding
+            if cfg["pick"] == "pool":                          # block means
+                tokens = zoom_pool(embeds[0, start:start + n_img], n, side, ~allowed)
+            else:                                              # the lattice over the image's content (EXP-0025)
+                pick = zoom_pick(n, side, "grid", pad=~allowed).to(embeds.device)
+                tokens = embeds[0, start:start + n_img][pick]
+                rec["picked"] = pick.tolist()
             rec["source"] = "full"
         else:
             from PIL import Image
@@ -497,8 +503,8 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
         raise ValueError("zoom n must be in [0, keep)")
     if cover and zoom and zoom["on"] != "unrouted":
         raise ValueError("cover works on the unrouted questions only (routed ones take query_vis, which it does not change)")
-    if zoom and zoom.get("source", "crop") == "full" and zoom.get("pick") != "pool":
-        raise ValueError("zoom source 'full' is the pooled-context control: it needs pick 'pool'")
+    if zoom and zoom.get("source", "crop") == "full" and zoom.get("pick") not in ("pool", "grid"):
+        raise ValueError("zoom source 'full' is a context control: it needs pick 'pool' or 'grid'")
     llama_model.fastv_zoom = zoom
     llama_model.fastv_cover = cover
     llama_model.fastv_zoom_count, llama_model.fastv_zoom_log = 0, []

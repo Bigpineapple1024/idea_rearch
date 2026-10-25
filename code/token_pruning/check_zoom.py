@@ -6,9 +6,10 @@ Router configuration of EXP-0020 (query_vis, K = 2, keep 30, 6 x 6 blocks, prior
 Checks: without zoom and cover the new code keeps exactly what the committed code keeps (kept_dump.py, two processes);
 with zoom on the unrouted questions a routed prefill is untouched, an unrouted one carries n more tokens at layer 0 and
 the same number of tokens as before after the stage (keep visual tokens), the inserted tokens equal the vision tower +
-projector on the logged crop at the picked positions (lattice), or its block means (pool), or block means of the image's
-own tokens (source full), and the box is the one the query (read from the text after the zoom tokens) points at, or the
-centred box with the same side; with zoom on every question the routed query_vis cosine still reads the question's
+projector on the logged crop at the picked positions (lattice), or its block means (pool), or the image's own tokens
+(source full: block means, or the same lattice over the image's content, EXP-0025), and the box is the one the query
+(read from the text after the zoom tokens) points at, or the centred box with the same side, whose crop's lattice tokens
+are inserted; with zoom on every question the routed query_vis cosine still reads the question's
 text; with cover, the baseline's own in-box count plus cover is taken inside the box by its rule and the rest outside;
 the box stays square and inside the image, never below the native-resolution side, and the picks skip a crop's padding;
 the layer-token and kept-token logs count the zoom tokens; argument, config and bench checks.
@@ -232,6 +233,14 @@ def main():
         rec["zoom"] and rec.get("source") == "full" and "crop_box" not in rec and rows == list(range(3, 21))
         and torch.allclose(e[start + n_img:start + n_img + n], block_means(e[start:start + n_img], rows, range(24), 4), atol=1e-5))
 
+    # H2. source full with the lattice (EXP-0025): the image's own tokens at the 4 x 4 lattice over its content (no crop)
+    model, lm, got = run(a.workdir, img_path, after, idf, [False], n=16, pick="grid", source="full")
+    rec, e = lm.fastv_zoom_log[0], got["embeds"][0][0].float()
+    lat = [r * 24 + c for r in (5, 9, 14, 18) for c in (3, 9, 15, 21)]       # content rows 3-20, all 24 columns
+    checks["full + grid: inserted tokens = the image's own tokens at the lattice over its content rows; no crop"] = (
+        rec["zoom"] and rec.get("source") == "full" and "crop_box" not in rec and rec.get("picked") == lat
+        and torch.allclose(e[start + n_img:start + n_img + n], e[start:start + n_img][lat], atol=1e-5))
+
     # I. centre: same side as located, centred on the image's content band
     model, lm, got = run(a.workdir, img_path, after, idf, [False], n=16, pick="grid", centre=True)
     rec, e = lm.fastv_zoom_log[0], got["embeds"][0][0].float()
@@ -243,6 +252,10 @@ def main():
     checks["centre: logged box = centred box, same side as the located one, centred on the content band"] = (
         list(g_ctr) == rec["grid_box"] and i_ctr["side"] == i_loc["side"] and abs(mid_r - (r_lo + r_hi) / 2) <= 0.5
         and abs(mid_c - (c_lo + c_hi) / 2) <= 0.5)
+    feats, _ = crop_feats(model, lm, rec)
+    checks["centre + grid: inserted tokens = vision tower + projector on the centred crop at the lattice"] = (
+        rec["zoom"] and rec.get("source") == "crop"
+        and torch.allclose(e[start + n_img:start + n_img + n], feats[rec["picked"]], atol=1e-5))
 
     # E. the box and the picks on other image shapes
     for wd, ht in ((640, 480), (480, 640), (500, 500), (640, 427)):
@@ -302,11 +315,14 @@ def main():
     checks["--fastv-zoom 10 refused (not a square)"] = refused(base + r + ["--fastv-zoom", "10", "--fastv-zoom-log", "z"])
     checks["--fastv-zoom without --fastv-zoom-log refused"] = refused(base + r + ["--fastv-zoom", "16"])
     checks["--fastv-cover with --fastv-zoom-on all refused"] = refused(base + r + ["--fastv-cover", "8", "--fastv-zoom-on", "all", "--fastv-zoom-log", "z"])
-    checks["--fastv-zoom-source full without pool refused"] = refused(base + r + ["--fastv-zoom", "16", "--fastv-zoom-source", "full", "--fastv-zoom-log", "z"])
+    checks["--fastv-zoom-source full with pick query refused"] = refused(base + r + ["--fastv-zoom", "16", "--fastv-zoom-pick", "query", "--fastv-zoom-source", "full", "--fastv-zoom-log", "z"])
+    checks["--fastv-zoom-source full without --fastv-zoom refused"] = refused(base + r + ["--fastv-cover", "8", "--fastv-zoom-source", "full", "--fastv-zoom-log", "z"])
     checks["--fastv-zoom-centre without zoom refused"] = refused(base + r + ["--fastv-zoom-centre"])
     for extra in (["--fastv-zoom", "16"], ["--fastv-cover", "8"], ["--fastv-zoom", "16", "--fastv-zoom-pick", "pool"],
                   ["--fastv-zoom", "16", "--fastv-zoom-pick", "pool", "--fastv-zoom-source", "full"],
-                  ["--fastv-zoom", "16", "--fastv-zoom-centre"], ["--fastv-cover", "16", "--fastv-zoom-smin", "0"]):
+                  ["--fastv-zoom", "16", "--fastv-zoom-pick", "grid", "--fastv-zoom-source", "full"],
+                  ["--fastv-zoom", "16", "--fastv-zoom-centre"], ["--fastv-zoom", "16", "--fastv-zoom-pick", "grid", "--fastv-zoom-centre"],
+                  ["--fastv-cover", "16", "--fastv-zoom-smin", "0"]):
         checks[f"accepted with the router: {' '.join(extra)}"] = not refused(base + r + extra + ["--fastv-zoom-log", "z"])
     C = exp0002.CONFIGS
     for b in (64, 128, 192):
@@ -325,7 +341,9 @@ def main():
             "fastv64_qroute_p16full_all0": q + ["--fastv-zoom", "16", "--fastv-zoom-pick", "pool", "--fastv-zoom-source", "full"] + all0,
             "fastv64_qroute_z16pctr_all0": q + ["--fastv-zoom", "16", "--fastv-zoom-pick", "pool", "--fastv-zoom-centre"] + all0,
             "fastv64_qroute_c16": q + ["--fastv-cover", "16", "--fastv-zoom-smin", "0"],
-            "fastv64k1_qroute_z16p_all0": k1 + ["--fastv-zoom", "16", "--fastv-zoom-pick", "pool"] + all0}
+            "fastv64k1_qroute_z16p_all0": k1 + ["--fastv-zoom", "16", "--fastv-zoom-pick", "pool"] + all0,
+            "fastv64_qroute_g16full_all0": q + ["--fastv-zoom", "16", "--fastv-zoom-pick", "grid", "--fastv-zoom-source", "full"] + all0,
+            "fastv64_qroute_z16gctr_all0": q + ["--fastv-zoom", "16", "--fastv-zoom-pick", "grid", "--fastv-zoom-centre"] + all0}
     for name, args in want.items():
         checks[f"exp0002 {name} (and _kl) as planned"] = C[name][1] == args and C[f"{name}_kl"][1] == args
     checks["exp0002 fastv64k1_scores = plain FastV at K 1, keep 47"] = C["fastv64k1_scores"][1] == ["--method", "fastv", "--fastv-k", "1", "--fastv-keep", "47"]
@@ -336,6 +354,9 @@ def main():
         for k in ("vqav2_dev2", "vqav2_test3", "gqa_val400"))
     src = open(f"{HERE}/score_pope_mme.py", encoding="utf-8").read()
     checks["score_pope_mme knows the three benches"] = all(f'"{k}"' in src for k in ("vqav2_dev2", "vqav2_test3", "gqa_val400"))
+    checks["benches textvqa_noocr, textvqa_ocr, vstar registered with existing files, known to score_pope_mme"] = all(
+        os.path.exists(exp0002.BENCHES[k]["question_file"]) and os.path.exists(exp0002.BENCHES[k]["annotations"][0])
+        and f'"{k}"' in src for k in ("textvqa_noocr", "textvqa_ocr", "vstar"))
     for name, ok in checks.items():
         print(("ok   " if ok else "FAIL ") + name)
     if not checks["without zoom and cover: kept sets and answers equal the committed code's"]:
