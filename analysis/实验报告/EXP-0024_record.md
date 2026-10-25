@@ -219,3 +219,10 @@ GPU 运行结束后另复制到 `code/output/EXP-0024/pre_run_review/`。
 - **只用题目文字、运行前已知的事实**（`zoom_share.py`，不读答案，输出在 `D:\6CJNM007\tmp\exp0024\zoom_share_confirm.json`）：
   - TextVQA 5000 题中被路由 382 题、不路由 4618 题，所以在 TextVQA 上“只放大不路由题”与“全部放大”几乎相同；
   - V\* 191 题中被路由 83 题（位置题 74、属性题 9），不路由 108 题（属性题 106、位置题 2）。按类别计数只读题目文字与类别字段（`D:\6CJNM007\tmp\exp0024\vstar_route_cat.py`）。
+
+## 运行中的记录与偏差（2026-10-25）
+
+- **开始**：EXP-0022-R09 在 16:32 结束后，排队脚本 `D:\6CJNM007\tmp\chain_0024.sh` 先把代码提交并推送到 code/token-pruning（commit bfff4bc），导入检查通过，把运行前审查的存档复制到 `code/output/EXP-0024/pre_run_review/`，再开始 R01（16:33）。
+- **R01 与 K = 1 的位置先验**：R01 completed（358 次空白图预填充）；make_prior_k1.py 写出 `code/output/EXP-0024/prior_k1/`。曲线的描述：底部 4 行占 27.2%，最后一个 patch 占 0.40%，与 K = 2 先验的 Pearson 相关 0.63。
+- **提前看到参照运行的 headline（按 DEC-0030 的规则记为偏差）**：16:52 检查进度时，排队脚本的日志里有 runs.tsv 的整行，看到了 R02（路由，K = 2，VQAv2 dev2）的准确率 68.80。它是参照运行的绝对值，不含任何放大运行或对照运行的结果，也不是选择规则用的差。之后的进度检查隐藏这些行（`D:\6CJNM007\tmp\exp0024\check_0024.sh`）。选择规则、分析脚本与计划都没有改。
+- **EXP-0025 计划 v0**（17 点，任何放大运行的结果出来之前）：把看细节部分的判据先写定，见 [EXP-0025](EXP-0025_record.md)。

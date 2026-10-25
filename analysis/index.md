@@ -120,6 +120,7 @@
 | [analysis/实验报告/EXP-0023_record.md](../analysis/实验报告/EXP-0023_record.md) | EXPERIMENT_RECORD：开放式题的答案在哪里（为新模块做的 CPU 诊断） |
 | [analysis/IDEA-0004_预算内放大.md](../analysis/IDEA-0004_预算内放大.md) | IDEA_PACKAGE：预算内放大（用题目查询定位被问的区域，裁剪后重新编码，用细节 token 替换一部分名额；P11、F44～F46） |
 | [analysis/实验报告/EXP-0024_record.md](../analysis/实验报告/EXP-0024_record.md) | EXPERIMENT_RECORD：预算内放大的开发集运行（VQAv2 dev2、GQA val400） |
+| [analysis/实验报告/EXP-0025_record.md](../analysis/实验报告/EXP-0025_record.md) | EXPERIMENT_RECORD：预算内放大的确认实验（计划 v0：TextVQA、V\* 的判据在开发结果之前写定） |
 | [analysis/实验报告/EXP-0020_squeeze.md](../analysis/实验报告/EXP-0020_squeeze.md) | SQUEEZE_REPORT：EXP-0020（增益来自 yes/no 与 number F42；与 VisionZip 的差距在开放式题，是底座的差距 F43） |
 | [analysis/论文主张与证据_草稿.md](../analysis/论文主张与证据_草稿.md) | 论文主张与证据对照（草稿）：可以写的主张 CL-1～CL-10、不能写的主张、共同的限定 |
 | [analysis/实验报告/EXP-0018_squeeze.md](../analysis/实验报告/EXP-0018_squeeze.md) | SQUEEZE_REPORT：EXP-0018（答案类型上效应相反 F38；损失集中在问点名物体属性的题 F39；一般题目上 FastV 一族低于 VisionZip F40） |

@@ -30,6 +30,7 @@
 | EXP-0022 | IDEA-0003 | 按题目句式路由（规则冻结）在 GQA testdev-balanced（12578 题）上的预注册检验：A、路由、A′+B+V（64），A、路由（128），vanilla、VisionZip-64、SparseVLM-64 | [EXP-0022_record](实验报告/EXP-0022_record.md)（计划 v1） | [SQZ-EXP-0022](实验报告/EXP-0022_squeeze.md) | completed（Q1、Q2 成立，Q3 不成立：路由 − A 64 档 +0.87 [+0.37, +1.40]、128 档 +0.68 [+0.30, +1.08]；与 VisionZip-64 无可检出差别（+0.29）；R03 失败，R09 重跑；F47、F48） |
 | EXP-0023 | （新模块的诊断） | 开放式题的答案在哪里：答案物体相对题目点名物体的位置，A 与 A′+B+V 的保留位置，剂量（CPU，只读已封存的输出与 COCO 框；test1 与 dev） | [EXP-0023_record](实验报告/EXP-0023_record.md)（计划 v1、v1.1） | 记录内 | completed（CPU，事后探索：邻域法按写定规则不满足“有希望”，放大法满足；A′+B+V 的损失集中在挤掉答案物体 token 的题上，F44～F46） |
 | EXP-0024 | IDEA-0004 | 预算内放大的开发集运行：池化放大、lattice 放大（K = 2）与池化放大（K = 1）对同 K 的路由，三个对照（全图池化、居中框、覆盖 16）；VQAv2 dev2、GQA val400，17 次（EXP-0022 收尾时补登） | [EXP-0024_record](实验报告/EXP-0024_record.md)（计划 v1、v1.1） | 待做 | running（2026-10-25 16:33 起，代码 commit bfff4bc） |
+| EXP-0025 | IDEA-0004 | 预算内放大的确认：所选变体对同 K 的路由，TextVQA（不给 OCR 为主、给 OCR 作参照）与 V\*，归因对照与 vanilla 参照；VQAv2 test3、GQA testdev 只在开发集判读为“有希望”时运行 | [EXP-0025_record](实验报告/EXP-0025_record.md)（计划 v0：看细节部分的判据在开发结果之前写定） | — | planned（v1 在 EXP-0024 分析之后、任何确认运行之前写定） |
 
 ## 全部运行
 
