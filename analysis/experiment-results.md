@@ -1,6 +1,6 @@
 # Experiment Results：实验详细数据总表
 
-状态（2026-10-25 补）：EXP-0018（VQAv2 验证集）已完成，一般题目上差异不显著，答案类型上效应相反；EXP-0019 已完成（审计的两项补充）；EXP-0020（按题目句式路由）运行中。原状态行（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 已完成（D3 成立），第 3 轮 EXP-0013（误报）已完成（没有修正通过），第 ⑫ 步的 EXP-0014 已完成（POPE 提升，MME 未提升）；时序预测有 iTransformer 的 GPU 复现（EXP-0004，56 次运行）、验证期预测（EXP-0009，48 次运行）、对照的 GPU 重跑（EXP-0005）和 ETTh1 上的 CPU 复现（EXP-0003），候选 1 的 CPU 诊断 EXP-0012 已完成（之后时序方向暂停，DEC-0020、DEC-0021）。空表表示无数据，绝不表示数值为零。
+状态（2026-10-25 补）：EXP-0018（VQAv2 验证集）已完成，一般题目上差异不显著，答案类型上效应相反；EXP-0019 已完成（审计的两项补充）；EXP-0020（按题目句式路由，VQAv2 test2）已完成，64、128 档都显著高于强对照（预注册），第 ⑫ 步的计划目标在 64 档达到；EXP-0021（192 档与 128 档参照）运行中；“全部运行”补上了此前漏登的 EXP-0016～EXP-0020（从各 runs.tsv 与 git.txt 生成）。原状态行（2026-10-24）：视觉 token 剪枝有 GPU 复现（EXP-0002，49 次运行）、保留位置诊断（EXP-0006）、位置校正（EXP-0008）、层分布与选择规则的拆分（EXP-0007）、覆盖对照（EXP-0010）和代码级核验（EXP-0001），第 ⑧ 步的 EXP-0011 已完成（D3 成立），第 3 轮 EXP-0013（误报）已完成（没有修正通过），第 ⑫ 步的 EXP-0014 已完成（POPE 提升，MME 未提升）；时序预测有 iTransformer 的 GPU 复现（EXP-0004，56 次运行）、验证期预测（EXP-0009，48 次运行）、对照的 GPU 重跑（EXP-0005）和 ETTh1 上的 CPU 复现（EXP-0003），候选 1 的 CPU 诊断 EXP-0012 已完成（之后时序方向暂停，DEC-0020、DEC-0021）。空表表示无数据，绝不表示数值为零。
 
 ## 实验登记
 
@@ -24,8 +24,8 @@
 | EXP-0016 | IDEA-0002 | 可视性与切分的拆分（MME），128 档复验（POPE、MME） | [EXP-0016_record](实验报告/EXP-0016_record.md)（计划 v1） | [SQZ-EXP-0015-0016](实验报告/EXP-0015-0016_squeeze.md) | completed（可视性测不出切分之外的贡献；128 档 POPE +5.21，MME −6.6 不显著） |
 | EXP-0017 | IDEA-0002 | 192 档复验 A′+B+V 与 A（POPE、MME） | [EXP-0017_record](实验报告/EXP-0017_record.md)（计划 v1） | 记录内（三档汇总见 DEC-0029） | completed（192 档 POPE +2.29，MME −20.6 不显著） |
 | EXP-0018 | IDEA-0002 | VQAv2 验证集子集（5246 题）上的一般题目检验：A′+B+V 与 A（64、128 档）及参照 | [EXP-0018_record](实验报告/EXP-0018_record.md)（计划 v1） | [SQZ-EXP-0018](实验报告/EXP-0018_squeeze.md) | completed（Q1、Q2 不成立：64 档 −0.74 [−1.70, +0.20]、128 档 −0.20，差异不显著；64 档 yes/no +1.70、other −3.43，F38～F40；R01 vanilla 失败，R09 重跑 76.69） |
-| EXP-0020 | IDEA-0003 | 按题目句式路由（助动词或 how many 开头 → A′+B+V，其余 → A）在新抽的 VQAv2 test2（5415 题）上的预注册确认（64、128 档），加参照 | [EXP-0020_record](实验报告/EXP-0020_record.md)（计划 v1～v1.2） | 待做 | running（2026-10-25 07:38 起，代码 commit 9ceacd1） |
-| EXP-0021 | IDEA-0003 | VQAv2 test2 的补全：192 档路由与 A，128 档 VisionZip、SparseVLM 参照（只作描述） | [EXP-0021_record](实验报告/EXP-0021_record.md)（计划 v1） | 待做 | planned（排在 EXP-0020 之后） |
+| EXP-0020 | IDEA-0003 | 按题目句式路由（助动词或 how many 开头 → A′+B+V，其余 → A）在新抽的 VQAv2 test2（5415 题）上的预注册确认（64、128 档），加参照 | [EXP-0020_record](实验报告/EXP-0020_record.md)（计划 v1～v1.2） | [SQZ-EXP-0020](实验报告/EXP-0020_squeeze.md) | completed（Q1、Q2、Q3 都成立：路由 − A 64 档 +1.22 [+0.58, +1.82]、128 档 +0.72 [+0.29, +1.15]；仍低于 VisionZip-64（−2.17），F42、F43） |
+| EXP-0021 | IDEA-0003 | VQAv2 test2 的补全：192 档路由与 A，128 档 VisionZip、SparseVLM 参照（只作描述） | [EXP-0021_record](实验报告/EXP-0021_record.md)（计划 v1） | 待做 | running（2026-10-25 10:12 起，代码 commit 9ceacd1） |
 | EXP-0019 | IDEA-0002 | 审计补充：A+B 的无先验对照；最终方法的 margin AUC（POPE） | [EXP-0019_record](实验报告/EXP-0019_record.md)（计划 v1） | 记录内 | completed（A+B − A₀ +0.56 [−0.70, +1.96]：适配必要得到支持；A′+B+V 的 AUC 比 vanilla 低 0.018～0.034、比 A 高，误报偏多，F41） |
 
 ## 全部运行
@@ -294,6 +294,36 @@
 | EXP-0015-R01 | vanilla_vocabvis × coco_dev（可视性记录） | 9a746fd；无未提交改动 | `tp`；--vocab-visibility-log | coco_dev 1800 题 | — | completed（不计分） | NA | — | 0.251 秒/题，14.99 GiB | `code/output/EXP-0015/EXP-0015-R01/`，65ab44fd…；备份同名目录 |
 | EXP-0015-R02 | fastv64_qvis_kl × MME（A′+B+V） | 同上 | --fastv-score query_vis | MME 2374 题 | — | completed | MME-P 1338.7 | — | 0.152 秒/题 | 88cb7a26… |
 | EXP-0015-R03 | fastv64_qvis_kl × POPE（A′+B+V） | 同上 | 同上 | POPE 8910 题 | — | completed | F1 82.74（RePOPE 86.73） | 召回 75.8% | 0.146 秒/题 | 7f4bf365… |
+| EXP-0016-R01 | fastv64_qvis_half_kl × mme（A′+B+V（名额减半）-64） | 77d3170；无未提交改动 | `tp` | MME 2374 题 | — | completed | MME-P 1320.0 | — | 0.152 秒/题，13.96 GiB | `code/output/EXP-0016/EXP-0016-R01/`，1e4711b1…；备份同名目录 |
+| EXP-0016-R02 | fastv128_prior_strat_nopad_kl × pope（A-128） | 同上 | `tp` | POPE 8910 题 | — | completed | F1 79.50（原始标注） | — | 0.153 秒/题，14.01 GiB | `code/output/EXP-0016/EXP-0016-R02/`，10b4f26d…；备份同名目录 |
+| EXP-0016-R03 | fastv128_qvis_kl × pope（A′+B+V-128） | 同上 | `tp` | POPE 8910 题 | — | completed | F1 84.71（原始标注） | — | 0.155 秒/题，14.01 GiB | `code/output/EXP-0016/EXP-0016-R03/`，84b16f4a…；备份同名目录 |
+| EXP-0016-R04 | fastv128_prior_strat_nopad_kl × mme（A-128） | 同上 | `tp` | MME 2374 题 | — | completed | MME-P 1453.8 | — | 0.159 秒/题，14.04 GiB | `code/output/EXP-0016/EXP-0016-R04/`，719f4171…；备份同名目录 |
+| EXP-0016-R05 | fastv128_qvis_kl × mme（A′+B+V-128） | 同上 | `tp` | MME 2374 题 | — | completed | MME-P 1447.2 | — | 0.162 秒/题，14.04 GiB | `code/output/EXP-0016/EXP-0016-R05/`，b4775a43…；备份同名目录 |
+| EXP-0017-R01 | fastv192_prior_strat_nopad_kl × mme（A-192） | a560902；无未提交改动 | `tp` | MME 2374 题 | — | completed | MME-P 1493.3 | — | 0.173 秒/题，14.11 GiB | `code/output/EXP-0017/EXP-0017-R01/`，0eea34eb…；备份同名目录 |
+| EXP-0017-R02 | fastv192_qvis_kl × mme（A′+B+V-192） | 同上 | `tp` | MME 2374 题 | — | completed | MME-P 1472.6 | — | 0.175 秒/题，14.11 GiB | `code/output/EXP-0017/EXP-0017-R02/`，5b74f432…；备份同名目录 |
+| EXP-0017-R03 | fastv192_prior_strat_nopad_kl × pope（A-192） | 同上 | `tp` | POPE 8910 题 | — | completed | F1 83.12（原始标注） | — | 0.167 秒/题，14.08 GiB | `code/output/EXP-0017/EXP-0017-R03/`，6b5d99da…；备份同名目录 |
+| EXP-0017-R04 | fastv192_qvis_kl × pope（A′+B+V-192） | 同上 | `tp` | POPE 8910 题 | — | completed | F1 85.41（原始标注） | — | 0.169 秒/题，14.08 GiB | `code/output/EXP-0017/EXP-0017-R04/`，78348928…；备份同名目录 |
+| EXP-0018-R01 | vanilla × vqav2_test（vanilla） | 0ee8b57；无未提交改动 | `tp` | VQAv2 test1 5246 题 | — | failed（eval_exit 127，见记录） | NA | — | — | `code/output/EXP-0018/EXP-0018-R01/`，387c99bb…；备份同名目录 |
+| EXP-0018-R02 | fastv64_prior_strat_nopad_kl × vqav2_test（A-64） | 同上 | `tp` | VQAv2 test1 5246 题 | — | completed | 准确率 67.01 | — | 0.188 秒/题，13.95 GiB | `code/output/EXP-0018/EXP-0018-R02/`，9a08c76f…；备份同名目录 |
+| EXP-0018-R03 | fastv64_qvis_kl × vqav2_test（A′+B+V-64） | 同上 | `tp` | VQAv2 test1 5246 题 | — | completed | 准确率 66.26 | — | 0.182 秒/题，14.05 GiB | `code/output/EXP-0018/EXP-0018-R03/`，c3469e6d…；备份同名目录 |
+| EXP-0018-R04 | fastv64_qidf_strat_nopad_kl × vqav2_test（A′+B-64） | 同上 | `tp` | VQAv2 test1 5246 题 | — | completed | 准确率 63.11 | — | 0.171 秒/题，14.05 GiB | `code/output/EXP-0018/EXP-0018-R04/`，a45f71f6…；备份同名目录 |
+| EXP-0018-R05 | visionzip64 × vqav2_test（VisionZip-64） | 同上 | `tp` | VQAv2 test1 5246 题 | — | completed | 准确率 70.57 | — | 0.159 秒/题，14.35 GiB | `code/output/EXP-0018/EXP-0018-R05/`，56b299ab…；备份同名目录 |
+| EXP-0018-R06 | sparsevlm64 × vqav2_test（SparseVLM-64） | 同上 | `tp` | VQAv2 test1 5246 题 | — | completed | 准确率 68.43 | — | 0.188 秒/题，18.11 GiB | `code/output/EXP-0018/EXP-0018-R06/`，1e91fa91…；备份同名目录 |
+| EXP-0018-R07 | fastv128_prior_strat_nopad_kl × vqav2_test（A-128） | 同上 | `tp` | VQAv2 test1 5246 题 | — | completed | 准确率 73.55 | — | 0.180 秒/题，14.02 GiB | `code/output/EXP-0018/EXP-0018-R07/`，419c18b7…；备份同名目录 |
+| EXP-0018-R08 | fastv128_qvis_kl × vqav2_test（A′+B+V-128） | 同上 | `tp` | VQAv2 test1 5246 题 | — | completed | 准确率 73.35 | — | 0.183 秒/题，14.03 GiB | `code/output/EXP-0018/EXP-0018-R08/`，cb70d713…；备份同名目录 |
+| EXP-0018-R09 | vanilla × vqav2_test（vanilla） | 0c3f70c；无未提交改动 | `tp` | VQAv2 test1 5246 题 | — | completed | 准确率 76.69 | — | 0.273 秒/题，14.51 GiB | `code/output/EXP-0018/EXP-0018-R09/`，934bac12…；备份同名目录 |
+| EXP-0019-R01 | fastv64_strat_nopad_kl × pope（A₀（无位置先验）-64） | 0c3f70c；无未提交改动 | `tp` | POPE 8910 题 | — | completed | F1 66.06（原始标注） | — | 0.144 秒/题，13.94 GiB | `code/output/EXP-0019/EXP-0019-R01/`，170805d4…；备份同名目录 |
+| EXP-0019-R02 | fastv64_prior_strat_nopad_kl × pope（A-64） | 同上 | `tp` | POPE 8910 题 | — | completed | F1 66.90（原始标注） | — | 0.144 秒/题，13.94 GiB | `code/output/EXP-0019/EXP-0019-R02/`，52bbc20f…；备份同名目录 |
+| EXP-0019-R03 | vanilla_logits × pope（vanilla（记录对数概率）） | 同上 | `tp` | POPE 8910 题 | — | completed | F1 85.90（原始标注） | — | 0.242 秒/题，14.50 GiB | `code/output/EXP-0019/EXP-0019-R03/`，a5da9671…；备份同名目录 |
+| EXP-0020-R01 | fastv64_prior_strat_nopad_kl × vqav2_test2（A-64） | 9ceacd1；无未提交改动 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 67.31 | — | 0.171 秒/题，13.95 GiB | `code/output/EXP-0020/EXP-0020-R01/`，c9b0ea8b…；备份同名目录 |
+| EXP-0020-R02 | fastv64_qroute_kl × vqav2_test2（路由-64） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 68.53 | — | 0.172 秒/题，13.95 GiB | `code/output/EXP-0020/EXP-0020-R02/`，eee45520…；备份同名目录 |
+| EXP-0020-R03 | fastv64_qvis_kl × vqav2_test2（A′+B+V-64） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 66.46 | — | 0.171 秒/题，13.95 GiB | `code/output/EXP-0020/EXP-0020-R03/`，ba5788e7…；备份同名目录 |
+| EXP-0020-R04 | fastv128_prior_strat_nopad_kl × vqav2_test2（A-128） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 73.87 | — | 0.179 秒/题，14.03 GiB | `code/output/EXP-0020/EXP-0020-R04/`，6a4a3b68…；备份同名目录 |
+| EXP-0020-R05 | fastv128_qroute_kl × vqav2_test2（路由-128） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 74.59 | — | 0.180 秒/题，14.03 GiB | `code/output/EXP-0020/EXP-0020-R05/`，6f6ac5a2…；备份同名目录 |
+| EXP-0020-R06 | fastv128_qvis_kl × vqav2_test2（A′+B+V-128） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 74.18 | — | 0.182 秒/题，14.03 GiB | `code/output/EXP-0020/EXP-0020-R06/`，0533a61d…；备份同名目录 |
+| EXP-0020-R07 | vanilla × vqav2_test2（vanilla） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 76.57 | — | 0.271 秒/题，14.51 GiB | `code/output/EXP-0020/EXP-0020-R07/`，4bb02078…；备份同名目录 |
+| EXP-0020-R08 | visionzip64 × vqav2_test2（VisionZip-64） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 70.70 | — | 0.159 秒/题，14.35 GiB | `code/output/EXP-0020/EXP-0020-R08/`，f5693f76…；备份同名目录 |
+| EXP-0020-R09 | sparsevlm64 × vqav2_test2（SparseVLM-64） | 同上 | `tp` | VQAv2 test2 5415 题 | — | completed | 准确率 68.70 | — | 0.186 秒/题，18.11 GiB | `code/output/EXP-0020/EXP-0020-R09/`，f69c338b…；备份同名目录 |
 
 ## 汇总与比较
 
@@ -324,5 +354,7 @@
 | C-0007-3 | EXP-0007-R03 vs R05、R04 vs R06（MME：R07 vs R09、R08 vs R10）；R05、R06 vs EXP-0002-R29、R11（MME：R09、R10 vs R28、R10） | 同上 | 同上 | SVP − 平坦（层平均 82.25 vs 81.94）：随机 POPE −5.55 [−7.00, −4.23]、MME-P −63.0 [−136.2, 12.9]；FastV POPE +1.54 [0.07, 2.99]、MME-P −87.4 [−156.4, −15.0]。平坦 49 − 平坦 30：随机 POPE +7.47 [6.58, 8.42]，FastV +17.30 [15.97, 18.75] | 计划 Q3 的规则 | 无 | 前多后少的分布没有收益，随机选择下更差（F20；M4 不成立的方向） |
 | C-0010-1 | EXP-0010-R03、R04 vs EXP-0008-R05、R06（只去位置）、EXP-0002-R11、R10（FastV-64）、R29、R28（随机-64 种子 2021） | POPE 8910 题、MME 2374 题 | 同题配对 bootstrap，1000 次 | 只覆盖 − 只去位置：POPE +4.06 [2.83, 5.27]，MME-P +95.8 [29.5, 157.0]；− FastV-64：+25.28 [23.82, 26.87]，+301.2 [231.2, 370.1]；− 随机：+1.21 [−0.30, 2.80]，+112.6 [36.1, 191.0] | 计划规则 1（R03 ≥ EXP-0008-R05 − 1） | 无 | 收益主要来自更分散；只覆盖就补回 FastV 与随机的全部 POPE 差距（F24） |
 | C-0010-2 | EXP-0010-R05、R06 vs 随机-64、只去位置、R03、R04 | 同上 | 同上 | 去位置 + 覆盖 − 随机：POPE +4.40 [2.81, 5.83]，MME-P +85.2 [5.3, 164.7]；− 只去位置：+7.25 [6.08, 8.39]，+68.4 [4.7, 128.2]；− 只覆盖：+3.19 [2.20, 4.21]，−27.4 [−84.3, 27.5] | 计划规则 3（区间不含 0） | 无 | K=2 时第 1 层注意力去掉位置后有可用的内容信号，与 FEATHER 方向一致；POPE 上仍比 VisionZip-64 低 12.4（未做区间） |
+| C-0020-1 | EXP-0020-R02 vs R01、R05 vs R04（路由 vs A）；R03 vs R01、R06 vs R04（A′+B+V vs A） | VQAv2 test2 5415 题、1000 张图，各 1 次（贪心解码） | VQA 准确率（m4c 评估器），逐题配对差 | 64 档 +1.22 [+0.58, +1.82]，128 档 +0.72 [+0.29, +1.15]（按图像重抽 1000 次，种子 0）；A′+B+V − A 64 档 yes/no +1.65、other −4.03 | 预注册：Q1、Q2 的区间在 0 以上；Q3 的 yes/no 区间在 0 以上、other 区间在 0 以下 | 无 | Q1、Q2、Q3 成立；LLaVA-1.5-7B，规则在 test1 上选、test2 上确认 |
+| C-0020-2 | EXP-0020-R02 vs R08、R09、R07（路由-64 vs VisionZip-64、SparseVLM-64、vanilla） | 同上 | 同上 | −2.17 [−3.22, −1.25]、−0.17 [−1.08, +0.84]、−8.04 [−9.01, −7.07]；与 VisionZip 的差几乎全在 other（−4.25） | 只作描述 | 无 | VQAv2 上不高于 VisionZip-64；POPE 上相反（F40、F43） |
 
 指标较多时在单次记录中使用长表，或引用可恢复的 CSV/JSON 并登记 schema、计算命令与校验和。缺失写 NA 及原因，未运行不写成失败或通过。见[事实记录模板](templates/EXPERIMENT_RECORD.md)。

@@ -14,7 +14,7 @@
 | 论文全文（MinerU 解析，只有文本） | [literature/processed](../literature/processed/README.md) |
 | 候选方案（待 baseline 复现与组合实验后重新排序） | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
 | **视觉方向第 ⑨～⑫ 步：IDF 加权的题目查询（DEC-0025）** | [IDEA-0002](IDEA-0002_题目词按信息量加权.md)（迁移方案）；[EXP-0014](实验报告/EXP-0014_record.md)、[SQZ-EXP-0014](实验报告/EXP-0014_squeeze.md)（A / A′ / A′+B / A+B：POPE 提升，MME 未提升，F34、F35） |
-| **视觉方向第 ⑨～⑫ 步第三轮：按题目句式路由（DEC-0031）** | [EXP-0018](实验报告/EXP-0018_record.md)、[SQZ-EXP-0018](实验报告/EXP-0018_squeeze.md)（VQAv2：差异不显著，yes/no 受益、other 受损，F38～F40）；[IDEA-0003](IDEA-0003_按题目句式路由.md)；[EXP-0020](实验报告/EXP-0020_record.md)（新数据上的预注册确认） |
+| **视觉方向第 ⑨～⑫ 步第三轮：按题目句式路由（DEC-0031）** | [EXP-0018](实验报告/EXP-0018_record.md)、[SQZ-EXP-0018](实验报告/EXP-0018_squeeze.md)（VQAv2：差异不显著，yes/no 受益、other 受损，F38～F40）；[IDEA-0003](IDEA-0003_按题目句式路由.md)；[EXP-0020](实验报告/EXP-0020_record.md)（新数据上的预注册确认：64、128 档显著高于强对照，计划目标在 64 档达到，DEC-0033）、[SQZ-EXP-0020](实验报告/EXP-0020_squeeze.md)（F42、F43） |
 | baseline 复现代码与步骤 | [code/token_pruning](../code/token_pruning/README.md) |
 | 视觉方向 GPU 复现记录与深挖 | [EXP-0002](实验报告/EXP-0002_record.md)、[SQZ-EXP-0002](实验报告/EXP-0002_squeeze.md) |
 | 视觉方向第 ⑤ 步：深挖意外现象 | [1a-4b_FastV不如随机选择](1a-4b_FastV不如随机选择.md)；[EXP-0006](实验报告/EXP-0006_record.md)、[SQZ-EXP-0006](实验报告/EXP-0006_squeeze.md)；[EXP-0008](实验报告/EXP-0008_record.md)、[SQZ-EXP-0008](实验报告/EXP-0008_squeeze.md)；[EXP-0007](实验报告/EXP-0007_record.md)、[SQZ-EXP-0007](实验报告/EXP-0007_squeeze.md)（层分布与选择规则）；[EXP-0010](实验报告/EXP-0010_record.md)、[SQZ-EXP-0010](实验报告/EXP-0010_squeeze.md)（覆盖对照） |
@@ -40,7 +40,7 @@
 | 关键决策与方向调整 | [version-evolution](version-evolution.md) |
 | 实验到论文的规划 | [paper-plan](paper-plan.md) |
 | 实验详细数据 | [experiment-results](experiment-results.md) |
-| 写作所需材料 | [新会话读取清单](../paper/论文写作-新会话读取清单.md) |
+| 写作所需材料 | [新会话读取清单](../paper/论文写作-新会话读取清单.md)；[论文主张与证据（草稿）](论文主张与证据_草稿.md) |
 
 ## 全部现有文档
 
@@ -107,6 +107,8 @@
 | [analysis/IDEA-0003_按题目句式路由.md](../analysis/IDEA-0003_按题目句式路由.md) | IDEA_PACKAGE：按题目句式路由（助动词或 how many 开头的题用题目查询，其余用强对照；P11） |
 | [analysis/实验报告/EXP-0020_record.md](../analysis/实验报告/EXP-0020_record.md) | EXPERIMENT_RECORD：按题目句式路由在新抽的 VQAv2 test2 上的预注册确认（第 ⑫ 步第六轮） |
 | [analysis/实验报告/EXP-0021_record.md](../analysis/实验报告/EXP-0021_record.md) | EXPERIMENT_RECORD：VQAv2 test2 的补全（192 档路由；128 档参照） |
+| [analysis/实验报告/EXP-0020_squeeze.md](../analysis/实验报告/EXP-0020_squeeze.md) | SQUEEZE_REPORT：EXP-0020（增益来自 yes/no 与 number F42；与 VisionZip 的差距在开放式题，是底座的差距 F43） |
+| [analysis/论文主张与证据_草稿.md](../analysis/论文主张与证据_草稿.md) | 论文主张与证据对照（草稿）：可以写的主张 CL-1～CL-10、不能写的主张、共同的限定 |
 | [analysis/实验报告/EXP-0018_squeeze.md](../analysis/实验报告/EXP-0018_squeeze.md) | SQUEEZE_REPORT：EXP-0018（答案类型上效应相反 F38；损失集中在问点名物体属性的题 F39；一般题目上 FastV 一族低于 VisionZip F40） |
 | [analysis/实验报告/EXP-0019_record.md](../analysis/实验报告/EXP-0019_record.md) | EXPERIMENT_RECORD：审计要求的补充（A+B 的对照；最终方法的区分力） |
 | [analysis/实验报告/EXP-0018_record.md](../analysis/实验报告/EXP-0018_record.md) | EXPERIMENT_RECORD：VQAv2 验证集子集上的一般题目检验（第 ⑫ 步第五轮） |
