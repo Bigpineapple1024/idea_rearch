@@ -15,7 +15,7 @@
 | 候选方案（待 baseline 复现与组合实验后重新排序） | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
 | **视觉方向第 ⑨～⑫ 步：IDF 加权的题目查询（DEC-0025）** | [IDEA-0002](IDEA-0002_题目词按信息量加权.md)（迁移方案）；[EXP-0014](实验报告/EXP-0014_record.md)、[SQZ-EXP-0014](实验报告/EXP-0014_squeeze.md)（A / A′ / A′+B / A+B：POPE 提升，MME 未提升，F34、F35） |
 | **视觉方向第 ⑨～⑫ 步第三轮：按题目句式路由（DEC-0031）** | [EXP-0018](实验报告/EXP-0018_record.md)、[SQZ-EXP-0018](实验报告/EXP-0018_squeeze.md)（VQAv2：差异不显著，yes/no 受益、other 受损，F38～F40）；[IDEA-0003](IDEA-0003_按题目句式路由.md)；[EXP-0020](实验报告/EXP-0020_record.md)（新数据上的预注册确认：64、128 档显著高于强对照，计划目标在 64 档达到，DEC-0033）、[SQZ-EXP-0020](实验报告/EXP-0020_squeeze.md)（F42、F43） |
-| **视觉方向第 ⑨～⑫ 步第四轮：预算内放大（DEC-0035）** | [EXP-0023](实验报告/EXP-0023_record.md)（CPU 诊断：放大法满足“有希望”，F44～F46）；[IDEA-0004](IDEA-0004_预算内放大.md)（新模块）；[EXP-0024](实验报告/EXP-0024_record.md)（开发集运行，计划 v1） |
+| **视觉方向第 ⑨～⑫ 步第四轮：预算内放大（DEC-0035）** | [EXP-0023](实验报告/EXP-0023_record.md)（CPU 诊断：放大法满足“有希望”，F44～F46）；[IDEA-0004](IDEA-0004_预算内放大.md)（新模块）；[EXP-0024](实验报告/EXP-0024_record.md)（开发集运行：判读“不像”，DEC-0039）、[SQZ-EXP-0024](实验报告/EXP-0024_squeeze.md)（F49～F51：放大不成立；作为对照的覆盖 16 与 K = 1 有正的探索性结果）；[EXP-0025](实验报告/EXP-0025_record.md)（看细节的检验，计划 v1，运行中） |
 | baseline 复现代码与步骤 | [code/token_pruning](../code/token_pruning/README.md) |
 | 视觉方向 GPU 复现记录与深挖 | [EXP-0002](实验报告/EXP-0002_record.md)、[SQZ-EXP-0002](实验报告/EXP-0002_squeeze.md) |
 | 视觉方向第 ⑤ 步：深挖意外现象 | [1a-4b_FastV不如随机选择](1a-4b_FastV不如随机选择.md)；[EXP-0006](实验报告/EXP-0006_record.md)、[SQZ-EXP-0006](实验报告/EXP-0006_squeeze.md)；[EXP-0008](实验报告/EXP-0008_record.md)、[SQZ-EXP-0008](实验报告/EXP-0008_squeeze.md)；[EXP-0007](实验报告/EXP-0007_record.md)、[SQZ-EXP-0007](实验报告/EXP-0007_squeeze.md)（层分布与选择规则）；[EXP-0010](实验报告/EXP-0010_record.md)、[SQZ-EXP-0010](实验报告/EXP-0010_squeeze.md)（覆盖对照） |
@@ -119,8 +119,9 @@
 | [analysis/实验报告/EXP-0022_squeeze.md](../analysis/实验报告/EXP-0022_squeeze.md) | SQUEEZE_REPORT：EXP-0022（GQA 上复现，增益来自 yes/no 与二选一题 F47；GQA 与 VQAv2 的差别 F48） |
 | [analysis/实验报告/EXP-0023_record.md](../analysis/实验报告/EXP-0023_record.md) | EXPERIMENT_RECORD：开放式题的答案在哪里（为新模块做的 CPU 诊断） |
 | [analysis/IDEA-0004_预算内放大.md](../analysis/IDEA-0004_预算内放大.md) | IDEA_PACKAGE：预算内放大（用题目查询定位被问的区域，裁剪后重新编码，用细节 token 替换一部分名额；P11、F44～F46） |
-| [analysis/实验报告/EXP-0024_record.md](../analysis/实验报告/EXP-0024_record.md) | EXPERIMENT_RECORD：预算内放大的开发集运行（VQAv2 dev2、GQA val400） |
-| [analysis/实验报告/EXP-0025_record.md](../analysis/实验报告/EXP-0025_record.md) | EXPERIMENT_RECORD：预算内放大的确认实验（计划 v0：TextVQA、V\* 的判据在开发结果之前写定） |
+| [analysis/实验报告/EXP-0024_record.md](../analysis/实验报告/EXP-0024_record.md) | EXPERIMENT_RECORD：预算内放大的开发集运行（VQAv2 dev2、GQA val400；判读“不像”） |
+| [analysis/实验报告/EXP-0024_squeeze.md](../analysis/实验报告/EXP-0024_squeeze.md) | SQUEEZE_REPORT：EXP-0024（放大为什么输 F49；覆盖 16 的增益依赖框盖住话题物体 F50；K = 1 的预算杠杆 F51） |
+| [analysis/实验报告/EXP-0025_record.md](../analysis/实验报告/EXP-0025_record.md) | EXPERIMENT_RECORD：预算内放大的确认实验（计划 v0：TextVQA、V\* 的判据在开发结果之前写定；v1：所选变体、同取法的对照、10 次运行） |
 | [analysis/实验报告/EXP-0020_squeeze.md](../analysis/实验报告/EXP-0020_squeeze.md) | SQUEEZE_REPORT：EXP-0020（增益来自 yes/no 与 number F42；与 VisionZip 的差距在开放式题，是底座的差距 F43） |
 | [analysis/论文主张与证据_草稿.md](../analysis/论文主张与证据_草稿.md) | 论文主张与证据对照（草稿）：可以写的主张 CL-1～CL-10、不能写的主张、共同的限定 |
 | [analysis/实验报告/EXP-0018_squeeze.md](../analysis/实验报告/EXP-0018_squeeze.md) | SQUEEZE_REPORT：EXP-0018（答案类型上效应相反 F38；损失集中在问点名物体属性的题 F39；一般题目上 FastV 一族低于 VisionZip F40） |
