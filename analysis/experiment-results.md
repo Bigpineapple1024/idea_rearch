@@ -37,6 +37,7 @@
 | EXP-0029 | IDEA-0006 | VisionZip-64 上的定位后覆盖的确认（只在 EXP-0028 判读“有希望”时运行）：所选 vs VisionZip-64（Q1，主），定位（Q2）、区域（Q3）的对照，TextVQA 上的描述（Q4）；VQAv2 test3、GQA testdev、TextVQA（不给 OCR），8～10 次 | [EXP-0029_record](实验报告/EXP-0029_record.md)（计划 v1、v1.1） | — | running（2026-10-26 09:04 开始，分析脚本 7ba3657；所选每题覆盖 16，10 次；DEC-0046～DEC-0048） |
 | EXP-0030 | IDEA-0007 | 一层全看，再按编码器排序（K = 1，留 47 个，按视觉编码器的 CLS 注意力），开发集：每题 CLS 排序、加路由、再加覆盖 16；VQAv2 dev2、GQA val400，6 次 | [EXP-0030_record](实验报告/EXP-0030_record.md)（计划 v1） | — | planned（排在 EXP-0029 分析封存之后；DEC-0049） |
 | EXP-0031 | IDEA-0007 | 一层全看、再按编码器排序的确认（只在 EXP-0030 判读“有希望”时运行）：所选 vs VisionZip-64（Q1，主）、vs IDEA-0006 的所选（Q2）、vs 对应的 FastV 配置（Q3，排序），TextVQA 上的描述（Q4）；新抽的 VQAv2 test4、GQA val400b 与 TextVQA（不给 OCR），9 次 | [EXP-0031_record](实验报告/EXP-0031_record.md)（计划 v1，在 EXP-0030 的任何结果之前写定） | — | planned（排在 EXP-0030 分析封存之后；DEC-0051） |
+| EXP-0032 | IDEA-0007（机制） | 本流程中的 DivPrune-64（按论文自己实现，在 LLM 之前留 64 个）与一层全看 + 同一选择的前 47 个（K = 1，同样的特征）；VQAv2 dev2、GQA val400，4 次 | [EXP-0032_record](实验报告/EXP-0032_record.md)（计划 v1） | — | planned（排在 chain_0031 之后；DEC-0052） |
 
 ## 全部运行
 
