@@ -1,6 +1,6 @@
 # EXPERIMENT_RECORD：VisionZip 上的定位后覆盖的确认实验（IDEA-0006）
 
-状态：计划 v1（2026-10-26 6 点），在 EXP-0028 的任何结果之前写定（EXP-0028 的 R02 运行中，没有看过它的任何结果）。只有 EXP-0028 的判读为“有希望”时才运行。计划 v1.1（6 点半）只因 EXP-0028 的重跑改了代码提交与排队条件，见文末。
+状态：运行中（2026-10-26 09:04:26 开始）。EXP-0028 的判读为“有希望”，所选为每题覆盖 16（`visionzip64_c16all`，DEC-0048），排队脚本按计划 v1.1 原样提交 analyze_0029.py（code/token-pruning 7ba3657，sha256 与 MANIFEST 相同）后开始 R01–R10，见文末“运行中的记录”。计划 v1（2026-10-26 6 点），在 EXP-0028 的任何结果之前写定（EXP-0028 的 R02 运行中，没有看过它的任何结果）。计划 v1.1（6 点半）只因 EXP-0028 的重跑改了代码提交与排队条件，见“计划 v1.1”。
 
 - 实验 ID：EXP-0029。
 - IDEA ID：[IDEA-0006](../IDEA-0006_强底座上的定位后覆盖.md)；DEC-0044、DEC-0046。
@@ -114,3 +114,10 @@ EXP-0028 的覆盖运行 R03–R12 因代码错误（visionzip_cover 的 dtype�
 - **排队**：等 EXP-0028 的 R13–R22 结束，核对 R01、R02、R13–R22 都 completed（R03–R12 是记录在案的失败运行）、GPU 空闲，再分析、封存、读判读；排队脚本核对的 HEAD 换成修正后的提交。
 - **分析脚本**：analyze_0029.py 不变。它用到的 analyze_0028 的函数（读题、重算、覆盖记录核对、居中框）在 v1.2 中没有改，只改了运行表；用 v1.2 重新空跑三种选择。
 - **预算**：按 DEC-0047，失败的 10 次不计入 30 次的上限，IDEA-0006 仍为 20～22 次。
+
+## 运行中的记录（2026-10-26）
+
+- **开始**：EXP-0028 的重跑 09:03:18 结束；排队脚本 `D:\6CJNM007\tmp\chain_0029b.sh` 核对 R01、R02、R13–R22 都 completed、GPU 空闲，运行已提交的 analyze_0028.py 并封存，从 0028.json 读出判读“有希望”、所选 `c16all`。之后核对 HEAD 为 b1eda7a、工作区干净、`D:\6CJNM007\tmp\exp0029\MANIFEST` 的 sha256、计划 v1.1 在 main 上，提交并推送 analyze_0029.py（7ba3657），核对配置，09:04:26 开始 R01。
+- **运行表**（所选不是覆盖 16，按计划共 10 次）：R01、R02 `visionzip64_c16all` × test3、testdev；R03 `visionzip64`、R04 `visionzip64_c16all` × textvqa_noocr；R05、R06 `visionzip64_c16ctr`；R07、R08 `visionzip64_t16`；R09、R10 `visionzip64_c16` × test3、testdev。每次运行设 PYTHONFAULTHANDLER=1。
+- **运行数**：IDEA-0006 按 DEC-0047 计 12 + 10 = 22 次；若失败运行也计入则为 32 次，超出上限 2 次。用户尚未答复。
+- 进度检查只显示运行号与状态，不看 headline。
