@@ -88,7 +88,7 @@
 ### 代码（分支 code/token-pruning，在 EXP-0029 分析封存之后、GPU 空闲时提交）
 
 - `fastv_llava.py`、`run_eval.py`、`exp0002.py` 的改动，`check_k1cls.py`、`analyze_0030.py`（新），sha256 记在 `D:\6CJNM007\tmp\exp0030\MANIFEST`。
-- 排队脚本确认本计划已在 main 上、工作区干净、HEAD 为 7ba3657、GPU 空闲，核对 MANIFEST 后复制、提交、推送，在仓库里重跑 check_k1cls.py（全部通过才继续），再开始 R01。
+- 排队脚本确认本计划已在 main 上、工作区干净、HEAD 为 7ba3657、GPU 空闲，核对 MANIFEST 后复制、提交、推送，在仓库里重跑 check_k1cls.py（全部通过才继续），再开始 R01。（2026-10-26 补注：用户要求每开启下一步之前完整阅读一遍仓库（DEC-0053），排队改用 `D:\6CJNM007\tmp\chain_0030b.sh`：与原脚本逐字相同，只在 EXP-0029 的分析封存之后、提交代码之前多等一道门 `D:\6CJNM007\tmp\read_repo\gate\EXP-0030.done`，读完、修好、提交之后才写）。
 
 ### 预算
 

@@ -264,7 +264,7 @@ v1 提交之后做了查新（Claude 自己检索网页与摘要，没有开子�
 
 ## 记录内深挖（2026-10-26 9 点后，看过分析之后，探索性；只读已封存的运行，CPU；没有看过 EXP-0029 的任何结果）
 
-脚本与输出都在 `D:\6CJNM007\tmp\exp0028\explore\`；做法与 analyze_0026 的定位分组、EXP-0027 的 locate_test3 相同（analyze_0024.topic_masks：题目点名、图中有的 COCO 物体的 patch；框盖住其中至少一半记为盖住）；重抽同 analyze_0028。
+脚本与输出都在 `D:\6CJNM007\tmp\exp0028\explore\`（2026-10-26 13 点封存到 `code/output/EXP-0028/explore/`（SHA256SUMS 4171f6f5…，已备份；封存前重跑，输出逐字节相同））；做法与 analyze_0026 的定位分组、EXP-0027 的 locate_test3 相同（analyze_0024.topic_masks：题目点名、图中有的 COCO 物体的 patch；框盖住其中至少一半记为盖住）；重抽同 analyze_0028。
 
 - **框是否盖住点名的物体**（locate_dev2.py，VQAv2 dev2）：
   - 不路由、点名了图中 COCO 物体的题 1165 道，框盖住物体的占 88.1%。

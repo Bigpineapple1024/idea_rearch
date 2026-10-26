@@ -1,5 +1,7 @@
 # 实验代码
 
+（2026-10-26 完整阅读补注：本文件是 main 上保留的旧副本，最后改于 e5f845a（2026-10-24）。之后的代码与运行都在分支 code/token-pruning 上，最新说明见该分支的 code/README.md 与 code/token_pruning/README.md；EXP-0002 起已在真实 LLaVA-1.5-7B 权重上运行，结果见 [experiment-results](../analysis/experiment-results.md)。）
+
 | 目录 | 方向 | 实验分支 | 状态 |
 | --- | --- | --- | --- |
 | [token_pruning/](token_pruning/README.md) | 视觉 token 剪枝（主 baseline FastV） | code/token-pruning | CPU 随机权重核验完成（EXP-0001），GPU 复现待执行 |

@@ -326,4 +326,4 @@ GPU 运行结束后另复制到 `code/output/EXP-0024/pre_run_review/`。
 - **发现并改正的文档缺口**：
   - MODE_C-0002 结构化交接包里的 F、M、C 清单仍停在 F43、M17、C19（状态行说已更新，实际没改），本次改为 F1～F51、M1～M18、C1～C23；
   - experiment-results 补上 EXP-0024 的 18 行运行与 C-0024-1～3。
-- **未完成**：squeeze_0024.py 待 GPU 空闲后提交；MinerU 解析四篇 PDF 仍未做（GPU 一直有运行）。
+- **未完成**：squeeze_0024.py 待 GPU 空闲后提交；MinerU 解析四篇 PDF 仍未做（GPU 一直有运行）。（2026-10-26 补注：squeeze_0024.py 已于 a2a51a0 提交，与封存副本相同；MinerU 解析排在 EXP-0030 开门之前的 GPU 空闲时。）

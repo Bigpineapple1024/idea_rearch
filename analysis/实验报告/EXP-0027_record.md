@@ -130,12 +130,12 @@
 
 ### 记录内深挖（看过分析之后，探索性）
 
-- **K = 1 路由 − VisionZip-64**（分析没有算这一对；用 analyze_0027 的函数与同样的重抽补算，`D:\6CJNM007\tmp\exp0027\explore\k1_vs_vz.py`，输出 k1_vs_vz.md）：
+- **K = 1 路由 − VisionZip-64**（分析没有算这一对；用 analyze_0027 的函数与同样的重抽补算，`D:\6CJNM007\tmp\exp0027\explore\k1_vs_vz.py`，输出 k1_vs_vz.md；2026-10-26 13 点连同 locate_test3 封存到 `code/output/EXP-0027/explore/`（SHA256SUMS 8ce13a38…，已备份；封存前重跑，输出逐字节相同））：
   - VQAv2 test3 −0.02 [−0.91, +0.93]：other −0.79 [−2.07, +0.47]，颜色题 −2.85 [−6.14, +0.51]（K = 2 时为 −4.34、−7.78）；
   - GQA testdev +1.62 [+0.75, +2.52]：structural choose +6.64、compare +4.75，attr +2.83。
 - 所以 VQAv2 上 FastV 一族与 VisionZip-64 的差距（F43，K = 2 时 −2.89）在 K = 1 时基本消失；同一层平均预算下，K = 1 的路由在两个确认集上与 VisionZip-64 持平或更好。登记为 F56。
 - 覆盖的增益小而稳定，集中在不路由的开放式题上。登记为 F55。
-- **定位框是否盖住话题物体**（2026-10-26 补，探索性；做法与 analyze_0026 的定位分组相同：analyze_0024.topic_masks 取题目点名、图中有的 COCO 物体的 patch，框盖住至少一半记为盖住；重抽同上；`D:\6CJNM007\tmp\exp0027\explore\locate_test3.py`，输出 locate_test3.md）：
+- **定位框是否盖住话题物体**（2026-10-26 补，探索性；做法与 analyze_0026 的定位分组相同：analyze_0024.topic_masks 取题目点名、图中有的 COCO 物体的 patch，框盖住至少一半记为盖住；重抽同上；`D:\6CJNM007\tmp\exp0027\explore\locate_test3.py`，输出 locate_test3.md；同样已封存）：
   - VQAv2 test3 上不路由、点名了图中 COCO 物体的题 1200 道，定位框盖住话题物体的占 88.4%（开发集上为 88%）。
   - 所选 − K = 1 路由：盖住的题 +1.50 [+0.23, +2.92]（1061 题），没盖住的题 −1.73 [−6.35, +2.85]（139 题）。
   - 所选 − VisionZip-64：盖住 −0.03 [−2.16, +1.89]，没盖住 −2.01 [−6.70, +1.97]。

@@ -1,5 +1,7 @@
 # token_pruning：视觉 token 剪枝 baseline 复现与代码级核验
 
+（2026-10-26 完整阅读补注：本文件是 main 上保留的旧副本，最后改于 e5f845a（2026-10-24）。之后的代码与运行都在分支 code/token-pruning 上，最新说明见该分支的 code/README.md 与 code/token_pruning/README.md；EXP-0002 起已在真实 LLaVA-1.5-7B 权重上运行，结果见 [experiment-results](../../analysis/experiment-results.md)。）
+
 方向 T1（见 [毕业选题候选](../../analysis/毕业选题候选.md)）。三篇论文的分析见 analysis/论文笔记/PAPER-0004～0006，代码级核验记录见 [EXP-0001](../../analysis/实验报告/EXP-0001_record.md)。
 
 **状态（2026-10-23）**：所有脚本都在 CPU 上用随机权重的小模型跑通，**还没有在真实 LLaVA-1.5-7B 权重和 benchmark 上运行**，因此没有任何准确率或速度结果。真实复现需要在 24GB GPU 上按下文执行。

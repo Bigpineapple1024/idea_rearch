@@ -115,7 +115,7 @@
 
 ### 排队
 
-排队脚本 `D:\6CJNM007\tmp\chain_0031.sh`：
+排队脚本 `D:\6CJNM007\tmp\chain_0031.sh`（2026-10-26 补注：用户要求每开启下一步之前完整阅读一遍仓库（DEC-0053），排队改用 `D:\6CJNM007\tmp\chain_0031b.sh`：与原脚本逐字相同，只在第 2 步之后多等一道门 `D:\6CJNM007\tmp\read_repo\gate\EXP-0031.done`，读完、修好、提交之后才写）：
 
 1. 等 `D:\6CJNM007\tmp\run_vision_0030.log` 写出 “EXP-0030 analysis sealed”；
 2. 从 0030.json 读判读：不是“有希望”就停下，不运行本实验；

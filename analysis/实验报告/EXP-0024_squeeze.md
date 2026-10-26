@@ -9,7 +9,7 @@
 - 证据状态：verified。
   - 数字都从封存的运行输出重算；覆盖 16 − 路由的配对差与封存的分析一致（同一组重抽）。
   - **预注册的只有 EXP-0024 记录中的选择规则、判读与归因规则**。本报告的分组都是看过分析之后选的，属于探索性。
-- 输出：`code/output/EXP-0024/squeeze/`（SHA256SUMS 的 sha256 81b7eb6f…，备份已核对）。脚本 `squeeze_0024.py` 在 GPU 运行期间放在 `D:\6CJNM007\tmp\exp0024\squeeze\`，GPU 空闲后提交到 code/token_pruning。
+- 输出：`code/output/EXP-0024/squeeze/`（SHA256SUMS 的 sha256 81b7eb6f…，备份已核对）。脚本 `squeeze_0024.py` 在 GPU 运行期间放在 `D:\6CJNM007\tmp\exp0024\squeeze\`，GPU 空闲后提交到 code/token_pruning（2026-10-26 补注：已于 a2a51a0 提交）。
 - 写这份报告时 EXP-0025 在运行。EXP-0025 的计划 v1 在本报告之前写定并提交（main 01c1c02），没有参考本报告。
 
 ## 1. 事实与证据边界
