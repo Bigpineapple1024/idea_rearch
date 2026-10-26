@@ -13,9 +13,9 @@
 | PAPER-0005 | SparseVLM / ICML2025 | arXiv 2410.04417v4；代码 Gumpest/SparseVLMs v1.5@734d9003、main@a9e71427 | [AP-SparseVLM](PAPER-0005_SparseVLM.md) | [SparseVLM 源码核验](PAPER-0005_SparseVLM_源码核验.md) | 原文+源码（核验补充含 SparseVLM+）；GPU 复现已完成（EXP-0002；原写“GPU 复现待执行”，2026-10-25 跑偏检查补注） |
 | PAPER-0006 | VisionZip / CVPR2025 | 正式论文+补充；代码 dvlab-research/VisionZip@8f86b55c | [AP-VisionZip](PAPER-0006_VisionZip.md) | [VisionZip 源码核验](PAPER-0006_VisionZip_源码核验.md) | 原文+源码；GPU 复现已完成（EXP-0002；原写“GPU 复现待执行”，2026-10-25 跑偏检查补注） |
 | PAPER-0007 | iTransformer / ICLR2024 | arXiv 2310.06625v4；代码 thuml/iTransformer@c2426e68 | [AP-iTransformer](PAPER-0007_iTransformer.md) | [iTransformer 源码核验](PAPER-0007_iTransformer_源码核验.md) | 原文+源码（实验室会话按 analyze-paper 写成）；GPU 复现见 EXP-0004 |
-| PAPER-0008 | CLASP / arXiv 2026-04 | arXiv 2604.12767v1（papers/CLASP-arxiv-2604.12767.pdf，sha256 534da994…） | [CLASP](PAPER-0008_CLASP.md) | 无（代码未下载、未核验，需许可） | 原文（2026-10-25，按 PDF 逐页阅读，另一代理逐页核验；未用 MinerU） |
-| PAPER-0009 | VIP-Router / arXiv 2026-09 | arXiv 2609.10346v1（papers/VIP-Router-arxiv-2609.10346.pdf，sha256 0d598900…） | [VIP-Router](PAPER-0009_VIP-Router.md) | 无（论文没有给代码链接） | 原文（同上） |
-| —（领域 B） | Li & Roth / COLING 2002；Moldovan 等 / ACL 2000 | ACL Anthology C02-1150、P00-1071（papers/，sha256 6133941c…、5a35e1c1…） | [领域 B 原文核对](domainB_原文核对_LiRoth_Moldovan.md) | — | 原文核对 IDEA-0003 的引用（2026-10-25）；Lally 等 2012 只有付费版，未读 |
+| PAPER-0008 | CLASP / arXiv 2026-04 | arXiv 2604.12767v1（papers/CLASP-arxiv-2604.12767.pdf，sha256 534da994…） | [CLASP](PAPER-0008_CLASP.md) | 无（代码未下载、未核验，需许可） | 原文（2026-10-25，按 PDF 逐页阅读，另一代理逐页核验；未用 MinerU。2026-10-26 补注：MinerU flash 档全文已解析，见 [literature/processed](../../literature/processed/README.md)，笔记未据此改动） |
+| PAPER-0009 | VIP-Router / arXiv 2026-09 | arXiv 2609.10346v1（papers/VIP-Router-arxiv-2609.10346.pdf，sha256 0d598900…） | [VIP-Router](PAPER-0009_VIP-Router.md) | 无（论文没有给代码链接） | 原文（同上）（2026-10-26 补注：MinerU 全文已解析，见 literature/processed） |
+| —（领域 B） | Li & Roth / COLING 2002；Moldovan 等 / ACL 2000 | ACL Anthology C02-1150、P00-1071（papers/，sha256 6133941c…、5a35e1c1…） | [领域 B 原文核对](domainB_原文核对_LiRoth_Moldovan.md) | — | 原文核对 IDEA-0003 的引用（2026-10-25）；Lally 等 2012 只有付费版，未读（2026-10-26 补注：MinerU 全文已解析，见 literature/processed） |
 
 两类笔记的分工：
 
