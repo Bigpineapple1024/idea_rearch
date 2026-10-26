@@ -119,5 +119,5 @@ EXP-0028 的覆盖运行 R03–R12 因代码错误（visionzip_cover 的 dtype�
 
 - **开始**：EXP-0028 的重跑 09:03:18 结束；排队脚本 `D:\6CJNM007\tmp\chain_0029b.sh` 核对 R01、R02、R13–R22 都 completed、GPU 空闲，运行已提交的 analyze_0028.py 并封存，从 0028.json 读出判读“有希望”、所选 `c16all`。之后核对 HEAD 为 b1eda7a、工作区干净、`D:\6CJNM007\tmp\exp0029\MANIFEST` 的 sha256、计划 v1.1 在 main 上，提交并推送 analyze_0029.py（7ba3657），核对配置，09:04:26 开始 R01。
 - **运行表**（所选不是覆盖 16，按计划共 10 次）：R01、R02 `visionzip64_c16all` × test3、testdev；R03 `visionzip64`、R04 `visionzip64_c16all` × textvqa_noocr；R05、R06 `visionzip64_c16ctr`；R07、R08 `visionzip64_t16`；R09、R10 `visionzip64_c16` × test3、testdev。每次运行设 PYTHONFAULTHANDLER=1。
-- **运行数**：IDEA-0006 按 DEC-0047 计 12 + 10 = 22 次；若失败运行也计入则为 32 次，超出上限 2 次。用户尚未答复。
+- **运行数**：IDEA-0006 按 DEC-0047 计 12 + 10 = 22 次；若失败运行也计入则为 32 次，超出上限 2 次。用户尚未答复。（11 点补：用户答复“不计入”，按 DEC-0047 计 22 次，DEC-0050。）
 - 进度检查只显示运行号与状态，不看 headline。
