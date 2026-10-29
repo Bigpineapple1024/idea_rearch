@@ -47,7 +47,7 @@
 | 机制 / 中间量 | **输入 embedding 已经能把物体名与对应图像区域对上**：物体名余弦的 Jaccard 0.048、AUC 0.718；用题目句均值就不行（命中 40.0%），因为模板词占了大多数 token | 同上 | 中 | 新（F29） |
 | 机制 / 中间量 | 逐 head：第 1 层 head 23 在两折中都被选中，对准比值 1.53，但命中只有 46.3%；所有 head 都远不如输入层的余弦 | 同上 | 中 | 新 |
 | 错误 / 异质性 | 变体的收益集中在小物体上：最小五分位的新漏答率 62.3% → 22.2%，最大五分位 21.2% → 2.4% | d3_pope | 高 | 新 |
-| 错误 / 异质性 | **误报增加**：负样本上，变体的误报比 vanilla 多 1.6～1.8 倍（adversarial 211 vs 132）；物体框内一个 patch 都没保留时，仍有 40.6% 答 yes（强对照 10.8%） | d3_pope；各运行 metrics.json | 高（三个子集一致） | 新（F30） |
+| 错误 / 异质性 | **误报增加**：负样本上，变体的误报是 vanilla 的 1.6～1.8 倍（多 60%～81%：211 / 121 / 56 对 132 / 69 / 31；原写“变体的误报比 vanilla 多 1.6～1.8 倍”，按字面是 2.6～2.8 倍；2026-10-29 完整阅读补注）（adversarial 211 vs 132）；物体框内一个 patch 都没保留时，仍有 40.6% 答 yes（强对照 10.8%） | d3_pope；各运行 metrics.json | 高（三个子集一致） | 新（F30） |
 | 边界 / 敏感性 | 只排除填充区：开发集上小物体命中 +4.6，POPE 上 +3.1，F1 +2.24 | d2_*、d3_pope | 高 | 扩展 F26 |
 | 边界 / 敏感性 | 剂量关系在全量 POPE 与开发集上都成立：物体上保留 0、1、2～3、≥ 4 个 patch 时，答 yes 约 11%、50%、68%、74%（强对照） | d2_pope、d2_coco_dev | 高 | 复验 F25 |
 
@@ -96,7 +96,7 @@ data_quality_and_provenance_gaps: D2b 第 1 版 AUC 缺陷已补；其余无
 primary_result_with_uncertainty: D3 变体 POPE F1 83.63，比强对照 +18.97 [17.67, 20.37]（RePOPE +16.50），比 VisionZip-64 +6.6、SparseVLM-64 +6.0
 process_dynamics: 无（推理）
 mechanism_and_intermediate_findings: 第 0～2 层注意力不看题目（Jaccard 0.93～0.98）；第 8～16 层出现题目相关的注意力；输入 embedding 余弦已能对上物体（Jaccard 0.048，小物体命中 70.4%）
-errors_heterogeneity_and_boundary_conditions: 收益集中在小物体；误报比 vanilla 多 1.6～1.8 倍；只适用于点名物体的题目
+errors_heterogeneity_and_boundary_conditions: 收益集中在小物体；误报是 vanilla 的 1.6～1.8 倍（多 60%～81%；原写“误报比 vanilla 多 1.6～1.8 倍”，按字面是 2.6～2.8 倍；2026-10-29 完整阅读补注）；只适用于点名物体的题目
 robustness_sensitivity_and_alternative_explanations: 开发集与 POPE 一致；RePOPE 下结论不变；只有一个模型、一个预算
 new_P: [P7：题目相关的选择在目标不存在时制造假证据（误报增加）, P8：一般题目里被问的物体没有标出，打分需要先找出它]
 new_F: [F28, F29, F30]

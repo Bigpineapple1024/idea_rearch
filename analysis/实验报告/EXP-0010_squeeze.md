@@ -46,7 +46,7 @@ mode_C_input_bundle:
     evidence: [E-SQZ10-3, E-SQZ7-2]
     status: UN
   - id: P-SQZ10-2
-    text: "分块后选择仍与问题无关（Jaccard 0.945）：块内换成题目相关的排序，能否补上与 SparseVLM 的 POPE 差距（13.0）"
+    text: "分块后选择仍与问题无关（Jaccard 0.945）（2026-10-29 完整阅读补注：0.945 是只覆盖（R01）的值，去位置 + 覆盖（R02）是 0.934，见 E-SQZ10-1；下文的 13.0 是去位置 + 覆盖的 POPE 64.66（R05）与 SparseVLM-64 的 77.67 之差）：块内换成题目相关的排序，能否补上与 SparseVLM 的 POPE 差距（13.0）"
     evidence: [E-SQZ10-1, E-SQZ7-1]
     status: UN
   - id: P-SQZ10-3
@@ -135,3 +135,5 @@ mode_C_input_bundle:
 - [ ] 1a-4b_FastV不如随机选择.md：3b 的结果。
 - [ ] 第 ⑥ 步交叉分析：B4-a 更新。
 - [ ] 最新实验分析报告.md、index.md。
+
+（2026-10-29 完整阅读补注：上面 7 项的方框都没有勾，实际状态是除第 2 项的 F15 外都已完成。①experiment-results.md 有 EXP-0010 的索引行、6 次运行（EXP-0010-R01～R06）和分析行 C-0010-1、C-0010-2；②已发现的实验现象.md 新增 F24，F8、F17 已更新，F15 当时漏了，现已在 F15 末尾补注 EXP-0010 的结果；③论文素材库.md 的 MAT-0012；④MODE_C-0002 的“回流 3”（F24、M9、M1、C9）；⑤1a-4b_FastV不如随机选择.md 的“3b 结果（EXP-0010）”；⑥专题分析/baseline骨架的全景图.md 的“更新（2026-10-24，EXP-0010 与 MME 的 yes 比例）”；⑦最新实验分析报告.md 的“EXP-0010（2026-10-24）”一节，index.md 已链接 EXP-0010_record 与 EXP-0010_squeeze。）

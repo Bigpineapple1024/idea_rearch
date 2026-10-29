@@ -103,6 +103,7 @@
       "authors": "Senqiao Yang 等，CUHK / HKUST / HITSZ",
       "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Yang_VisionZip_Longer_is_Better_but_Not_Necessary_in_Vision_Language_CVPR_2025_paper.pdf",
       "repo": "https://github.com/JIA-Lab-research/VisionZip",
+      "repo_note": "论文 p.1 与本地克隆 source/VisionZip 的 origin 都是 https://github.com/dvlab-research/VisionZip，固定 commit 8f86b55c 在该克隆上核验；JIA-Lab-research 是原记录的写法，是否为同一仓库改名未联网核对（2026-10-29 完整阅读补注）",
       "sha": "8f86b55c6f000eb033e6912538af2dd7dcb30502",
       "branch": "main",
       "license": "Apache-2.0（代码；模型权重另按其许可）",

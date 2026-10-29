@@ -2,7 +2,7 @@
 
 阅读日期：2026-10-23。范围：此前推荐的 DUET、TQNet、WPMixer，以及用户指定的 FastV、SparseVLM、VisionZip；趋势分析只针对后三篇。已阅读原文的方法、主结果及相关消融/附录，并静态核对关键源码。未下载模型权重、未复现实验、未核实引用量排名。
 
-> 定位更新（2026-10-23，[DEC-0014](version-evolution.md)）：用户确认用“近三年、效果差一点”的 baseline，视觉方向改为以 FastV 为主 baseline，VisionZip、SparseVLM 只作对照。下文“VisionZip 开发”的分工是写作时的定位，论文内容分析不受影响。
+> 定位更新（2026-10-23，[DEC-0014](version-evolution.md)）：用户确认用“近三年、效果差一点”的 baseline，视觉方向改为以 FastV 为主 baseline，VisionZip、SparseVLM 只作对照。下文“VisionZip 开发”的分工是写作时的定位，论文内容分析不受影响。（2026-10-29 完整阅读补注：DEC-0044 起，IDEA-0006 以 VisionZip-64 为底座，开发定位后覆盖（用户在 DEC-0043 中的选择），IDEA-0007 用 VisionZip 的 CLS 排序（DEC-0049）；“VisionZip 只作对照”对这两个方案不再成立，FastV 一族的结果保留。IDEA-0006 已在 DEC-0054 结束，IDEA-0007 的 EXP-0030～EXP-0032 已写计划）
 
 **判断：用户提出的“VisionZip 开发、FastV 与 SparseVLM 对照”分工合理。真正值得继续研究的是压缩后丢失了什么信息、在什么问题下丢失，以及节省是否转化成实际延迟收益。** 三篇只能说明这组工作的研究脉络，不能代表截至 2026 年整个领域的最新趋势或最强方法。
 
@@ -83,7 +83,7 @@ VisionZip §4.2/Table 5 在 TextVQA 上报告：SparseVLM 从原始 576 token �
 
 FastV 作为简单剪枝对照；SparseVLM 固定到原方法的 `v1.5` 分支，并核对论文与阶段预算差异。三者和不压缩模型在同一评估协议下比较，先找到可重复的失败类型，再进入 idea 设计。不要因为局部 attention 更集中就断言整体任务一定改善。
 
-下一步的证据重点是：保留 token 的信息承载、被合并细节的可恢复性、问题切换后的变化，以及 3090 上真实成本。可交接的 P/F/M/E 矩阵见 [Mode C 分析](视觉Token压缩_ModeC.md)。这里只定位候选问题，尚未生成或执行实验方案。
+下一步的证据重点是：保留 token 的信息承载、被合并细节的可恢复性、问题切换后的变化，以及 3090 上真实成本。可交接的 P/F/M/E 矩阵见 [Mode C 分析](视觉Token压缩_ModeC.md)（2026-10-29 完整阅读补注：该文件已于 2026-10-24 被 [MODE_C-0002](MODE_C-0002_视觉token剪枝.md) 取代，现行矩阵看 MODE_C-0002）。这里只定位候选问题，尚未生成或执行实验方案。
 
 ## 7. 阅读来源与可追溯入口
 
@@ -91,6 +91,6 @@ FastV 作为简单剪枝对照；SparseVLM 固定到原方法的 `v1.5` 分支�
 - 下载版本、校验和、代码 commit：[来源清单](论文笔记/sources-20261023.json)。PDF 存于被忽略的 `papers/`，没有提交全文；文本提取使用 `pdftotext`/PyMuPDF，没有声称使用 MinerU。
 - FastV 官方代码：[pkunlp-icler/FastV](https://github.com/pkunlp-icler/FastV)。
 - SparseVLM 原方法分支：[Gumpest/SparseVLMs v1.5](https://github.com/Gumpest/SparseVLMs/tree/v1.5)。
-- VisionZip 官方代码：[JIA-Lab-research/VisionZip](https://github.com/JIA-Lab-research/VisionZip)；[CVPR 补充材料](https://openaccess.thecvf.com/content/CVPR2025/supplemental/Yang_VisionZip_Longer_is_CVPR_2025_supplemental.pdf)。
+- VisionZip 官方代码：[JIA-Lab-research/VisionZip](https://github.com/JIA-Lab-research/VisionZip)（2026-10-29 完整阅读补注：论文 p.1 与本地克隆的 origin 都是 dvlab-research/VisionZip，见 论文笔记/sources-20261023.json 的 repo_note；是否为同一仓库改名未联网核对）；[CVPR 补充材料](https://openaccess.thecvf.com/content/CVPR2025/supplemental/Yang_VisionZip_Longer_is_CVPR_2025_supplemental.pdf)。
 
 DE 标记只表示直接核验了论文表格/源码中的内容，不代表独立复现了其结论。当前没有自有实验结果，不更新实验结果台账为“已完成”。

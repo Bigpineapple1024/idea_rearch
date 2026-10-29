@@ -13,7 +13,7 @@ matrix_id: MODE_C-0001
 created_at: 2026-10-23
 source_ids: [PAPER-0004, PAPER-0005, PAPER-0006, EXP-0001, S-04, S-05, S-06, S-07, S-08, S-09]
 evidence_status: partial
-evidence_locations: [本文“来源地图”“P/F/M/E 清单”, analysis/论文笔记/PAPER-000{1,2,3}_*.md, analysis/实验报告/EXP-0001_record.md]
+evidence_locations: [本文“来源地图”“P/F/M/E 清单”, analysis/论文笔记/PAPER-000{1,2,3}_*.md, analysis/实验报告/EXP-0001_record.md]   # 2026-10-29 完整阅读补注：PAPER-000{1,2,3} 是 2026-10-23 改编号前的旧编号，改编号时漏改了这一处（本文 source_ids 已是 PAPER-0004～0006）；视觉三篇的笔记现在是 PAPER-000{4,5,6}_*.md（FastV、SparseVLM、VisionZip），PAPER-0001～0003 是时序方向的 DUET、TQNet、WPMixer
 missing_evidence:
 - 所有论文全文未读，SC 条目来自检索摘要
 - 没有真实权重下的注意力、范数或准确率数据（等待 EXP-0002）
@@ -129,7 +129,7 @@ first_low_cost_check: "EXP-0002 复现通过后，按 MME 子项、POPE 子集�
 
 ## 交接与回流
 
-- **交给 Discover Innovation 的顺序**：先完成 C5 与损失分解（随 EXP-0002），再按成功可能性在 C2（待建 IDEA-0002）与 C1（IDEA-0001，已设计）中选择。当前先验是 C2 先于 C1；EXP-0002 的损失分解可以改变这个顺序，改变时记入 version-evolution。
+- **交给 Discover Innovation 的顺序**：先完成 C5 与损失分解（随 EXP-0002），再按成功可能性在 C2（待建 IDEA-0002）与 C1（IDEA-0001，已设计）（2026-10-29 完整阅读补注：C2 的方案至今没有建立；IDEA-0002 这一编号后来用于“题目词按信息量加权”（DEC-0025），与 C2 无关。第 ⑦ 步的排序里 C2 只是候选 4、成功可能性低（DEC-0015），C1 没有列入候选）中选择。当前先验是 C2 先于 C1；EXP-0002 的损失分解可以改变这个顺序，改变时记入 version-evolution。
 - **差异点拼接（C4）的定位**（DEC-0011 修订）：作为论文方法主张，它已被 VScan（ICML 2025）实现，新颖性低；但按研究流程第 ④ 步，组合实验（包括随机组合）是“制造意外实验”的探索手段，不要求新颖性，仍然可以做，前提是先跑单独的 A、B 再跑组合。
 - **与研究流程 v2.0 的衔接**：主 baseline 已改为 FastV（DEC-0011）。本矩阵中的 C 点在 FastV 复现通过、完成第一轮组合实验和 squeeze 之后，再回流更新、重新排序；在此之前不进入 discover-innovation。
 - **可比性、材料缺口和选择偏差**：三篇论文都是本项目选出的代表作，2025–2026 年的大量后续工作（如 DART、VScan、HoliTom 等）只读了摘要；新颖性判断必须在 IDEA 执行前用 analyze-paper 补读最相关的 3～5 篇。

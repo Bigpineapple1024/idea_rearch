@@ -65,7 +65,7 @@ unresolved_questions: [秩自适应策略在哪个版本的代码里, v2 取消�
 | E-SV-C09 | DE | v1 剪枝后把 position id 压成连续编号；v2 保留原始 position id | L311-314、L653-662 | — | — |
 | E-SV-C10 | DE | v1 回收：被剪 token 中相关度前 30% 用 DPC-KNN 聚成 n/10+1 个；v2 设 `s_flag=False` 取消回收 | L273-306；utils.py cluster_and_merge | — | 取消回收的理由与消融未见 |
 | E-SV-C11 | DE | batch=2 时第二个样本保留 0 个视觉 token（mask 只写到第 0 行）；写死 `.cuda()`；eval 脚本路径是作者集群的 /mnt/bn/... | EXP-0001 probe_sparsevlm.py 第 1 部分；L552、L655；scripts/v1_5/eval/*.sh | — | 必须用 batch size 1 评测 |
-| E-SV-C12 | DE | score.py 注释“2*576 4*300 10*200 16*110”与剪枝层 [2,6,15] 不一致。EXP-0001 推算为 2/4/9/17 层，真实前向中实测为 3/4/9/16 层（剪枝结果从剪枝层的下一层起生效，EXP-0002-R47～R49） | score.py 第 9 行（main）、第 7 行（v1.5）；v1.5 modelling_sparse_llama.py L265-313 | — | 只是注释问题，但影响按预算表推算的层平均 |
+| E-SV-C12 | DE | score.py 注释“2*576 4*300 10*200 16*110”与剪枝层 [2,6,15] 不一致。EXP-0001 推算为 2/4/9/17 层，真实前向中实测为 3/4/9/16 层（剪枝结果从剪枝层的下一层起生效，EXP-0002-R47～R49） | score.py 第 11 行（main；原写第 9 行，第 9 行是 layer_dict；2026-10-29 完整阅读补注）、第 7 行（v1.5）；v1.5 modelling_sparse_llama.py L265-313 | — | 只是注释问题，但影响按预算表推算的层平均 |
 | E-SV-C13 | DE | EXP-0002（LLaVA-1.5-7B，RTX 3090，batch 1）：POPE 三档与 v4 Table 1 相差 ≤0.2；同档预算下每题耗时最长（POPE 0.185/0.166/0.152 秒），评测显存 18.1 GiB，比其他方法多约 4 GiB（builder.py L114-121 为 32 层各复制一份注意力权重）。与论文 Table 1 中“SparseVLM 每档都比 FastV 略慢”一致 | EXP-0002 记录与 tables.md | Windows 上为 SDPA 替代 | — |
 
 ## 研究判断

@@ -1,6 +1,6 @@
 # 时序预测三篇论文对比：DUET、TQNet、WPMixer
 
-状态：partial，2026-10-23。材料：PAPER-0001～0003（代码已核验，论文全文未读）与 [EXP-0003](../实验报告/EXP-0003_record.md)（CPU 上真实数据复现，仅 ETTh1）。三篇论文由用户提供，并附推荐意见“DUET 优先考虑作为主 baseline”；2026-10-23 按[研究流程 v2.0](../研究流程.md) 的第 ① 步（近两年高引用、有源码、衍生工作多）和第 ② 步（复现门槛）定下 baseline（DEC-0011）。
+状态：partial，2026-10-23。材料：PAPER-0001～0003（代码已核验，论文全文未读）与 [EXP-0003](../实验报告/EXP-0003_record.md)（CPU 上真实数据复现，仅 ETTh1）。三篇论文由用户提供，并附推荐意见“DUET 优先考虑作为主 baseline”；2026-10-23 按[研究流程 v2.0](../研究流程.md) 的第 ① 步（近两年高引用、有源码、衍生工作多）和第 ② 步（复现门槛）定下 baseline（DEC-0011）。（2026-10-29 完整阅读补注：①PAPER-0001～0003 现已有原文笔记，核验状态为“原文+源码”（[论文笔记 README](../论文笔记/README.md)），“论文全文未读”只指 2026-10-23 写本文时的材料。②引用量已于 2026-10-23 21:48 用 Semantic Scholar 查过：iTransformer 2676、DUET 230、WPMixer 139、TQNet 72、CycleNet 233（[citations-20261023.json](../论文笔记/citations-20261023.json)）。③baseline 选择表里主 baseline 一行写的 GPU 复现已完成：EXP-0004 的 16 个组合中 6 个落在 ±2 SD 内，复现门槛按字面没有全过，用户决定记为偏差、继续使用（DEC-0018）；统一协议下的对照重跑见 EXP-0005。④“复现中已发现的现象”一节的候选已处理：EXP-0003 有 SQZ-EXP-0003（只基于抄录数字），drop_last、DUET 测试 mask、DUET 两个种子之差已登记为 F-TS2、F-TS5、F-TS7 并进入 MODE_C-0003；DUET 路由器输入（E-DU-C04）与 TQNet 的周期长度（E-TQ-C04）没有登记为现象，仍只在源码核验笔记里。⑤时序方向自 DEC-0020 起暂停。）
 
 ## 用户提供的候选
 
@@ -47,7 +47,7 @@
 
 | 用途 | 选择 | 依据 |
 | --- | --- | --- |
-| **主 baseline** | **iTransformer**（ICLR 2024） | ①有源码：thuml/iTransformer@c2426e68（MIT），也收录在 Time-Series-Library；②论文报告 ETTh1（回看 96）四个预测长度平均 MSE 0.454，2025 年方法约 0.44（均为论文报告值，SC，待在统一协议下实测），有改进空间；③是后续时序论文最常用的对照之一，基于它改进的工作多（引用量待实查）；④评测协议干净：测试集 batch size 为 1，`drop_last` 不丢窗口；超参数由官方脚本给出。**复现门槛未过**：云端 CPU 运行已按用户要求中止，复现在实验室 GPU 上做 |
+| **主 baseline** | **iTransformer**（ICLR 2024） | ①有源码：thuml/iTransformer@c2426e68（MIT），也收录在 Time-Series-Library；②论文报告 ETTh1（回看 96）四个预测长度平均 MSE 0.454，2025 年方法约 0.44（均为论文报告值，SC，待在统一协议下实测），有改进空间；③是后续时序论文最常用的对照之一，基于它改进的工作多（引用量待实查）（2026-10-29 补注：已查，见状态行补注）；④评测协议干净：测试集 batch size 为 1，`drop_last` 不丢窗口；超参数由官方脚本给出。**复现门槛未过**：云端 CPU 运行已按用户要求中止，复现在实验室 GPU 上做（2026-10-29 补注：已做，见状态行补注） |
 | 备选 | CycleNet（NeurIPS 2024） | ACAT-SCUT/CycleNet@d807e51f（Apache-2.0），与 TQNet 同一团队，TQNet 是其后续工作；iTransformer 一周内复现不上时启用 |
 | 强对照 + 组合实验素材 | DUET | ETTh1-96 两个种子 0.3898、0.3790，报告值 0.377 落在种子波动范围内；Paper Digest 2025-09 版 KDD 最具影响力论文排名第一；通道聚类与 mask 可作为组合素材 |
 | 强对照 + 组合实验素材 | TQNet | 复现最精确、协议干净、训练快，适合做多种子和快速诊断；周期 query 可作为组合实验的素材 |
@@ -62,7 +62,7 @@
 
 ## 复现中已发现的现象（待登记台账、待 squeeze）
 
-以下来自 EXP-0003，尚未经过 squeeze-experiment 和 deep-read，只是候选，不是 idea：
+以下来自 EXP-0003，尚未经过 squeeze-experiment 和 deep-read，只是候选，不是 idea（2026-10-29 补注：已过 squeeze-experiment（SQZ-EXP-0003），登记情况见状态行补注）：
 
 | 现象 | 证据 | 备注 |
 | --- | --- | --- |

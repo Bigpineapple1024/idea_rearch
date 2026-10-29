@@ -3,6 +3,7 @@
 > 本文件是源码核验补充；原文笔记见 [PAPER-0002_TQNet](PAPER-0002_TQNet.md)。两份冲突时以能追溯到原文页码或源码行号的一方为准。
 
 状态：partial（代码已核验，ETTh1 已在 CPU 上真实复现；论文全文未读）。paper_id PAPER-0002 / 2026-10-23 / 分析者 Claude Code 会话 / 输入：代码 ACAT-SCUT/TQNet@15e19cb23483ed52398566c4baa959168cfffa57、README、仓库内 result.txt 与 Figures/Table2.png、论文检索摘要、EXP-0003。
+**论文已回查（2026-10-24）**：E-TQ-C01 已按论文 p.1、p.5～6、p.9、p.13 核对；状态中的“论文全文未读”和 missing_evidence 第 1 条的“论文全文未读（arxiv.org 被网络策略拦截）”都是初稿时的说法；超参数怎样选出，论文确实没有写（2026-10-29 完整阅读补注）。
 
 ## 结构化交接包
 
@@ -25,10 +26,10 @@ study_type_and_context: 多变量长期预测；12 个数据集；回看窗口�
 design_units_samples_or_materials: ETT 四个、Electricity、Solar、Traffic、Weather、PEMS03/04/07/08
 intervention_input_or_procedure: 用按周期移位的可学习向量作为注意力的 query，输入数据作为 key/value，做一层跨变量注意力，再接两层 MLP
 measurements_and_analysis: MSE、MAE；单种子 2024
-results_with_uncertainty: 论文与 result.txt 为单种子；本项目 4 个种子在 ETTh1-96 上 MSE 标准差约 0.003（E-TQ-C07）
+results_with_uncertainty: 论文与 result.txt 为单种子；本项目 4 个种子在 ETTh1-96 上 MSE 标准差约 0.003（E-TQ-C07）（CPU；GPU 三个种子在 96 档的标准差为 0.0002，见 E-TQ-C08 的 2026-10-29 补注）
 claim_evidence_implementation_map: 见 E 表
 limitations_biases_and_ethics: 需要人为指定周期长度 cycle；README 自述难以扩展到超长回看窗口
-reproducibility_and_transferability: 高：ETTh1 四个预测长度与官方 result.txt 的 MSE 差 ≤0.0025，CPU 每次约 1 分钟
+reproducibility_and_transferability: 高：ETTh1 四个预测长度与官方 result.txt 的 MSE 差 ≤0.0025，CPU 每次约 1 分钟（CPU、种子 2024；GPU 三种子均值与 result.txt 的差见「研究判断」中复现误差一条的 2026-10-29 补注）
 candidate_P: [P-TS1 评测协议差异导致结论不可比, P-TS3 周期先验需要人工指定]
 candidate_F: [F-TS1 TQNet 可在 CPU 上精确复现, F-TS4 种子波动与方法间差距同量级]
 evidence_index: E-TQ-C01..E-TQ-C08
@@ -59,14 +60,14 @@ unresolved_questions: [超参数（lr、dropout、d_model）如何选定, cycle 
 | E-TQ-C05 | DE | 测试集 `drop_last=False`（所有测试窗口都计分）；所有主实验脚本回看固定 96；ETT 采用 12/4/4 个月的标准划分 | data_factory.py L19-22；scripts/TQNet/*.sh；data_loader.py L49-50 | — | 验证集 drop_last=True，只影响早停 |
 | E-TQ-C06 | DE | `run.py` 每次运行都会把结果追加写入仓库根目录的 result.txt | run.py | — | 复现时应先备份原始 result.txt |
 | E-TQ-C07 | DE | 本项目在 CPU 上复现 ETTh1（种子 2024）：96/192/336/720 的 MSE 为 0.3703/0.4282/0.4754/0.4849，官方为 0.3712/0.4284/0.4757/0.4874；ETTh1-96 用 4 个种子（2021–2024）得到 0.3722/0.3718/0.3771/0.3703，均值 0.3729，标准差 0.0030 | EXP-0003 | ETTh1，CPU fp32 | 只测了一个数据集 |
-| E-TQ-C08 | AI | 4 个种子的 MSE 极差 0.0068，与论文中相邻方法在 ETTh1 上的差距同一量级（例如 TQNet 0.441 vs TimeXer 0.437），单种子结论不可靠 | E-TQ-C07、E-TQ-C02 | ETTh1 | 其他数据集的波动可能更小 |
+| E-TQ-C08 | AI | 4 个种子的 MSE 极差 0.0068，与论文中相邻方法在 ETTh1 上的差距同一量级（例如 TQNet 0.441 vs TimeXer 0.437），单种子结论不可靠（2026-10-29 完整阅读补注：这是 CPU 结果。GPU 三种子复验（EXP-0005）中 96 档标准差只有 0.0002，720 档为 0.0206（主要来自种子 2022 的 0.5255）；种子敏感性随预测长度变化，见现象台账 F-TS4。） | E-TQ-C07、E-TQ-C02 | ETTh1 | 其他数据集的波动可能更小 |
 
 ## 研究判断
 
 - **优点**：
   - 结构极简（单层注意力 + MLP），代码约 80 行，便于阅读和消融。
   - 评测协议干净：测试集不丢样本、回看窗口固定、划分标准。
-  - 本项目复现误差小于 0.003。
+  - 本项目复现误差小于 0.003。（2026-10-29 完整阅读补注：指 CPU、种子 2024 的结果；GPU 三种子均值为 0.3728 / 0.4295 / 0.4796 / 0.5019，result.txt 为 0.3712 / 0.4284 / 0.4757 / 0.4874，720 档差得最多，见 EXP-0005。）
   - CPU 上每次约 1 分钟，单卡 GPU 上可以负担多种子、多数据集的实验。
 - **缺点**：
   - 周期长度需要人为指定，多周期或周期不明显的数据怎么办，代码中没有处理。

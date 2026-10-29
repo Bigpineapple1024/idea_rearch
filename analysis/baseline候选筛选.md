@@ -1,6 +1,6 @@
 # Baseline 候选初筛：单张 RTX 3090 24GB
 
-后续状态（2026-10-23）：本文件保留初筛时的判断。此后六篇原文已取得，用户提供了 VisionZip 开发、FastV/SparseVLM 对照的定位；更新见[六篇阅读与趋势](六篇论文总结与视觉Token压缩趋势.md)。按用户“近三年、效果差一点、有源码”的偏好，时序主 baseline 已改为 iTransformer，DUET、TQNet、WPMixer 改作对照（[DEC-0012](version-evolution.md)）；视觉方向以 FastV 为主 baseline，VisionZip 只作对照（DEC-0014）。下文“原文未取得”是初筛时的证据状态；引用量仍未核验。
+后续状态（2026-10-23）：本文件保留初筛时的判断。此后六篇原文已取得，用户提供了 VisionZip 开发、FastV/SparseVLM 对照的定位；更新见[六篇阅读与趋势](六篇论文总结与视觉Token压缩趋势.md)。按用户“近三年、效果差一点、有源码”的偏好，时序主 baseline 已改为 iTransformer，DUET、TQNet、WPMixer 改作对照（[DEC-0012](version-evolution.md)）；视觉方向以 FastV 为主 baseline，VisionZip 只作对照（DEC-0014）。下文“原文未取得”是初筛时的证据状态；引用量仍未核验。（2026-10-29 完整阅读补注：引用量已于 2026-10-23 21:48（+09:00）用 Semantic Scholar 查过，见 论文笔记/citations-20261023.json 与 论文笔记/README.md 的来源说明；本文最后一次修改（e7a38bd，2026-10-23 08:38 UTC）早于这次查询，所以“引用量仍未核验”以及下文“引用量核验的剩余工作”里引用量的部分已过时；该节中扩展候选池、逐篇查后续论文两项未见完成记录。另外，DEC-0044 起 IDEA-0006 以 VisionZip-64 为底座开发（用户在 DEC-0043 中的选择），“VisionZip 只作对照”对它不再成立，FastV 一族的结果保留）
 
 检索日期：2026-10-23（Asia/Tokyo）。状态：**代码与可复现性初筛完成，引用量排序及后续改进论文的系统检索未完成**。
 

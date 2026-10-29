@@ -29,7 +29,7 @@
 ### 数据准备的实际情况（2026-10-25，任何 GQA 运行之前）
 
 - `questions1.2.zip` 下载完整（1498616372 字节，与 HEAD 一致；sha256 cffe9277…）。
-- **398 张图**：用 HTTP 分段请求从同一个官方 `images.zip` 读出目录和这 398 个成员（`make_gqa_set.py`），每个成员都经 zipfile 的 CRC-32 校验。逐张 sha256 在 `D:\6CJNM007\data\gqa\images_SHA256SUMS`（该文件的 sha256 9fcfa63b…），398 张都能用 PIL 打开（宽 288～640 像素）。这样做是为了不让 GPU 空等完整包下载。完整的 `images.zip`（21.8 GB）仍在后台下载，下完后核对大小、记录 sha256，并逐张比对两条路径取到的图（结果补记在本节）。**补记（2026-10-25 12:07）**：完整的 images.zip 下载完成，21817965542 字节（与 HEAD 一致），sha256 02ce5c49…；从中读出的 398 张图与分段取到的逐张 sha256 都相同（398 / 398，`D:\6CJNM007\tmp\exp0022\verify_full_zip.py`）。
+- **398 张图**：用 HTTP 分段请求从同一个官方 `images.zip` 读出目录和这 398 个成员（`make_gqa_set.py`），每个成员都经 zipfile 的 CRC-32 校验。逐张 sha256 在 `D:\6CJNM007\data\gqa\images_SHA256SUMS`（该文件的 sha256 9fcfa63b…），398 张都能用 PIL 打开（宽 288～640 像素）。这样做是为了不让 GPU 空等完整包下载。完整的 `images.zip`（21.8 GB）仍在后台下载，下完后核对大小、记录 sha256，并逐张比对两条路径取到的图（结果补记在本节）。**补记（2026-10-25 12:07）**：完整的 images.zip 下载完成，21817965542 字节（与 HEAD 一致），sha256 02ce5c49…；从中读出的 398 张图与分段取到的逐张 sha256 都相同（398 / 398，`D:\6CJNM007\tmp\exp0022\verify_full_zip.py`）。（2026-10-29 完整阅读补注：该脚本只在 tmp 下，不在 git，也未封存进 code/output；sha256 前 16 位 5c0e7318d9f62816。）
 - **数据核对全部通过**：官方答案覆盖 LLaVA 题目文件的 12578 个 question_id，一一对应；图像名与题目文字逐题相同。
 - 逐题标注 `llava_gqa_testdev_balanced_annotations.jsonl`，sha256 23a5c89c…；LLaVA 题目文件的 sha256 515aab31…。
 - **只由标注得到的事实**（不涉及任何模型输出）：
@@ -44,7 +44,7 @@ route_share_gqa.py（不读答案）：
 - 路由比例 0.425，共 5340 题。开头词：is 2708、are 1145、does 987、do 497、was 2、could 1。GQA 没有 how many 题。
 - 被路由的题中，**1279 题（24%）是二选一题**，题目中含 or，如 “Is the shirt red or blue?”：句式是助动词开头，答案却是属性或位置。
 - 不路由的题开头词：what 3994、which 991、who 917、how 432 等。
-- 每张图 3～92 题，中位数 29。
+- 每张图 3～92 题，中位数 29。（2026-10-29 完整阅读补注：上面几条和“数据准备的实际情况”里 398 张图“398 / 398”的比对，出自 route_share_gqa.py 与 verify_full_zip.py。核对时这两个脚本只在 D:\6CJNM007\tmp\exp0022\：没有提交到 code/token-pruning，没有封存进 code/output/EXP-0022，D:\6CJNM007\backup\EXP-0022\ 里也没有，tmp\exp0022 里没有找到它们的输出文件；route_share_gqa.py 在记录里连路径都没写。路由比例 0.425、二选一 1279 题和被路由题的开头词，已由封存的 code/output/EXP-0022/analysis/0022.md 和 squeeze/squeeze_0022.md §7 复现；不路由题的开头词计数（what 3994 等）、每图题数（3～92，中位数 29）和 398 张图两条下载路径逐张一致的核对，目前只有这两个脚本作依据（题目文字上的计数可由题目文件重算，其 sha256 记在“数据准备的实际情况”一节）。脚本提交或封存之后，另补 commit 与 sha256。）
 
 ### 运行（gqa_testdev，按此顺序；主判据的运行在前）
 

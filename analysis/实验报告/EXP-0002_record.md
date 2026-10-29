@@ -113,7 +113,7 @@ next_routes: [squeeze-experiment（EXP-0002_squeeze）, deep-read Mode C（合�
 
 ## 全部运行
 
-主指标：POPE 为三子集 F1 均值（%），MME 为 Perception 总分，诊断运行（pope50）为 32 层平均视觉 token 数。49 个 git.txt 中，只有 R04 记录了一个未跟踪文件（`code/token_pruning/bootstrap_ci.py`，当时尚未提交）；其余运行开始时本仓库没有未提交改动，外部仓库均为 clean。R06～R25 的 commit 为 f5087a9；R26 起为 e4636ec，这次提交加入了 SDPA 替代，只改变 sparsevlm 路径。
+主指标：POPE 为三子集 F1 均值（%），MME 为 Perception 总分，诊断运行（pope50）为 32 层平均视觉 token 数。49 个 git.txt 中，只有 R04 记录了一个未跟踪文件（`code/token_pruning/bootstrap_ci.py`，当时尚未提交）；其余运行开始时本仓库没有未提交改动，外部仓库均为 clean。R06～R25 的 commit 为 f5087a9；R26 起为 e4636ec，这次提交加入了 SDPA 替代，只改变 sparsevlm 路径。（2026-10-29 完整阅读补注：e4636ec 只到 R41；R42～R45 为 97bda7b（逐层 token 诊断），R46～R49 为 a2fa660（诊断钩子修复），见下表和各运行的 git.txt。）
 
 | 运行 ID | 组别 / 种子 | 开始 / 结束 | 状态 / 退出码 | 实际配置 | 样本量 | 原始输出 / 校验和 / 备份 | 异常与偏差 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -279,7 +279,7 @@ tables.md 的最后一张表（`analyze_exp0002.py` 的 `METHOD_PAIRS`，在记�
 ### 局部指标（摘要；完整表见 tables.md）
 
 - **POPE 的 yes 比例与召回率**：
-  - vanilla 的 yes 比例为 42.6%（真值 50%）。所有剪枝方法都更少答 yes：FastV 最严重（32.7% → 27.3% → 11.6%），随机次之（37.5% → 34.3% → 23.5%）。VisionZip、SparseVLM 在 192/128 档与 vanilla 相差不超过 2.2 个百分点，64 档降到 34.7%、35.0%。
+  - vanilla 的 yes 比例为 42.6%（真值 50%）。所有剪枝方法都更少答 yes（2026-10-29 完整阅读补注：VisionZip-192 是例外，其 yes 比例 43.3% 比 vanilla 的 42.6% 高 0.7 个百分点，其余配置都低于 vanilla；各方法内部从 192 档到 128 档到 64 档单调下降，数据见上面的主结果表与 code/output/EXP-0002/analysis/tables.md）：FastV 最严重（32.7% → 27.3% → 11.6%），随机次之（37.5% → 34.3% → 23.5%）。VisionZip、SparseVLM 在 192/128 档与 vanilla 相差不超过 2.2 个百分点，64 档降到 34.7%、35.0%。
   - F1 的下降主要来自召回：FastV-64 的召回率为 22.3%（vanilla 79.1%），精确率仍有 93.8%～98.5%。
   - FastV 与随机选择改变的答案以“对→错”为主（FastV-64：2616 vs 254；随机-64 种子 2021：1690 vs 237）。VisionZip-192、SparseVLM-192 两者接近（239 vs 195、236 vs 194）。
 - **MME 子任务（相对 vanilla）**：

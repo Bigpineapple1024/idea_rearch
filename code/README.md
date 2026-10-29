@@ -4,9 +4,9 @@
 
 | 目录 | 方向 | 实验分支 | 状态 |
 | --- | --- | --- | --- |
-| [token_pruning/](token_pruning/README.md) | 视觉 token 剪枝（主 baseline FastV） | code/token-pruning | CPU 随机权重核验完成（EXP-0001），GPU 复现待执行 |
+| [token_pruning/](token_pruning/README.md) | 视觉 token 剪枝（主 baseline FastV） | code/token-pruning | CPU 随机权重核验完成（EXP-0001），GPU 复现待执行（2026-10-29 完整阅读补注：已过时。GPU 复现已在 EXP-0002 完成（2026-10-23～24，实验室 RTX 3090，49 次运行，含失败）；此后视觉方向的实验到 EXP-0029 都已完成，IDEA-0006 在 EXP-0029 结束（DEC-0054）。方向格的“主 baseline FastV”也不再只指 FastV：IDEA-0006 起在 VisionZip-64 上做（DEC-0044）。最新状态见 main 分支的 analysis/index.md） |
 | [env/](env/windows_env.sh) | 实验室电脑（原生 Windows）的环境脚本 | 所有分支 | 2026-10-23 在实验室电脑上运行通过；六个环境（含“再装”一列）已装好并核对 |
-| [ts_forecasting/](ts_forecasting/README.md) | 时序预测（主 baseline iTransformer） | code/ts-forecasting | 对照 DUET/TQNet/WPMixer 已在 CPU 上运行 ETTh1（EXP-0003）；iTransformer 待复现 |
+| [ts_forecasting/](ts_forecasting/README.md) | 时序预测（主 baseline iTransformer） | code/ts-forecasting | 对照 DUET/TQNet/WPMixer 已在 CPU 上运行 ETTh1（EXP-0003）；iTransformer 待复现（2026-10-29 完整阅读补注：已过时。iTransformer 已在实验室 GPU 上复现（EXP-0004，记为偏差后继续使用，DEC-0018）；DUET、TQNet、WPMixer 已按统一协议在 GPU 上重跑（EXP-0005）；之后做了 EXP-0009、EXP-0012 两个诊断；时序方向在第 ⑦ 步后暂停（DEC-0020、DEC-0021），代码在 code/ts-forecasting 分支（撰写补注时为 099fead）） |
 
 外部仓库（LLaVA、FastV、SparseVLM、VisionZip、iTransformer、DUET、TQNet、WPMixer）不放进本仓库，按 [source/README](../source/README.md) 登记的 commit 克隆到 `source/` 下（只读）；本目录只放本项目自己的代码。
 
@@ -136,6 +136,8 @@ Git 为 PortableGit 2.56.0.3（`D:\6CJNM007\git`），Miniforge 26.7.2-1 装在 
 - 各环境的完整 `pip freeze`、安装脚本和日志在 `D:\6CJNM007\backup\env_setup_2026-10-23\`。
 
 ### 原生 Windows 上的已知差异（视觉方向已在 EXP-0002 中实际运行；时序方向来自代码核查）
+
+（2026-10-29 完整阅读补注：时序方向此后也在实验室电脑上实际运行了，EXP-0004、EXP-0005 都加 `--num_workers 0`（见两份记录的配置），所以下面时序方向的条目不再只是代码核查。）
 
 - **DataLoader 子进程**：Windows 用 spawn 启动 worker，子进程会重新导入主模块。
   - LLaVA 的 `model_vqa_loader` 在 worker 中读取只在 `__main__` 里定义的 `args`，worker 数大于 0 时会报 NameError。本项目的 `run_eval.py` 换用自己的 DataLoader（数据集、collate_fn 和顺序与 LLaVA 相同），在每个 worker 启动时把 `args` 传进去，默认 4 个 worker（`--num-workers` 可改）。答案与 0 个 worker 时逐条相同（EXP-0002-R05 对 R02、R34 对 R04），每题快约 7%。

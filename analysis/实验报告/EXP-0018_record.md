@@ -113,7 +113,7 @@ IDF 在 test 题目文件上计；可视性表与 EXP-0015 相同。
 - **运行顺序**：vanilla 原定第一个，实际最后跑；失败的 R01 保留文件夹，重试用新 ID R09。
 - **分析脚本**：从 `D:\6CJNM007\tmp\exp0018\analyze_0018.py` 运行，因为当时 EXP-0019 在 GPU 上，运行期间不改工作区。之后原样提交为 `code/token_pruning/analyze_0018.py`。
 - **只读复核**：多代理工作流在运行期间做了只读复核，结论都不影响结果，记录如下。
-  - **计分**：m4c 的答案归一化会删掉逗号，官方 vqaEval.py 不删，所以“标准 VQA 准确率”不完全准确。按 lmms-eval 与 LLaVA 服务端的定义重算 8 个运行：每个运行只有 0～3 题不同，准确率差 ≤0.03 个百分点，所有配置的差同向抵消（`D:\6CJNM007\tmp\verify_comma_metric\score_runs.py`）。
+  - **计分**：m4c 的答案归一化会删掉逗号，官方 vqaEval.py 不删，所以“标准 VQA 准确率”不完全准确。按 lmms-eval 与 LLaVA 服务端的定义重算 8 个运行：每个运行只有 0～3 题不同，准确率差 ≤0.03 个百分点，所有配置的差同向抵消（`D:\6CJNM007\tmp\verify_comma_metric\score_runs.py`）。（2026-10-29 完整阅读补注：核对时，D:\6CJNM007\tmp\verify_comma_metric\ 下的 score_runs.py、verify.py、scan_outputs.py 三个脚本没有提交（code/token-pruning 的历史里没有），没有封存进 code/output/EXP-0018，D:\6CJNM007\backup\EXP-0018\ 里也没有，tmp 里也没有另存它们的输出。上面“每个运行只有 0～3 题不同，准确率差 ≤0.03 个百分点”目前只有这些脚本作依据（它们读封存的 EXP-0018 答案，可以重跑）；EXP-0020_record 的计分口径引用了这一结论。脚本封存或提交之后，另补 commit 与 sha256。）
   - **dev 不是 test 的同分布样本**：dev 的 300 张图都有至少 3 个 COCO 类别（平均 4.51），test 只有 46.6% 有（平均 2.92）。答案类型比例 dev 为 34.8 / 14.7 / 50.4，test 为 37.5 / 13.2 / 49.3。已写进 make_vqav2_sets.py 的说明。以后若用 dev 预测 test，要另抽同分布的开发样本。EXP-0020 改用新抽的 test2 做确认。
   - **coco_dev3 的 adversarial 负样本**：类别频率与共现计数用了全部非 POPE 的 val2014 图，包括后来划进 vqav2_test 的图（989 张在计数池中，占 2.5%）。去掉这些图后，300 张图中有 3 张的 adversarial 负样本集合改变（5 张的排序改变）。按原样重建 coco_dev3 与现有文件逐字节相同（45fbc759…、ba6cd852…）。所以 vqav2_test 的图像不是严格“未被开发碰过”，影响只在 EXP-0013 的开发集负样本上，不需要重建。
   - **数据来源记录**：bench 的 `data_archives_sha256_file` 原来指向不含 VQAv2 的 `downloads/SHA256SUMS`。已在 0c3f70c 改为 `downloads/vqav2/SHA256SUMS`，所以 R02～R08 的 config.json 里是旧指针，R09 是新指针。

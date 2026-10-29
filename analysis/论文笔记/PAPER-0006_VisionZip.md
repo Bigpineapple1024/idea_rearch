@@ -9,7 +9,7 @@
 - 标题：VisionZip: Longer is Better but Not Necessary in Vision Language Models。
 - 作者/机构：Senqiao Yang 等，CUHK / HKUST / HITSZ。
 - 版本：CVPR 2025 正式 PDF + 官方 supplement；不采用 arXiv v2（2026-03-15）新增内容作会议版证据。
-- [原文](https://openaccess.thecvf.com/content/CVPR2025/papers/Yang_VisionZip_Longer_is_Better_but_Not_Necessary_in_Vision_Language_CVPR_2025_paper.pdf)；[固定源码](https://github.com/JIA-Lab-research/VisionZip/tree/8f86b55c6f000eb033e6912538af2dd7dcb30502)（分支 `main`）。
+- [原文](https://openaccess.thecvf.com/content/CVPR2025/papers/Yang_VisionZip_Longer_is_Better_but_Not_Necessary_in_Vision_Language_CVPR_2025_paper.pdf)；[固定源码](https://github.com/JIA-Lab-research/VisionZip/tree/8f86b55c6f000eb033e6912538af2dd7dcb30502)（分支 `main`）。（2026-10-29 完整阅读补注：论文 p.1 与本地克隆 source/VisionZip 的 origin 都是 https://github.com/dvlab-research/VisionZip，固定 commit 8f86b55c 在该克隆上核验；JIA-Lab-research 是原记录的写法，是否为同一仓库改名未联网核对。）
 - PDF：`papers/VisionZip-cvpr.pdf`，11 页；SHA-256：`d4e22f2136ba1b7e95a971d99f008a53141b9dbe1b2dfae5bdfbf8c06778e13d`。原文访问不等于获得再分发许可，全文未提交 Git。
 - 代码许可：Apache-2.0（代码；模型权重另按其许可）。
 - 实际阅读：研究动机、方法、主要表格、相关消融/附录和上文指定代码路径；未逐项复算所有数据或证明。提取工具为 pdftotext/PyMuPDF，双栏公式可能有解析误差，引用以原 PDF 页/节/表为准；不是 MinerU 解析。
@@ -49,7 +49,7 @@ Table 1 免训练归一化平均：192 为 98.5%，128 为 97.6%，64 为 94.0%�
 
 ## 与当前项目的关系
 
-材料可得性中，独立复现未知。写作时用户将其指定为开发 baseline（2026-10-23 已改为对照，主 baseline 为 FastV，见 DEC-0014），7B 免训练版本是单张3090值得验证的入口；仍需实测 batch1 显存和端到端延迟。Qwen2.5-VL 等后续适配不等于原论文已评估；“VisionZip后再SparseVLM”已有 Table5，不能当组合创新。适合围绕细节丢失、上下文合并和跨问题复用继续诊断。
+材料可得性中，独立复现未知。写作时用户将其指定为开发 baseline（2026-10-23 已改为对照，主 baseline 为 FastV，见 DEC-0014），7B 免训练版本是单张3090值得验证的入口；仍需实测 batch1 显存和端到端延迟。Qwen2.5-VL 等后续适配不等于原论文已评估；“VisionZip后再SparseVLM”已有 Table5，不能当组合创新。适合围绕细节丢失、上下文合并和跨问题复用继续诊断。（2026-10-29 完整阅读补注：本段是 2026-10-23 写作时的状态。DEC-0044 起，DEC-0012、DEC-0014 中“VisionZip 只作对照、不以它开发”对 IDEA-0006 已由用户在 DEC-0043 中的选择取代：IDEA-0006 以 VisionZip-64 为底座（EXP-0028 起，已于 DEC-0054 结束）；DEC-0049 的 IDEA-0007 在 K = 1 框架里按 VisionZip 的 CLS 分数排序；FastV 一族的结果保留。“独立复现未知”“仍需实测 batch1 显存和端到端延迟”已由 EXP-0002 补上（RTX 3090、batch 1）：POPE F1 85.49 / 83.12 / 77.03（192 / 128 / 64 档，EXP-0002-R13 / R15 / R17；论文 Table 1 为 85.3 / 83.2 / 77.0），峰值显存 14.35 GiB，每题 0.158 / 0.143 / 0.128 秒（含 Python 与生成开销，不是单独测的预填充延迟），见源码核验补充 E-VZ-C14。）
 
 ## 交接 Deep Read
 
@@ -77,7 +77,7 @@ evidence_locations:
 - 'E-VZ-4: 主文 PDF p.7–8，Table 5、§4.2'
 - 'E-VZ-5: 主文 PDF p.8，§4.3、Fig.7'
 missing_evidence:
-- 没有本项目独立运行、原始逐样本输出或3090实测
+- 没有本项目独立运行、原始逐样本输出或3090实测（2026-10-29 完整阅读补注：已由 EXP-0002 部分补上，见源码核验补充 E-VZ-C14）
 - 未完成全部基准数据许可/划分/污染与所有引用文献审计
 - 引用量和2026年完整后续工作未核验
 next_skill: deep-read Mode C

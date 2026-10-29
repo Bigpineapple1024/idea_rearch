@@ -1,6 +1,6 @@
 # 所有论文在baseline骨架的改进内容
 
-状态：partial，2026-10-23；2026-10-24 补入时序方向（文末）。材料范围：PAPER-0004 FastV、PAPER-0005 SparseVLM、PAPER-0006 VisionZip 的代码（固定 commit 见各论文笔记）与检索摘要；论文全文未读。代码层面的核验见 [EXP-0001](../实验报告/EXP-0001_record.md)。
+状态：partial，2026-10-23；2026-10-24 补入时序方向（文末）。材料范围：PAPER-0004 FastV、PAPER-0005 SparseVLM、PAPER-0006 VisionZip 的代码（固定 commit 见各论文笔记）与检索摘要；论文全文未读（2026-10-29 完整阅读补注：“论文全文未读”只指 2026-10-23 写本文时用的材料。PAPER-0004～0006 现已有原文笔记，核验状态为“原文+源码”，见[论文笔记 README](../论文笔记/README.md)；下文“幅值、CLS、位置编号三篇都没有讨论”一句另写有“2026-10-24 已回查论文”。baseline 选择表里 FastV 一行的“引用量待…实查”也已查，数字见该行补注）。代码层面的核验见 [EXP-0001](../实验报告/EXP-0001_record.md)。（2026-10-26 补注：视觉部分末尾补入“查新补充中的论文（2026-10-26）”一节，列 DivPrune、MMTok、CoverPruner、ShaRP、VTW、PyramidDrop 六篇：只读了摘要与 HTML 页，没有原文笔记，也没有读代码。“论文全文未读”说的是本文三行的材料；PAPER-0004～0006 另有原文笔记（[论文笔记/README](../论文笔记/README.md) 的核验状态为“原文+源码”），2026-10-24 回查过论文的地方见共性第 5 条。）
 
 目的：将文献改造映射到 baseline 的具体位置，与[骨架全景图](baseline骨架的全景图.md)交叉阅读。
 
@@ -9,6 +9,8 @@
 | PAPER-0004 FastV | LLaVA-1.5，transformers 修改版 | B4 第 K 层前（fastv_kvcache.py） | 按第 K-1 层最后一个 token 的注意力保留前 R 个视觉 token，保留原始位置 | 深层对视觉注意力很低（SC） | FLOPs 降低；前 K 层不省；打分层不能用 FlashAttention | E-FV-C01～10 |
 | PAPER-0005 SparseVLM | LLaVA-1.5 分叉，transformers 4.37.0 + flash_attn 2.3.3 | B4 第 2/6/15 层（modelling_sparse_llama.py） | 文本评分者打分，分阶段保留固定数；v1 回收被剪 token；v2 做 RoPE 校正、保留原始位置、取消回收 | 应由问题引导剪枝（SC） | 文本相关；前 2 层不省；只支持 batch 1 | E-SV-C01～12 |
 | PAPER-0006 VisionZip | 官方 LLaVA，猴子补丁 | B1 CLIP 第 22 层（clip_encoder.py） | CLS 注意力选 dominant + key 相似度合并 contextual，送入 LLM 前完成压缩 | 视觉 token 大量冗余（SC） | 所有 LLM 层都变短，多轮可复用；不看问题；CLS 注入、合并幅值翻倍、位置压缩 | E-VZ-C01～12 |
+
+（2026-10-26 补注：查新补充中的六篇只读了摘要与 HTML 页，单列在视觉部分末尾的“查新补充中的论文（2026-10-26）”一节，不并入上表。）
 
 ## 共性
 
@@ -32,7 +34,7 @@
 | 多轮对话 / KV 复用 | 按首轮问题剪 | 按首轮问题剪 | 文本无关，可复用 |
 | 工程状态 | 无 LICENSE；KV 版写死常量、重复写 cache | 写死 .cuda() 与路径；batch>1 出错；代码中缺秩自适应 | PyPI 包为空；写死 24 层 CLIP；默认参数不是论文预算 |
 
-同样“平均 64 个视觉 token”时，三者的理论 FLOPs 几乎相同（vanilla 的 18～23%，EXP-0001 flops_budget.py）。差别在于**每层看到的视觉信息量**：FastV 在第 2 层以后只剩 30 个，SparseVLM 在最后 17 层只剩 17～20 个，VisionZip 每层 64 个。这可以部分解释为什么作者报告的低预算结果中 VisionZip 最好（推断，需在统一口径下实测）。
+同样“平均 64 个视觉 token”时，三者的理论 FLOPs 几乎相同（vanilla 的 18～23%，EXP-0001 flops_budget.py）（2026-10-29 完整阅读补注：这是按 EXP-0001 的名义分布算的。上表“64 token 的口径”一行已写明 SparseVLM 的实测层分布（前 3 层 576，之后 82、32、18，层平均 82.25）；按它用同一公式重算，SparseVLM-64 约为 vanilla 的 21.49%（文本 20 token）到 26.05%（文本 60 token），比 FastV-64、VisionZip-64 高约 12%～16%，三者不再“几乎相同”）。差别在于**每层看到的视觉信息量**：FastV 在第 2 层以后只剩 30 个，SparseVLM 在最后 17 层只剩 17～20 个，VisionZip 每层 64 个。这可以部分解释为什么作者报告的低预算结果中 VisionZip 最好（推断，需在统一口径下实测）。
 
 2026-10-24 统一口径实测（EXP-0002）：64 档 POPE 为 VisionZip 77.03、SparseVLM 77.67（实际层平均 82.25）、同分布随机 60.14、FastV 36.19。SparseVLM 的实际 token 比名义多，FastV 的打分由位置主导（EXP-0006）；层分布与选择规则各自的作用已由 EXP-0007 拆分：同一层分布下 SparseVLM 的规则比随机高 15.5，层平均相同时前多后少的分布没有收益。FastV 加上 FEATHER 式的去位置与覆盖后升到 64.66（EXP-0010）。第 ⑥ 步的交叉结论见[骨架全景图](baseline骨架的全景图.md)文末。
 
@@ -43,7 +45,7 @@
 | 用途 | 选择 | 理由 |
 | --- | --- | --- |
 | 骨架 baseline（必须） | LLaVA-1.5-7B vanilla | 所有结论的参照；先复现官方 POPE 85.9、MME 1510.7 |
-| **主 baseline** | **FastV**（ECCV 2024 Oral） | 方法论的选择标准：近两年引用最高、有源码、衍生工作多。FastV 是本方向的开山工作，SparseVLM、VisionZip 以及质疑类工作 S-04 都以它为对照，后续改进工作最多，便于制造意外实验和统计骨架改造位置（引用量待在实验室电脑上实查并注明日期）。复现用 `code/token_pruning/fastv_llava.py`（已证明与官方 lmms-eval 实现输出一致，并修正了 KV cache 重复写入） |
+| **主 baseline** | **FastV**（ECCV 2024 Oral） | 方法论的选择标准：近两年引用最高、有源码、衍生工作多。FastV 是本方向的开山工作，SparseVLM、VisionZip 以及质疑类工作 S-04 都以它为对照，后续改进工作最多，便于制造意外实验和统计骨架改造位置（引用量待在实验室电脑上实查并注明日期）（2026-10-29 完整阅读补注：已查。2026-10-23 21:48 用 Semantic Scholar 查询：FastV 799（有影响的引用 225）、SparseVLM 467、VisionZip 379，见 [citations-20261023.json](../论文笔记/citations-20261023.json)；该口径合并预印本与正式版本，Google Scholar 未查）。复现用 `code/token_pruning/fastv_llava.py`（已证明与官方 lmms-eval 实现输出一致，并修正了 KV cache 重复写入） |
 | 对照 + 组合实验素材 | VisionZip | 编码器侧、文本无关压缩的代表；作者报告的低预算结果最好；本项目在它身上发现了三个有代码证据的问题（合并幅值、CLS 注入、位置压缩） |
 | 对照 + 组合实验素材 | SparseVLM（v1.5 分支，ICML 版） | 文本引导 + 逐层剪枝的代表；在它自己的仓库里跑，batch 1 |
 
@@ -56,6 +58,33 @@
 
 - **作为论文方法主张**：直接把差异点拼起来（例如 VisionZip 压缩 + LLM 内文本引导剪枝）已有 VScan（ICML 2025）做过，新颖性低。
 - **作为第 ④ 步“制造意外实验”的组合实验**：仍然可以做，目的是观察有没有两篇论文都没发现的现象，见 [MODE_C-0001](../MODE_C-0001_视觉token剪枝.md)。
+
+## 查新补充中的论文（2026-10-26）
+
+（2026-10-26 13 点半补）来源：[查新补充：覆盖 / 多样性一类方法与浅层剪枝](查新补充_覆盖与多样性_2026-10-26.md)（DEC-0052）。那份笔记是 Claude 自己做的网页搜索与摘要页、HTML 全文页的读取（WebSearch 4 次、WebFetch 5 次），没有开子代理，没有下载 PDF 或代码。
+
+- **阅读级别**：下表六篇只读了摘要与 HTML 页。MMTok 只看了摘要或检索结果；VTW、PyramidDrop 在笔记里各只有一两句，读到哪一级没有写明（推断为检索摘要级）。六篇都没有 PAPER 编号、原文笔记和源码核验。
+- **证据性质**：“改了什么”“为何改”“收益与代价”都是作者主张（SC）。数字来自 WebFetch 对 HTML 页的摘录；CoverPruner 表中其他方法的数字是 CoverPruner 自己的对比，来源与实现未逐一核对。引用到论文之前要对照 PDF 原表核对。
+- **骨架位置**按[骨架全景图](baseline骨架的全景图.md)的 B1～B5 写；笔记没有写明的标“推断”或“笔记未记”。
+
+| 论文 | baseline 版本 | 模块 / 位置（没有读代码） | 改了什么 | 为何改 | 收益与代价（论文报告，SC） | 证据 / 条件 |
+| --- | --- | --- | --- | --- | --- | --- |
+| DivPrune（arXiv 2503.02175 v2，CVPR 2025） | LLaVA-1.5（论文说视觉 token 是 4096 维） | 默认在进入 LLM 之前选（Layer 0）；推断用的是 B2 投影层的输出（论文没有明说）。Table 3 也在 LLM 之内选，用解码层特征（没有写清） | 最大-最小多样性：余弦距离 d = 1 − cos；第一个取“最近邻最远”的 token，之后每次加入“到已选集合的最小距离最大”的候选；距离矩阵只算一次 | 笔记未记 | 自己的表（约 13%～16% TFLOPs，约 56 个）：VQAv2 71.55（EM，不剪枝 76.65）、GQA 56.85（不剪枝 61.96），FastV、VTW 在同样的算力下很低。Table 3：同样的 TFLOPs（19.61%～19.80%）下，Layer 0、1、2、3 四种放置的平均分（MMB、MMMU、POPE、SQA 四列）为 62.34、60.44、56.99、38.60。CoverPruner 的 Table 1（留 64 个）：VQAv2 74.1、GQA 57.5、TextVQA 54.5、POPE 85.5、MME 1334.7 | 读了 arXiv HTML 页（v2）。本项目按论文的 Algorithm 1 自己实现（投影层输出，在 LLM 之前留 64 个），EXP-0032 计划中、未运行；没有下载官方代码，可能与官方实现有差别（DEC-0052） |
+| MMTok（arXiv 2508.18264，ICLR 2026） | 笔记未记 | 笔记未记 | 视觉与文本的覆盖最大化 | 笔记未记 | CoverPruner 的 Table 1（留 64 个，CoverPruner 自己的对比）：VQAv2 75.2、GQA 58.3、TextVQA 56.0、POPE 85.8、MME 1371.5 | 只看了摘要或检索结果 |
+| CoverPruner（arXiv 2609.03158 v1，EMNLP 2026 main） | LLaVA-1.5-7B（Table 1） | 在 B2 投影层的输出空间上、进入 LLM 之前选一次；题目权重用 B4 第 0 层的 input LayerNorm 与各头的 W_Q、W_K 算题目 token 对视觉 token 的注意力（“第一层注意力探针”，不跑整层） | 按题目加权的覆盖最大化（facility location：`f(S) = Σ_i w_i max_{j∈S} A_ij`，A 为去均值后截到 0 的余弦相似度；贪心按边际增益选） | 笔记未记 | Table 1（576 个中留 64 个）：VQAv2 75.9、GQA 58.4、TextVQA 55.6、POPE 86.1、MME 1432.4；同表 VisionZip 72.4、55.1、55.5、77.0、1365.2，不剪枝 78.5、61.9、58.2、85.9、1506.5 | 读了 arXiv 摘要页与 HTML 页（v1） |
+| ShaRP（arXiv 2512.05385 v2） | 视频模型（笔记未记具体模型） | B4 的第一个解码层（同一笔记：FastV 在第 2 层、PDrop 在第 4 层起剪） | 按最后一个文本 token 的注意力排序；用全黑视频估计位置偏差并减去（λ = 0.6）；段内聚合；对高注意力 token 去冗余 | 笔记未记 | 按算力对齐的保留比例比较，报告保留约 97.2% 的性能；只测了视频模型 | 读了 arXiv 摘要页与 HTML 页（v2） |
+| VTW（arXiv 2405.05803，AAAI 2025） | 笔记未记 | B4 的某一层之后（按 KL 选层） | 某一层之后撤除全部视觉 token | 深层不需要视觉 token | DivPrune 的表中，同样算力下 VTW 很低 | 笔记只有一句，读到哪一级没有写明（推断为检索摘要级） |
+| PyramidDrop（arXiv 2410.17247） | 笔记未记 | B4 多段（B4-b，分阶段丢弃） | 分阶段按比例丢弃 | 作者的观察：浅层对丢弃敏感，第 16 层只留 10% 没有明显下降 | CoverPruner 的 Table 1 中 PDrop（留 64 个）：VQAv2 56.3、GQA 46.1、TextVQA 49.2、POPE 40.8、MME 982.2（推断 PDrop 即 PyramidDrop，笔记没有写明） | 同上 |
+
+**与本项目的对照（推断，2026-10-26）**：
+
+- **改在哪里**：DivPrune、CoverPruner 都在 B2 投影层输出与进入 LLM 之间选（DivPrune 用投影层输出是推断），既不在 CLIP 内部（VisionZip，B1），也不在 LLM 内部（FastV，B4）。ShaRP 在 B4 的第一个解码层；VTW、PyramidDrop 在 B4 的中深层撤除或分段丢弃。MMTok 的位置笔记未记。
+- **谁来打分**：DivPrune、CoverPruner、MMTok 按多样性或覆盖选，不把注意力直接当作“重要性”，与上文“共性”第 2 条的三篇不同；CoverPruner 只用第 0 层的注意力探针给题目加权。ShaRP 仍用 LLM 注意力，但先减去用全黑视频估计的位置偏差，与 FEATHER、本项目 EXP-0008 的“去位置”同类。
+- **64 个时的差距**：CoverPruner 的 Table 1 中，DivPrune、MMTok、CoverPruner 比 VisionZip 高 +1.7、+2.8、+3.5（VQAv2）与 +2.4、+3.2、+3.3（GQA）（DEC-0052）。IDEA-0006 的所选（VisionZip-64 + 每题覆盖 16）在开发集上比 VisionZip-64 高 +1.36 / +0.52（EXP-0028），在确认集上只有 +0.40 [−0.26, +1.10] / +0.10 [−0.47, +0.67]（EXP-0029）。同表 VisionZip 的 GQA 55.1、POPE 77.0，与本项目测得的 VisionZip-64（GQA testdev 55.18，EXP-0022；POPE 77.03，EXP-0002）相近；VQAv2 上本项目用的是自己抽的验证集子集，不能直接比。
+- **预算口径**：在 LLM 之前剪的方法每层都是 64 个，与本项目按 32 层平均的计法相同（IDEA-0005 查新）；DivPrune 的 Table 3 按 TFLOPs 对齐。
+- **对 IDEA-0007**：ShaRP 说明“第 0 层全看、第 1 层起少留”的放置本身不新；DivPrune 的 Table 3 中 Layer 1 比 Layer 0 低约 1.9，是不利于“一层全看有帮助”的旁证，但放置与特征没有分开。EXP-0032 用同样的特征（投影层输出、同一多样性选择）检验放置（DEC-0052），未运行。
+- **PyramidDrop 与 EXP-0007**：层平均相同时，前多后少的分布没有收益（F20）；[骨架全景图](baseline骨架的全景图.md)已写“与 PyramidDrop 的金字塔直觉相反”。
+- **查新补充里出现、这里没有单列的**：SCOPE（arXiv 2510.24214，显著性 + 覆盖，64 个时保留 96.0%）、HoloV（arXiv 2510.02912，64 个时 95.8%）、ZOO-Prune（arXiv 2509.24837，64 个时 95.2%，同处 DivPrune 94.4%），都只看了摘要或检索结果；FEATHER、HiDrop 已在骨架全景图的 B4-a、B4-b 中出现。
 
 # 时序方向：各论文在 iTransformer 骨架上的改造（2026-10-24）
 

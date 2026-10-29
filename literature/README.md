@@ -15,7 +15,7 @@
 - **只在本地解析**：不使用 `--remote`（会把文档上传到 mineru.net）。`mineru parse` 默认只解析前 10 页，全文需 `--pages all`。
 - **本机只有 flash 档（2026-10-24 实测）**：basic/standard/advanced 需要本地 parse-server（`parse_server.local.mode`，默认 disabled）和另外下载的版面、表格、公式模型，没有安装；不加 `--tier flash` 时报“No basic, standard, or advanced engine available”。现有全文用 flash 档解析（只有文本），见 [processed/README](processed/README.md)。
 - **远端健康探测已关闭**：服务器运行时会定期向 `parse_server.remote.url`（默认 `https://mineru.net/api`）发 `GET /v1/tiers` 探测（`doclib/background/parse_server_health.py`），不含文档内容；不加 `--remote` 时解析任务的隐私级别是 local，不会改走远端（`doclib/services/parse_svc.py` 的 `_resolve_api_target`）。2026-10-24 已执行 `mineru config set parse_server.remote.url http://127.0.0.1:9/api`，探测改指本机无效地址，不再联系 mineru.net。重装或换 `MINERU_HOME` 时与遥测一起重做。
-- **用法**（每条命令先加载环境脚本并设置 `MINERU_HOME`）：
+- **用法**（每条命令先加载环境脚本并设置 `MINERU_HOME`）（2026-10-29 完整阅读补注：下面代码块里的 `mineru parse` 缺 `--tier flash`，本机会以“No basic, standard, or advanced engine available”退出（见上面“本机只有 flash 档”一条），而且直接写进 literature/processed/，与上面“重解析时保留版本，不覆盖已经引用的证据”冲突。实际用过的做法见 [processed/README](processed/README.md) 的“命令”一条：先 `mineru server start`，再 `mineru parse papers/<PDF> --tier flash --pages all --wait 3600 -o D:/6CJNM007/tmp/mineru_flash/<论文 ID>/<名称>.md`，核对后原样复制到 literature/processed/<论文 ID>/，最后 `mineru server stop`；解析前后各查一次 `mineru telemetry status`。已有且被引用的解析文件不覆盖，重解析另存版本并在 processed/README 登记 sha256。2026-10-25 下载的四篇 PDF 已按这个做法解析，见 processed/README 的“2026-10-26 补充解析”）：
 
   ```bash
   source /d/6CJNM007/idea_rearch/code/env/windows_env.sh mineru && export MINERU_HOME=D:/6CJNM007/cache/mineru \
