@@ -282,6 +282,9 @@ def run_one(exp, spec):
     files = sorted(os.path.relpath(os.path.join(d, n), run_dir).replace("\\", "/")
                    for d, _, names in os.walk(run_dir) for n in names)
     sums = {p: sha256(f"{run_dir}/{p}") for p in files}
+    # 2026-10-29 note: text mode writes CRLF on Windows, so the SHA256SUMS of EXP-0004, EXP-0005 and EXP-0009 are CRLF (strip the CRs before sha256sum -c);
+    # exp0002.py has written LF (newline="\n") since EXP-0022 and copies runs.tsv to the backup after every run, which this runner does not do.
+    # Port both before the time-series direction resumes; the sealed runs stay as they are.
     with open(f"{run_dir}/SHA256SUMS", "w") as f:
         f.writelines(f"{h}  {p}\n" for p, h in sums.items())
     shutil.copytree(run_dir, f"{BACKUP}/{exp}/{run_id}")

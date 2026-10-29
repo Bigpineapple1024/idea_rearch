@@ -1,14 +1,14 @@
 # ts_forecasting：多变量长期时序预测 baseline 复现与评测核验
 
-方向：多变量长期预测。主 baseline 为 iTransformer（DEC-0012，备选 CycleNet）；DUET、TQNet、WPMixer 为强对照。三篇对照的论文分析见 analysis/论文笔记/PAPER-0001～0003，复现记录见 [EXP-0003](../../analysis/实验报告/EXP-0003_record.md)，三篇对比与 baseline 选择见 [时序三篇对比](../../analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md)。
+方向：多变量长期预测。主 baseline 为 iTransformer（DEC-0012，备选 CycleNet）；DUET、TQNet、WPMixer 为强对照。三篇对照的论文分析见 analysis/论文笔记/PAPER-0001～0003，复现记录见 [EXP-0003](../../analysis/实验报告/EXP-0003_record.md)（2026-10-29 完整阅读补注：此后的复现与诊断见 [EXP-0004](../../analysis/实验报告/EXP-0004_record.md)、[EXP-0005](../../analysis/实验报告/EXP-0005_record.md)、[EXP-0009](../../analysis/实验报告/EXP-0009_record.md)），三篇对比与 baseline 选择见 [时序三篇对比](../../analysis/专题分析/时序预测_DUET_TQNet_WPMixer对比.md)。
 
-**状态（2026-10-23）**：在 CPU（4 核）上用真实 ETTh1 数据跑了 DUET、TQNet、WPMixer 三个官方仓库；这些是真实训练与测试结果，不是随机权重的代码检查。其他数据集尚未运行。iTransformer 尚未复现（云端 CPU 运行按用户要求中止，没有留下结果）。
+**状态（2026-10-23）**：在 CPU（4 核）上用真实 ETTh1 数据跑了 DUET、TQNet、WPMixer 三个官方仓库；这些是真实训练与测试结果，不是随机权重的代码检查。其他数据集尚未运行。iTransformer 尚未复现（云端 CPU 运行按用户要求中止，没有留下结果）。（2026-10-29 完整阅读补注：此状态行已过时。此后在实验室电脑的 GPU 上完成了 EXP-0004（iTransformer 的复现，论文 Table 10，3 个种子；16 个组合中 6 个落在 ±2 SD 内，记为偏差、继续使用，DEC-0018）、EXP-0005（DUET、TQNet、WPMixer 在统一协议下的 ETTh1 重跑，3 个种子；WPMixer 的 12 次因环境缺 thop 失败，补装后重跑）和 EXP-0009（iTransformer 检查点在验证期上的预测，不训练）；EXP-0012（时序候选 1 的 CPU 诊断，记录在 main，不在本分支）按预设规则为高，边界见 DEC-0021。之后按 DEC-0020、DEC-0021 暂停时序方向，代码在本分支 code/ts-forecasting（撰写补注时为 099fead）。）
 
 ## 文件
 
 | 文件 | 作用 |
 | --- | --- |
-| exp_ts.py | 实验室 GPU 上的运行器（EXP-0004 起）：每次运行一个目录（仓库自己的 checkpoints/、results/ 也在其中），写 cmd、config、git、seed、env、gpu、stdout、metrics、status 和 SHA256SUMS，复制到备份并核对，追加到 runs.tsv；拒绝复用已有的 run ID |
+| exp_ts.py | 实验室 GPU 上的运行器（EXP-0004 起）：每次运行一个目录（仓库自己的 checkpoints/、results/ 也在其中），写 cmd、config、git、seed、env、gpu、stdout、metrics、status 和 SHA256SUMS，复制到备份并核对，追加到 runs.tsv；拒绝复用已有的 run ID（2026-10-29 完整阅读补注：本运行器用文本模式写 SHA256SUMS，Windows 上是 CRLF，EXP-0004、EXP-0005、EXP-0009 的运行目录里的 SHA256SUMS 都是 CRLF，在 Git Bash 里要先去掉 CR 再用 sha256sum -c 核对（做法见 code/token-pruning 分支 code/token_pruning/README.md 的“校验和”一段）；运行后也不把 runs.tsv 复制到备份。视觉方向的 exp0002.py 从 EXP-0022 起改为 LF、并在每次运行后备份 runs.tsv；时序方向恢复运行前再照改，已封存的运行不改） |
 | itransformer_seed.py | 用其他种子运行 iTransformer 官方 run.py：在内存中只替换 `fix_seed = 2023` 这一行后执行，不修改官方文件；种子 2023 时执行的代码与 run.py 字节相同 |
 | itransformer_val.py | 不训练：官方 run.py 以 `--is_training 0` 载入 ./checkpoints/ 下的检查点，本脚本把交给 `exp.test()` 的数据换成验证集（加载方式与测试集相同：按顺序、batch 1），因此保存的 pred.npy、true.npy、metrics.npy 都是验证期的。exp_ts.py 的 `itransformer_val` 方法复制 EXP-0004 同数据集、同预测长度、同种子运行的检查点后调用它。CPU 冒烟测试：同一检查点走官方测试路径，预测与原运行保存的逐位相同 |
 | tqnet_save_pred.py | 运行 TQNet 官方 run.py，在本进程内替换 `metric`，先保存测试集的 pred.npy、true.npy 再返回原指标（官方保存语句被注释掉了） |
@@ -26,6 +26,8 @@
 | duet_test_stochasticity.py | 运行 DUET 官方 TFB 入口，并在测试时用另外 `--resamples` 个随机种子重新采样通道 mask，测量分数波动；`--save-pred` 时保存官方预测与标准化后的真值 |
 | probe_duet_mask.py | 代码级探针：随机权重下 DUET 在 eval 模式对同一输入两次前向输出是否相同 |
 | to_tfb_format.py | 把 ETDataset 的宽表 CSV 转成 TFB/DUET 需要的长表与 FORECAST_META.csv（长度 14400 = 12/4/4 个月标准划分） |
+| analyze_projector_bias.py | 1A4B-0002 第 3a 步第 3 项（不训练，CPU）：从 EXP-0004 的检查点读出投影头偏置的均值 b_bar，由保存的测试期预测还原每个窗口、每个变量的水平变化 c，比较原样、只留常数 b_bar、只留依赖输入的部分和 c = 0 时的水平误差。写 `code/output/EXP-0004/deepdive/projector_bias_<数据集>.{md,json}`（EXP-0009 记录、MODE_C-0003 的 E-MC3-2 引用）（2026-10-29 完整阅读补注：此行原先漏列） |
+| sealed_copies/ | 只封存在 code/output 里、此前从未提交的 5 个 shell 包装（2026-10-25 跑偏检查时收集，099fead）；MANIFEST.tsv 列出来源文件夹与封存时的 sha256（2026-10-29 完整阅读补注：此行原先漏列） |
 
 三个仓库的文件都不被修改；包装脚本只在本进程内替换函数。
 
