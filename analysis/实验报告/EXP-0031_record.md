@@ -132,3 +132,13 @@
 - **读的范围**：上次阅读（main 331e184，跑偏检查_2026-10-26）以来的改动——main 的 a773664（DEC-0055）、fb400d6（EXP-0033 计划 v1，DEC-0056）、09f1616（EXP-0033 计划 v1.1 与 11 篇 PDF 的登记；11 份解析全文没有逐行读，提交前与 MinerU 的输出逐字节核对过）与本次提交（EXP-0030 的结果，DEC-0057）；code/token-pruning 的 604c777（IDEA-0007 的代码：exp0002.py、fastv_llava.py、run_eval.py 的改动，check_k1cls.py、analyze_0030.py）；EXP-0030 已封存的分析 0030.md；本计划与排队脚本 chain_0031b.sh。写当前状态的文档：index 的状态行、交接、结果总表的登记行。
 - **发现并修好的**：交接的“已完成”一栏写的是“MODE_C-0002 回流 1～19”，现为回流 1～23，本次提交加了补注。没有发现别的问题。
 - **排队脚本开门后要查的条件先只读地查了一遍**（`D:\6CJNM007\tmp\exp0031\precheck_gate.sh`）：在 code/token-pruning、HEAD 是 IDEA-0007 的代码提交（父提交 7ba3657）、工作区干净；HEAD 中 exp0002.py、score_pope_mme.py 与改动的底本相同；MANIFEST、test4、val400b 与 400 张图的校验和都通过；计划 v1（98abf74）在 main 上；analyze_0031.py、make_confirm_sets.py 还不在仓库里；score_smoke 与 EXP-0031 的输出目录都不存在；GPU 上没有评测进程。
+
+## 运行中的记录（2026-10-29）
+
+- **开门**：读完改动部分后 12:46:05 写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0031.done`。门文件第一行写的时间“13:05”是估错的（实为 12:46），这行字也被抄进了排队日志；以文件时间为准。
+- **推送被拒绝**：chain_0031b 开门后的核对全部通过，12:46:29 提交 EXP-0031 的代码（code/token-pruning 889f287），推送时 GitHub 返回 “remote: fatal error in commit_refs”、“[remote rejected] code/token-pruning -> code/token-pruning (failure)”。排队脚本按设计停下（“CHAIN STOP: push of the EXP-0031 code failed”），没有任何运行开始；排在后面的 chain_0032b、chain_0033 也随之停下（它们把前一条的任何停止都当作停止）。
+- **核对与重试**：本地 HEAD 889f287 的四个文件与 tmp 中 MANIFEST 核对过的副本逐字节相同，工作区干净，远端仍是 604c777，GPU 空闲。同一个快进推送（不强推）手动重试一次即成功，远端变为 889f287。十几分钟前推送到 main 的两次提交都成功，看来是 GitHub 一侧的临时错误。
+- **续跑**：`D:\6CJNM007\tmp\chain_0031c.sh` 是 chain_0031b 推送之后部分的逐行副本，开头另核对：门已开过、HEAD 的提交说明与 msg_code63.txt 相同且父提交是 604c777、远端等于 HEAD、四个文件与副本相同、MANIFEST 与三份数据校验和、计划在 main 上；并从 0030.json 重新读所选。12:50:25 开始：配置核对通过，两个新数据集的计分冒烟测试通过，12:50:40 在 889f287 上开始 R01（所选 `k1qcls_c16`）。日志：`run_vision_0031.log`（chain_0031b，保留）、`run_vision_0031c.log`（chain_0031c）。
+- **封存说明的出入**：seal_0031.sh 写进 notes.md 的排队脚本名是 chain_0031.sh（写于 chain_0031b 出现之前，且在 MANIFEST 里，不改）；实际依次是 chain_0031b.sh 与 chain_0031c.sh，以本节为准。
+- 后面两条排队改用续跑版：`chain_0032c.sh`（等 run_vision_0031c.log）、`chain_0033b.sh`（等 run_vision_0032c.log）；只改等待的日志，并把推送改为失败时隔 60 秒再试、最多 3 次、核对远端等于 HEAD。
+- 进度检查只看运行号、状态与答题数（`D:\6CJNM007\tmp\queue_status.sh`，已改看新日志）。
