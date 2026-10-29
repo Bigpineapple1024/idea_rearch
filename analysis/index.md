@@ -136,6 +136,7 @@
 | [analysis/实验报告/EXP-0028_squeeze.md](../analysis/实验报告/EXP-0028_squeeze.md) | SQUEEZE_REPORT：EXP-0028（2026-10-26 事后补写：VisionZip-64 上定位的增益在开发集上集中于颜色题；两种底座的拼接是 IDEA-0007 的来由，补登为 C24；F57、F58） |
 | [analysis/实验报告/EXP-0029_record.md](../analysis/实验报告/EXP-0029_record.md) | EXPERIMENT_RECORD：VisionZip 上的定位后覆盖的确认实验（计划 v1、v1.1：VQAv2 test3、GQA testdev、TextVQA，8～10 次；只在 EXP-0028 判读“有希望”时运行；2026-10-26 09:04 起运行，所选每题覆盖 16，10 次；结果：Q1～Q3 不成立，IDEA-0006 结束，DEC-0054） |
 | [analysis/实验报告/EXP-0029_squeeze.md](../analysis/实验报告/EXP-0029_squeeze.md) | SQUEEZE_REPORT：EXP-0029（开发集的增益在新数据上消失来自题型内的效应而不是构成；每题覆盖只改动约 9% 的题；TextVQA 的损失集中在读字题；开发集上的定位模式没有复现；F59、F60） |
+| [analysis/实验报告/EXP-0030_squeeze.md](../analysis/实验报告/EXP-0030_squeeze.md) | SQUEEZE_REPORT：EXP-0030（一层全看 + CLS 排序与 VisionZip 留的几乎是同一批 patch，VQAv2 上的差距来自 token 数而不是选法 F64；VisionZip 的主导 patch 约 4 个落在填充里 F63；GQA 语义类型上方向不同 F65，探索性） |
 | [analysis/IDEA-0007_一层全看再按编码器排序.md](../analysis/IDEA-0007_一层全看再按编码器排序.md) | IDEA_PACKAGE：一层全看，再按编码器排序（K = 1：第 0 层看全部 patch，第 1 层起按视觉编码器的 CLS 注意力留 47 个；可加路由与覆盖） |
 | [analysis/实验报告/EXP-0030_record.md](../analysis/实验报告/EXP-0030_record.md) | EXPERIMENT_RECORD：一层全看、再按编码器排序的开发集运行（计划 v1：VQAv2 dev2、GQA val400，6 次） |
 | [analysis/实验报告/EXP-0031_record.md](../analysis/实验报告/EXP-0031_record.md) | EXPERIMENT_RECORD：一层全看、再按编码器排序的确认实验（计划 v1：新抽的 VQAv2 test4、GQA val400b 与 TextVQA，9 次；只在 EXP-0030 判读“有希望”时运行） |
