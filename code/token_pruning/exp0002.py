@@ -247,6 +247,15 @@ CONFIGS["visionzip64_c16all"] = ("tp", CONFIGS["visionzip64_c16"][1] + ["--vz-co
 # EXP-0028 v1.1, the no-box control (as EXP-0026's fastv64_qroute_t16): the 16 patches most similar to the question are
 # kept wherever they lie, the other 37 dominant ones by CLS attention outside them.
 CONFIGS["visionzip64_t16"] = ("tp", CONFIGS["visionzip64_c16"][1] + ["--vz-cover-top", "16"])
+# IDEA-0007 (EXP-0030): one full LLM layer, then VisionZip's ranking. Layer 0 sees all 576 patches and from layer 1 on
+# K = 1 keeps 47 (63.5 tokens per layer, as the K = 1 router), ranked by the vision tower's CLS attention at layer -2
+# (VisionZip's dominant score, taken plainly, padding never kept): k1cls for every question; k1_qroute_cls for the
+# router's unrouted questions only (the routed ones keep query_vis, as fastv64k1_qroute); _c16 adds cover 16 on the
+# unrouted questions, its box share taken by the same score.
+CONFIGS["fastv64k1_cls"] = ("tp", ["--method", "fastv", "--fastv-k", "1", "--fastv-keep", "47", "--fastv-score", "cls",
+                                   "--fastv-exclude-padding"])
+CONFIGS["fastv64k1_qroute_cls"] = ("tp", CONFIGS["fastv64k1_qroute"][1] + ["--fastv-cls-unrouted"])
+CONFIGS["fastv64k1_qroute_cls_c16"] = ("tp", CONFIGS["fastv64k1_qroute_c16"][1] + ["--fastv-cls-unrouted"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
@@ -344,6 +353,9 @@ def run_one(run_id, config, bench):
         method_args = method_args + ["--fastv-zoom-log", f"{run_dir}/zoom.json"]
     if "--vz-cover" in method_args:                                         # IDEA-0006: one record per prefill
         method_args = method_args + ["--vz-log", f"{run_dir}/vz.json"]
+    scores = [method_args[i + 1] for i, a in enumerate(method_args) if a == "--fastv-score"]
+    if scores[-1:] == ["cls"] or "--fastv-cls-unrouted" in method_args:     # IDEA-0007: one record per prefill
+        method_args = method_args + ["--fastv-cls-log", f"{run_dir}/cls.json"]
     if config.endswith("_names"):
         method_args = method_args + ["--answer-logit-log", f"{run_dir}/answer_logits.json",
                                      "--name-cos-log", f"{run_dir}/name_cos.npz"]

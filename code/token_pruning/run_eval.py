@@ -100,7 +100,7 @@ def parse():
                       help="diagnostic: per image, the largest and the mean cosine over the image tokens' input embeddings "
                            "for every vocabulary embedding (.npz, EXP-0015)")
     ours.add_argument("--fastv-score", choices=["last", "object_cos", "mix", "contrast_max", "contrast_mean", "query_mean",
-                                                "query_idf", "attn_idf", "query_vis"],
+                                                "query_idf", "attn_idf", "query_vis", "cls"],
                       default="last",
                       help="fastv: rank by the last token's attention at layer K-1 (FastV), or, for POPE-style questions, "
                            "by the cosine of each image token's input embedding to the object name's (EXP-0011 D3), or "
@@ -108,7 +108,15 @@ def parse():
                            "by that cosine minus the largest / mean cosine to the other 80 COCO names (EXP-0013); "
                            "query_mean / query_idf: by the cosine to the uniform / IDF-weighted mean input embedding of "
                            "all tokens after the image, IDF over the question file; attn_idf: the scoring layer's "
-                           "attention rows of those tokens, IDF-weighted (EXP-0014)")
+                           "attention rows of those tokens, IDF-weighted (EXP-0014); cls: by the vision tower's CLS "
+                           "attention at layer -2, VisionZip's dominant score, taken plainly (IDEA-0007)")
+    ours.add_argument("--fastv-cls-unrouted", action="store_true",
+                      help="fastv, --fastv-score query_vis with --fastv-route (IDEA-0007): rank the unrouted questions by "
+                           "the vision tower's CLS attention instead of the strong baseline's score (a cover too); the "
+                           "routed questions are unchanged")
+    ours.add_argument("--fastv-cls-log", default=None,
+                      help="with --fastv-score cls or --fastv-cls-unrouted: one record per prefill (JSON): VisionZip's 53 "
+                           "dominant patches by the CLS score, and the patches the CLS ranking puts first when it ranked")
     ours.add_argument("--fastv-route", choices=["yesno_howmany"], default=None,
                       help="fastv, --fastv-score query_vis (EXP-0020): only questions in yes/no form (first word an "
                            "auxiliary verb) or starting with 'how many' take query_vis; the others take the strong "
@@ -186,6 +194,13 @@ def parse():
         ours.error("--fastv-score query_vis needs --fastv-stratify and no --text-rows-log")
     if method_args.fastv_route and method_args.fastv_score != "query_vis":
         ours.error("--fastv-route needs --fastv-score query_vis")
+    if method_args.fastv_score == "cls" and (method_args.fastv_score_prior or method_args.fastv_stratify or method_args.text_rows_log
+                                             or method_args.fastv_schedule or method_args.fastv_zoom or method_args.fastv_cover):
+        ours.error("--fastv-score cls ranks plainly: no position prior, stratify, row log, schedule, zoom or cover")
+    if method_args.fastv_cls_unrouted and not (method_args.fastv_score == "query_vis" and method_args.fastv_route):
+        ours.error("--fastv-cls-unrouted needs --fastv-score query_vis with --fastv-route")
+    if (method_args.fastv_cls_log is not None) != (method_args.fastv_score == "cls" or method_args.fastv_cls_unrouted):
+        ours.error("--fastv-cls-log goes with --fastv-score cls or --fastv-cls-unrouted")
     zoom_on = method_args.fastv_zoom or method_args.fastv_cover
     if zoom_on and method_args.fastv_score != "query_vis":
         ours.error("--fastv-zoom and --fastv-cover need --fastv-score query_vis")
@@ -275,7 +290,7 @@ def apply_method(model, m, tokenizer=None):
                            mix_question=getattr(m, "fastv_mix_question", None), contrast_ids=contrast_ids,
                            token_weights=weights,
                            visibility=np.load(m.fastv_visibility) if score_kind == "query_vis" else None, route=route,
-                           zoom=zoom, cover=cover)
+                           zoom=zoom, cover=cover, cls_unrouted=bool(getattr(m, "fastv_cls_unrouted", False)))
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "visionzip":
@@ -614,6 +629,8 @@ def main():
             _ZOOM_MODEL.append(lm)
         if method_args.vz_cover:                                 # IDEA-0006: its log is written at the end
             _VZ_MODEL.append(model)
+        if method_args.fastv_cls_log:                            # IDEA-0007: its log is written at the end
+            _CLS_MODEL.append(model.get_model())
         if method_args.layer_token_log:
             times["n_layers"] = len(model.get_model().layers)
             for i, layer in enumerate(model.get_model().layers):
@@ -707,10 +724,15 @@ def main():
         log = _VZ_MODEL[0].vz_cover_log if _VZ_MODEL else []
         with open(method_args.vz_log, "w") as f:
             json.dump({"n_prefills": len(log), "n_covered": sum(r["cover"] for r in log), "records": log}, f)
+    if method_args.fastv_cls_log:                               # IDEA-0007: one record per prefill
+        log = _CLS_MODEL[0].fastv_cls_log if _CLS_MODEL else []
+        with open(method_args.fastv_cls_log, "w") as f:
+            json.dump({"n_prefills": len(log), "n_used": sum(r["used"] for r in log), "records": log}, f)
 
 
 _ZOOM_MODEL = []
 _VZ_MODEL = []
+_CLS_MODEL = []
 
 
 if __name__ == "__main__":

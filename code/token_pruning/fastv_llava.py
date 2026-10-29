@@ -53,6 +53,14 @@ the visual tokens after the stage are still keep. With cover (IDEA-0004, unroute
 baseline's own count of kept tokens inside the box plus cover is taken inside the box (by its score, in blocks) and the
 rest outside; with cover_top (EXP-0026 v1.1, the no-box control) the region is instead the cover_top non-padding tokens
 most similar to the query. fastv_zoom_log holds one record per prefill. Without zoom and cover nothing changes.
+With score_kind="cls" (IDEA-0007) the image tokens are ranked by the vision tower's CLS attention summed over heads at
+layer -2, VisionZip's score for its dominant tokens, taken plainly (no blocks, no position prior, no attention map at
+layer K-1); with cls_unrouted (query_vis with route only) the router's unrouted questions are ranked that way instead of
+the strong baseline's path, a cover then taking its box share by that score too, and the routed questions are untouched.
+The tower then runs plain LLaVA's forward with its attention maps returned (CLIP's attention is eager only, so the
+features are the same) and keeps the score of each prefill; fastv_cls_log holds one record per prefill: VisionZip's 53
+dominant patches by that score and, when it ranked the stage, the `keep` non-padding patches it puts first. Without
+either option nothing changes.
 """
 import math
 import types
@@ -238,6 +246,8 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             self.fastv_visible_share, self.fastv_mix_count = None, 0
             self.fastv_kept_question_positions = torch.zeros(0, dtype=torch.long)
     object_cos = self.fastv_score_kind == "object_cos" or contrast or query     # ranked by an input-embedding score alone
+    # IDEA-0007: ranked by the vision tower's CLS attention instead (every question, or the router's unrouted ones)
+    cls_now = prefill and (self.fastv_score_kind == "cls" or (self.fastv_cls_unrouted and self.fastv_routed is False))
     mix = self.fastv_score_kind == "mix" or query_vis
     extra = getattr(self, "fastv_extra", 0) if prefill else 0      # zoom tokens inserted right after the image (IDEA-0004)
     if prefill:
@@ -274,13 +284,15 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
                 alt = torch.nn.functional.normalize(h[start:start + n_img], dim=-1) @ self.fastv_contrast_emb[other].T
                 ref = alt.max(1).values if self.fastv_score_kind == "contrast_max" else alt.mean(1)
                 self.fastv_input_score = self.fastv_object_cos - ref
+        if cls_now:                                            # one CLS attention value per patch, from the tower
+            self.fastv_input_score = self.fastv_cls_score.to(hidden.device).float()
         allowed = torch.ones(n_img, dtype=torch.bool, device=hidden.device)
         if self.fastv_exclude_padding:
             allowed = ~_padding_mask(*self.fastv_image_size, round(n_img ** 0.5)).to(hidden.device)
     for idx, layer in enumerate(self.layers):
         if prefill and idx in stages:
             n_cur = kept.numel()
-            if self.fastv_generator is None and object_cos:
+            if self.fastv_generator is None and (object_cos or cls_now):
                 score = self.fastv_input_score[kept]
                 self.fastv_last_scores = score
             elif self.fastv_generator is None and attn_weighted:   # weighted attention rows of the text after the image
@@ -302,6 +314,8 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             pos = allowed[kept].nonzero().squeeze(1)           # positions among the present image tokens that may stay
             count = min(stages[idx] - extra, pos.numel())       # zoom tokens count towards the stage's budget
             cover = getattr(self, "fastv_cover_mask", None) if not mix else None
+            if cls_now and self.fastv_cls_log:                 # the CLS ranking's own choice, before any cover
+                self.fastv_cls_log[-1].update(used=True, own=sorted(kept[pos[score[pos].topk(count).indices]].tolist()))
             if mix:                                            # part by the object name, the rest by FastV's score
                 side, blocks = round(n_img ** 0.5), self.fastv_stratify
                 n_q = round(count * self.fastv_visible_share) if query_vis else min(self.fastv_mix_question, count)
@@ -315,7 +329,7 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
                 top = torch.cat((first, second)).sort().values
                 self.fastv_kept_question_positions = kept[first].sort().values
             elif cover is not None:            # IDEA-0004: the baseline's own in-box count plus `cover` taken in the box
-                side, blocks = round(n_img ** 0.5), self.fastv_stratify
+                side, blocks = round(n_img ** 0.5), 1 if cls_now else self.fastv_stratify     # CLS: plain ranking
                 box = cover.to(hidden.device)
                 base = pos[_stratified_top(score[pos], count, kept[pos], side, blocks)]    # the baseline's own choice
                 a_in = int(box[kept[base]].sum())
@@ -331,7 +345,7 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
                 if self.fastv_zoom_log:                        # this prefill's record, written by _zoom just before
                     self.fastv_zoom_log[-1].update(baseline_in_box=a_in, in_box=n_c,
                                                    changed=int((~torch.isin(top, base)).sum()))
-            elif self.fastv_stratify is None:
+            elif self.fastv_stratify is None or cls_now:
                 top = pos[score[pos].topk(count).indices].sort().values
             else:
                 side = round(n_img ** 0.5)
@@ -345,7 +359,7 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             kept = kept[top]
             self.fastv_kept_image_positions = kept
         mask = _causal_mask(hidden) if prefill else None
-        need_attn = prefill and idx + 1 in stages and self.fastv_generator is None and not object_cos
+        need_attn = prefill and idx + 1 in stages and self.fastv_generator is None and not (object_cos or cls_now)
         out = layer(hidden, attention_mask=mask, position_ids=position_ids, past_key_value=cache,
                     output_attentions=need_attn, use_cache=use_cache)
         hidden = out[0]
@@ -463,6 +477,13 @@ def _record_image_span(model):
             lm.fastv_text_after_ids = input_ids[0, int(hits[0, 0]) + 1:].tolist()
             lm.fastv_image_size = tuple(image_sizes[0]) if image_sizes is not None else None     # (width, height)
             lm.fastv_extra, lm.fastv_cover_mask = 0, None
+            if getattr(lm, "fastv_cls_log", None) is not None:      # IDEA-0007: this prefill's CLS attention score
+                score = lm.get_vision_tower().fastv_cls_score
+                if score.shape[0] != 1:
+                    raise ValueError("the CLS ranking takes one image per prefill")
+                lm.fastv_cls_score = score[0]
+                lm.fastv_cls_log.append({"index": len(lm.fastv_cls_log), "used": False,
+                                         "top53": sorted(score[0].topk(53).indices.tolist())})
             if getattr(lm, "fastv_zoom", None):
                 result = _zoom(model, lm, result)
         return result
@@ -470,9 +491,21 @@ def _record_image_span(model):
     model.prepare_inputs_labels_for_multimodal = wrapped
 
 
+@torch.no_grad()
+def _cls_tower_forward(self, images):
+    """Plain LLaVA's CLIPVisionTower.forward (the batch-tensor branch) with the attention maps returned: the features are
+    the same (CLIP's attention is eager only); the CLS attention summed over heads at layer -2, VisionZip's dominant
+    score, is kept in self.fastv_cls_score (batch x patches)."""
+    if type(images) is list:
+        raise ValueError("the CLS ranking takes a batch tensor of images (LLaVA-1.5), not a list")
+    outs = self.vision_tower(images.to(device=self.device, dtype=self.dtype), output_hidden_states=True, output_attentions=True)
+    self.fastv_cls_score = outs.attentions[-2][:, :, 0, 1:].sum(dim=1)
+    return self.feature_select(outs).to(images.dtype)
+
+
 def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
                score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None,
-               token_weights=None, visibility=None, route=None, zoom=None, cover=0):
+               token_weights=None, visibility=None, route=None, zoom=None, cover=0, cls_unrouted=False):
     """Turn a transformers LlamaModel into FastV in place (image span set by the caller).
 
     seed=None keeps FastV's attention ranking; an integer selects random image tokens from that seed.
@@ -488,10 +521,21 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
     both taken in blocks (stratify required, single stage).
     score_kind "contrast_max" / "contrast_mean" subtracts from that cosine the largest / mean cosine to the names in
     contrast_ids (a list of token-id lists; each name is the mean of its tokens' input embeddings).
+    score_kind "cls" (IDEA-0007) ranks by the vision tower's CLS attention (set per prefill by apply_fastv's tower
+    forward), plainly: no seed, position prior, blocks, row log, schedule, route, zoom or cover. cls_unrouted
+    (query_vis with route only) ranks the unrouted questions that way, a cover included; the routed ones are unchanged.
     """
     if score_kind not in ("last", "object_cos", "mix", "contrast_max", "contrast_mean", "query_mean", "query_idf",
-                          "attn_idf", "query_vis"):
+                          "attn_idf", "query_vis", "cls"):
         raise ValueError(f"unknown score_kind {score_kind!r}")
+    if score_kind == "cls" and (seed is not None or score_prior is not None or stratify is not None or log_text_rows
+                                or schedule or route is not None or zoom or cover or object_span is not None):
+        raise ValueError("cls ranks plainly: no seed, position prior, stratify, row log, schedule, route, zoom or cover")
+    if cls_unrouted and (score_kind != "query_vis" or route is None):
+        raise ValueError("cls_unrouted needs query_vis with route")
+    llama_model.fastv_cls_unrouted = bool(cls_unrouted)
+    llama_model.fastv_cls_score = None
+    llama_model.fastv_cls_log = [] if score_kind == "cls" or cls_unrouted else None
     weighted = score_kind in ("query_mean", "query_idf", "attn_idf", "query_vis")
     if weighted != (token_weights is not None):
         raise ValueError("query_mean, query_idf, attn_idf and query_vis need token_weights, and only they take it")
@@ -562,9 +606,15 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
 
 def apply_fastv(model, k=2, keep=288, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
                 score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None,
-                token_weights=None, visibility=None, route=None, zoom=None, cover=0):
+                token_weights=None, visibility=None, route=None, zoom=None, cover=0, cls_unrouted=False):
     """Enable FastV (or its random-selection control when seed is given) on a loaded LlavaLlamaForCausalLM."""
-    bind_fastv(model.get_model(), k, keep, seed, schedule, score_prior, stratify, log_text_rows, score_kind, object_span,
-               exclude_padding, mix_question, contrast_ids, token_weights, visibility, route, zoom, cover)
+    lm = bind_fastv(model.get_model(), k, keep, seed, schedule, score_prior, stratify, log_text_rows, score_kind,
+                    object_span, exclude_padding, mix_question, contrast_ids, token_weights, visibility, route, zoom,
+                    cover, cls_unrouted)
+    if lm.fastv_cls_log is not None:                           # IDEA-0007: the tower returns its CLS attention too
+        tower = lm.get_vision_tower()
+        if tower.select_layer != -2 or tower.select_feature != "patch":
+            raise ValueError("the CLS ranking expects LLaVA-1.5's tower (layer -2, patch features)")
+        tower.forward = types.MethodType(_cls_tower_forward, tower)
     _record_image_span(model)
     return model
