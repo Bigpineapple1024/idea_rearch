@@ -30,3 +30,19 @@
 | —（领域 B） | Moldovan-acl2000-P00-1071.pdf | 5a35e1c190a9b144 | 8 | domainB/Moldovan-acl2000-P00-1071.md | aab0ed66330f0c76 |
 
 PDF 的完整 sha256 与版本见 [论文来源清单](../../analysis/论文笔记/sources-20261023.json)（PAPER-0008、0009 与领域 B 的两篇见 [论文笔记 README](../../analysis/论文笔记/README.md)）。
+
+**2026-10-29 补充解析**：同日经用户许可下载的 11 篇 PDF（“我同意下载所有你需要的论文原文pdf”）用同样的方法解析（脚本 `D:\6CJNM007\tmp\mineru_parse_flash3.sh`，11:53:12～11:56:48，每个都 exit 0；未使用 `--remote`，远程 parse-server 指向本机的空地址，遥测解析前后都是 disabled、`last_flush_at: never`；页标记数与 MinerU 读到的页数相同）。论文 ID 在登记时编号（按下载顺序），原文笔记尚未写。下载地址、字节数、完整 sha256 与版本见[论文笔记 README](../../analysis/论文笔记/README.md)的“2026-10-29 下载的十一篇 PDF 的登记”。
+
+| 论文 ID | PDF（papers/，不跟踪） | PDF sha256（前 16 位） | 页数 | 解析文件 | 解析文件 sha256（前 16 位） |
+| --- | --- | --- | --- | --- | --- |
+| PAPER-0010 | DivPrune-arxiv-2503.02175.pdf | 9f93e2fb05a2b677 | 17 | PAPER-0010/DivPrune-arxiv-2503.02175.md | 4d353c820477f9b2 |
+| PAPER-0011 | CoverPruner-arxiv-2609.03158.pdf | b2f40481bc02b3ae | 20 | PAPER-0011/CoverPruner-arxiv-2609.03158.md | b453cadd441f5d09 |
+| PAPER-0012 | MMTok-arxiv-2508.18264.pdf | 706b0792bfff8edc | 25 | PAPER-0012/MMTok-arxiv-2508.18264.md | 4a93bceae515e06a |
+| PAPER-0013 | CDPruner-arxiv-2506.10967.pdf | 2a46e68695ee0a81 | 22 | PAPER-0013/CDPruner-arxiv-2506.10967.md | 5c9c01eaa4f929c9 |
+| PAPER-0014 | VScan-arxiv-2505.22654.pdf | da9c58244a7145c9 | 24 | PAPER-0014/VScan-arxiv-2505.22654.md | 11656ff42e9a25cd |
+| PAPER-0015 | ShaRP-arxiv-2512.05385.pdf | 2a5cd4fc5fe4c3f2 | 19 | PAPER-0015/ShaRP-arxiv-2512.05385.md | 859e2199d15f0043 |
+| PAPER-0016 | FSR-arxiv-2602.05809.pdf | b034fff51d633918 | 16 | PAPER-0016/FSR-arxiv-2602.05809.md | b5772f1fb73d4577 |
+| PAPER-0017 | VisionTrim-arxiv-2601.22674.pdf | 794614de3a8c1d29 | 31 | PAPER-0017/VisionTrim-arxiv-2601.22674.md | 0d83d80811f6e108 |
+| PAPER-0018 | SCOPE-arxiv-2510.24214.pdf | 50a1f9a32777dc0f | 26 | PAPER-0018/SCOPE-arxiv-2510.24214.md | 359c9ff16d9e4f99 |
+| PAPER-0019 | HoloV-arxiv-2510.02912.pdf | 3f3353a89d1e9da2 | 34 | PAPER-0019/HoloV-arxiv-2510.02912.md | ea3cdca76b988778 |
+| PAPER-0020 | ZOO-Prune-arxiv-2509.24837.pdf | c77f17b8b06308fd | 20 | PAPER-0020/ZOO-Prune-arxiv-2509.24837.md | c79b337eb8f101ce |
