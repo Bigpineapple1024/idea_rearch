@@ -100,6 +100,17 @@ BENCHES = {
               "image_folder": f"{DATA}/downloads/vstar_bench",
               "annotations": [f"{DATA}/llava_eval/vstar/llava_vstar_test_annotations.jsonl"],
               "archives_sha256": f"{DATA}/downloads/vstar_bench/SHA256SUMS"},
+    # IDEA-0007's confirmation data (make_confirm_sets.py, drawn once before any EXP-0030 result): every question on 1000
+    # further val2014 images and every balanced question on 400 further GQA val images. Checksums: vqav2_val/SHA256SUMS_test4,
+    # gqa/SHA256SUMS_val400b and, for the 400 images, gqa/images_val400b_SHA256SUMS
+    "vqav2_test4": {"question_file": f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test4.jsonl",
+                    "image_folder": f"{DATA}/coco/val2014",
+                    "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test4_annotations.jsonl"],
+                    "archives_sha256": f"{DATA}/downloads/vqav2/SHA256SUMS"},
+    "gqa_val400b": {"question_file": f"{DATA}/llava_eval/gqa/llava_gqa_val400b.jsonl",
+                    "image_folder": f"{DATA}/gqa/images_val400b",
+                    "annotations": [f"{DATA}/llava_eval/gqa/llava_gqa_val400b_annotations.jsonl"],
+                    "archives_sha256": f"{DATA}/downloads/gqa/SHA256SUMS"},
 }
 # Budgets are 32-layer averages of visual tokens (code/token_pruning/README.md, "预算的口径").
 FASTV_KEEP = {192: 166, 128: 98, 64: 30}
