@@ -224,7 +224,7 @@ first_low_cost_check: "EXP-0006：在 pope_img20（20 张图、358 道题）上�
 2. **C11**：需要多阶段随机剪枝的实现（约 6 次 POPE 运行）；它能把 E-MC2-2 中的层分布与选择规则拆开。
 3. **C10**：需要下载 COCO val2014 的物体标注（annotations_trainval2014.zip，约 241 MB），之后只做离线分析。
 4. C5 的剩余部分（按实际 token 数对齐 VisionZip，3 次 POPE 运行）与 C2 的范数测量（1 次短运行）可以穿插进行。
-5. C4（FastV + VisionZip）作为第 ④ 步的探索性组合实验：先有 A、B 单独的结果（EXP-0002 已有），再跑组合。
+5. C4（FastV + VisionZip）作为第 ④ 步的探索性组合实验：先有 A、B 单独的结果（EXP-0002 已有），再跑组合。（2026-10-29 补注：一直没有做；排进第 ④ 步第二轮 EXP-0033 的 X1（VisionZip-128 + FastV 第 2 层起留 60 个），DEC-0056。）
 
 ## 交接与回流
 

@@ -38,6 +38,7 @@
 | EXP-0030 | IDEA-0007 | 一层全看，再按编码器排序（K = 1，留 47 个，按视觉编码器的 CLS 注意力），开发集：每题 CLS 排序、加路由、再加覆盖 16；VQAv2 dev2、GQA val400，6 次 | [EXP-0030_record](实验报告/EXP-0030_record.md)（计划 v1） | — | running（2026-10-29 11:09:59 开始，代码 604c777；原写 planned（排在 EXP-0029 分析封存之后；DEC-0049；2026-10-26 起另等完整阅读仓库的门，DEC-0053）） |
 | EXP-0031 | IDEA-0007 | 一层全看、再按编码器排序的确认（只在 EXP-0030 判读“有希望”时运行）：所选 vs VisionZip-64（Q1，主）、vs IDEA-0006 的所选（Q2）、vs 对应的 FastV 配置（Q3，排序），TextVQA 上的描述（Q4）；新抽的 VQAv2 test4、GQA val400b 与 TextVQA（不给 OCR），9 次 | [EXP-0031_record](实验报告/EXP-0031_record.md)（计划 v1，在 EXP-0030 的任何结果之前写定） | — | planned（排在 EXP-0030 分析封存之后；DEC-0051；另等完整阅读仓库的门，DEC-0053） |
 | EXP-0032 | IDEA-0007（机制） | 本流程中的 DivPrune-64（按论文自己实现，在 LLM 之前留 64 个）与一层全看 + 同一选择的前 47 个（K = 1，同样的特征）；VQAv2 dev2、GQA val400，4 次 | [EXP-0032_record](实验报告/EXP-0032_record.md)（计划 v1） | — | planned（排在 chain_0031 之后；DEC-0052；另等完整阅读仓库的门，DEC-0053） |
+| EXP-0033 | none（第 ④ 步） | 第 ④ 步第二轮，探索性组合（制造意外）：X1 VisionZip-128 + FastV（C4）、X2 CLS 候选 × DivPrune、X3 句式路由 × DivPrune、X4 DivPrune + 上下文合并（随机组合），另跑原版 FastV-64 与不剪枝；VQAv2 dev2、GQA val400，12 次 | [EXP-0033_record](实验报告/EXP-0033_record.md)（计划 v1） | — | planned（排在 chain_0032 之后；DEC-0056） |
 
 ## 全部运行
 
