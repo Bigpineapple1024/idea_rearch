@@ -137,3 +137,10 @@
 chain_0033.sh 随前面两条排队停下（日志 `run_vision_0033.log` 保留）。改用 `D:\6CJNM007\tmp\chain_0033b.sh`：与计划 v1.1 写的 chain_0033.sh 相同，只改两处——等待的日志改为 chain_0032c 的 `run_vision_0032c.log`；推送失败时隔 60 秒再试、最多 3 次，并核对远端等于 HEAD。门（EXP-0033.done）、核对、运行与分析都不变。
 
 - 2026-10-29 14:20 补：用户要求暂停，chain_0033b 随之停下（没有开始任何运行）。恢复时用 `chain_0033c.sh`（只把等待的日志改为 run_vision_0032d.log）。
+
+## 开门前的阅读（DEC-0055，2026-10-30）
+
+- **读的范围**：上一道门（EXP-0032，19:04）以来的改动：main 的 6844407（SQZ-EXP-0031、MODE_C-0002 回流 24 等）、337305f（完整阅读的其余修复、跑偏检查_2026-10-30）与本次提交（EXP-0032 的结果，DEC-0061）；code/token-pruning 的 e1daaab（EXP-0032 的代码，开门前已读）；新的运行产物：EXP-0032 的 analysis。本实验要提交的代码：`D:\6CJNM007\tmp\read_repo\diff_20261030\` 中 run_eval.py（+62 / −6 行）、exp0002_on0032_0031.py（+14）相对 HEAD（e1daaab）的差异，combo.py、check_combo.py、analyze_0033.py 的全文，run_analyze_0033.sh、seal_0033.sh、提交说明 msg_code65.txt 与排队脚本 chain_0033c.sh。
+- **核对**：HEAD 中 run_eval.py、divprune.py 与 tmp/exp0032/code 的副本相同，exp0002.py 与 exp0002_on0031.py 相同；两个 exp0002 变体做的是同一处改动；exp0033/MANIFEST 通过。tmp 里最近一次自检：check_combo.py 37/37，回归 check_divprune.py 29/29、check_zoom.py 77/77；空跑三种情形（复用 EXP-0032 的 DivPrune-64、用自己的 R13/R14、故意偏离 2%）按设计写出或停下。EXP-0032 的 R01、R02 都 completed，按排队脚本不会运行 R13、R14。X3 用的可视性表 `code/output/EXP-0015/visibility/visibility.npy` 的 sha256 为 0eb2258c12369566d793eae889400139d9b56788a10d1965e2990fe412cb8030，与 EXP-0015 封存时相同（运行留存的 config.json 不记它的哈希，在这里补记）。
+- **发现**：代码与计划 v1.1 一致，没有要改的。完整阅读发现的文档问题已修完（[跑偏检查_2026-10-30](../跑偏检查_2026-10-30.md)）；代码分支上的问题等本实验跑完再提交（排队脚本核对 HEAD）。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0033.done`。
