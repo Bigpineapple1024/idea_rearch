@@ -156,3 +156,7 @@ chain_0031b 推送 EXP-0031 的代码时被 GitHub 拒绝而停下，chain_0032b
 - **当前证据支持**：本流程中，DivPrune-64 在两个开发集上都明显强于 VisionZip-64；一层全看对多样性选择没有平均的帮助。
 - **不能支持**：DivPrune-64 在新数据上的大小（没有确认）；“本项目的方法与 DivPrune 相当”（开发集上 DivPrune-64 比 IDEA-0007 的所选 +1.01 / +0.25，比 K = 1 路由 +2.02 / +0.94）。
 - **下一步**（DEC-0061）：以 DivPrune-64 为下一轮的底座；EXP-0033（第 ④ 步第二轮，X2～X4 以 DivPrune 为一方）照预注册进行；SQZ-EXP-0032 在 EXP-0033 运行期间写，回流 MODE_C-0002（回流 25）；下一轮的 IDEA 在 EXP-0033 之后由 discover-innovation 写，确认用新抽的数据。IDEA-0007 共用 19 / 30 次，到此结束。
+
+## 深挖
+
+- 2026-10-30 补：[SQZ-EXP-0032](EXP-0032_squeeze.md)（F75、F76；code/output/EXP-0032/squeeze，SHA256SUMS 72cadb31…，已备份）。
