@@ -61,3 +61,10 @@
 ### 预算
 
 - 9 次：MME 每次约 8 分钟、V\* 约 1 分钟、POPE 约 27 分钟，约 1.8 GPU 小时。IDEA-0008 共 25 / 30 次，约 6.2 / 20 GPU 小时。
+
+## 开门前的阅读（DEC-0055，2026-10-31 凌晨 4 点前；EXP-0035 运行中）
+
+- **读的范围**：上一道门（EXP-0035，2026-10-31 03:09）以来的改动：main 的 522187a（EXP-0035 计划 v1.1：两项二级分析）、a0197d5（SQZ-EXP-0034、F88～F90、F6 的补注、source/README.md 登记四个官方代码）、1aee6e5（MODE_C-0002 回流 26）、3f3037c（本计划 v1、DEC-0066）；code/token-pruning 的 88cb1cb（EXP-0035 的代码，由 chain_0035 在核对 exp0035/MANIFEST 后提交，开门前已读）；新的运行产物：EXP-0034 的 squeeze（已封存并读过）；本地新增、不进仓库的 source/DivPrune、CDPruner、MMTok、VScan（只读，本实验不用）。EXP-0035 的运行产物正在生成，本实验不用它们，没有读。本实验要提交的代码：只新增 analyze_0036.py（sha256 4c5dbc97…，记在 `D:\6CJNM007\tmp\exp0036\MANIFEST`）；run_analyze_0036.sh、seal_0036.sh、提交说明 msg_code68.txt 与排队脚本 chain_0036.sh。
+- **核对**：analyze_0036.py 的运行表（R01～R09 的配置与数据、复用的三个不剪枝运行）与计划相同；Q1～Q3 的读法与计划写定的一致（区间每个 benchmark 内按图像重抽 1000 次、种子 0；Q3 在两个 benchmark 内各自重抽再合并）；任何核对不到 100% 就停（选择与 DivPrune-64 前 61 个相同一项按 ≥ 99% 计）。用 EXP-0002、EXP-0025 的旧运行作替身空跑，48 项核对都通过：POPE 每个划分按 eval_pope.py 的规则重算的准确率与答“是”的比例、MME 每个子任务按 calculation.py 的规则重算的分数、V\* 的准确率都等于各自的 metrics.json。chain_0036.sh：等 chain_0035 写出“EXP-0035 analysis sealed”（停下或“not run”就停）、等本门、GPU 空闲、工作区干净、HEAD 是 EXP-0035 的代码提交、MANIFEST 相同、本计划在 main 上，再提交、推送、核对配置、运行、分析、封存；bash -n 语法检查通过。
+- **发现**：①替身运行没有 peek、nopeek 的选择记录与第一个 token 的日志，空跑跳过了这几项核对与 FLOPs（代码照 analyze_0035.py 的同类核对写）；真实运行时若这里出错，分析会停下、不写任何结果，改正后重跑。②本门在 EXP-0035 的结果写进 main 之前打开：EXP-0036 不用 EXP-0035 的任何产物，读法也不依赖它（DEC-0066 ④）。③其余与计划 v1 一致，没有要改的。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0036.done`。
