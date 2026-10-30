@@ -160,6 +160,7 @@
 | [analysis/实验报告/EXP-0033_record.md](../analysis/实验报告/EXP-0033_record.md) | EXPERIMENT_RECORD：第 ④ 步第二轮，探索性组合实验（计划 v1、v1.1：VQAv2 dev2、GQA val400，12 次；预先写定“意外”的三类，没有判据；2026-10-31 补：已完成，DEC-0062） |
 | [analysis/实验报告/EXP-0033_squeeze.md](../analysis/实验报告/EXP-0033_squeeze.md) | SQUEEZE_REPORT：EXP-0033（脚本写于看到结果之前；X2 少铺开而准确率不变 F80；DivPrune 底座上的题目查询没有帮助 F79；64 档的缺口与 K = 1 在 GQA 属性、二选一题上的补回 F77、F78；按题目文字挑方法几乎没有提升 F83） |
 | [analysis/实验报告/EXP-0034_record.md](../analysis/实验报告/EXP-0034_record.md) | EXPERIMENT_RECORD：IDEA-0008 的开发运行（计划 v1：VQAv2 dev2、GQA val400，6 次；Q1 peek − DivPrune-64，Q2 peek − nopeek） |
+| [analysis/实验报告/EXP-0035_record.md](../analysis/实验报告/EXP-0035_record.md) | EXPERIMENT_RECORD：IDEA-0008 的确认（计划 v1，条件式：新抽的 VQAv2 test5、GQA val400c，TextVQA 描述，10 次；在看到 EXP-0034 的结果之前写定） |
 | [analysis/实验报告/EXP-0020_squeeze.md](../analysis/实验报告/EXP-0020_squeeze.md) | SQUEEZE_REPORT：EXP-0020（增益来自 yes/no 与 number F42；与 VisionZip 的差距在开放式题，是底座的差距 F43） |
 | [analysis/论文主张与证据_草稿.md](../analysis/论文主张与证据_草稿.md) | 论文主张与证据对照（草稿）：可以写的主张 CL-1～CL-10、不能写的主张、共同的限定 |
 | [analysis/实验报告/EXP-0018_squeeze.md](../analysis/实验报告/EXP-0018_squeeze.md) | SQUEEZE_REPORT：EXP-0018（答案类型上效应相反 F38；损失集中在问点名物体属性的题 F39；一般题目上 FastV 一族低于 VisionZip F40） |
