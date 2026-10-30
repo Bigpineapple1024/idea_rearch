@@ -10,7 +10,7 @@
 | 实验室电脑新会话的交接 | [实验室会话交接](实验室会话交接.md) |
 | 视觉 token 剪枝：六篇总结与趋势（原文） | [六篇论文总结与视觉Token压缩趋势](六篇论文总结与视觉Token压缩趋势.md) |
 | 视觉 token 剪枝：三篇共性、差异与 baseline（FastV） | [所有论文在baseline骨架的改进内容](专题分析/所有论文在baseline骨架的改进内容.md) |
-| 问题—现象—机制矩阵（合并版，回流 EXP-0002；之后回流 1～13，2026-10-25 跑偏检查补注；2026-10-29 补注：现为回流 1～23） | [MODE_C-0002](MODE_C-0002_视觉token剪枝.md)；旧版保留：[视觉Token压缩_ModeC](视觉Token压缩_ModeC.md)（原文）、[MODE_C-0001](MODE_C-0001_视觉token剪枝.md)（源码与探针） |
+| 问题—现象—机制矩阵（合并版，回流 EXP-0002；之后回流 1～13，2026-10-25 跑偏检查补注；2026-10-29 补注：现为回流 1～23；2026-10-31 补注：现为回流 1～26） | [MODE_C-0002](MODE_C-0002_视觉token剪枝.md)；旧版保留：[视觉Token压缩_ModeC](视觉Token压缩_ModeC.md)（原文）、[MODE_C-0001](MODE_C-0001_视觉token剪枝.md)（源码与探针） |
 | 论文全文（MinerU 解析，只有文本） | [literature/processed](../literature/processed/README.md) |
 | 候选方案（待 baseline 复现与组合实验后重新排序；2026-10-26 补注：这是最早的候选，之后的方案见下面第 ⑨～⑫ 步各轮的 IDEA-0002～IDEA-0007） | [IDEA-0001](IDEA-0001_编码器侧压缩的位置编号.md) |
 | **视觉方向第 ⑨～⑫ 步：IDF 加权的题目查询（DEC-0025）** | [IDEA-0002](IDEA-0002_题目词按信息量加权.md)（迁移方案）；[EXP-0014](实验报告/EXP-0014_record.md)、[SQZ-EXP-0014](实验报告/EXP-0014_squeeze.md)（A / A′ / A′+B / A+B：POPE 提升，MME 未提升，F34、F35） |
@@ -95,7 +95,7 @@
 | [analysis/archied/2026-10-23_SOP-v1_从论文到融合方案.md](../analysis/archied/2026-10-23_SOP-v1_从论文到融合方案.md) | 已归档：SOP v1（被研究流程 v2.0 取代） |
 | [analysis/实验室会话交接.md](../analysis/实验室会话交接.md) | 实验室电脑新会话的交接说明 |
 | [analysis/MODE_C-0001_视觉token剪枝.md](../analysis/MODE_C-0001_视觉token剪枝.md) | MODE_C_PACKAGE：多模态大模型视觉 token 剪枝（历史版本，已由 MODE_C-0002 取代） |
-| [analysis/MODE_C-0002_视觉token剪枝.md](../analysis/MODE_C-0002_视觉token剪枝.md) | MODE_C_PACKAGE：视觉 token 剪枝合并版（原文版 + 源码版 + EXP-0001/0002 回流；之后回流 1～13，2026-10-25 跑偏检查补注；2026-10-29 补注：现为回流 1～23，回流 20～23 是 SQZ-EXP-0027、SQZ-EXP-0028、查新补充与 SQZ-EXP-0029） |
+| [analysis/MODE_C-0002_视觉token剪枝.md](../analysis/MODE_C-0002_视觉token剪枝.md) | MODE_C_PACKAGE：视觉 token 剪枝合并版（原文版 + 源码版 + EXP-0001/0002 回流；之后回流 1～13，2026-10-25 跑偏检查补注；2026-10-31 补注：现为回流 1～26；2026-10-29 补注：现为回流 1～23，回流 20～23 是 SQZ-EXP-0027、SQZ-EXP-0028、查新补充与 SQZ-EXP-0029） |
 | [analysis/MODE_C-0003_时序预测.md](../analysis/MODE_C-0003_时序预测.md) | MODE_C-0003：时序预测的问题—现象—机制矩阵（iTransformer 为 baseline） |
 | [analysis/IDEA-0002_题目词按信息量加权.md](../analysis/IDEA-0002_题目词按信息量加权.md) | 跨领域迁移方案：用 IDF 给题目加权，构造图像 token 的查询（第 ⑨～⑪ 步，领域 B 信息检索，领域 C BERTScore / SIF） |
 | [analysis/IDEA-0001_编码器侧压缩的位置编号.md](../analysis/IDEA-0001_编码器侧压缩的位置编号.md) | IDEA_PACKAGE：编码器侧压缩的位置编号（融合路线候选，deferred） |
