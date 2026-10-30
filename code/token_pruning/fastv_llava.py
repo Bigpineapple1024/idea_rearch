@@ -61,6 +61,11 @@ The tower then runs plain LLaVA's forward with its attention maps returned (CLIP
 features are the same) and keeps the score of each prefill; fastv_cls_log holds one record per prefill: VisionZip's 53
 dominant patches by that score and, when it ranked the stage, the `keep` non-padding patches it puts first. Without
 either option nothing changes.
+With score_kind="div" (EXP-0032) the stage keeps the image tokens DivPrune would choose (divprune.maxmin_order: max-min
+diversity, cosine distance) on the same features DivPrune uses before the LLM, the image tokens' input embeddings (the
+projector's output), so only where the selection is applied differs; padding is not excluded (as DivPrune), no attention
+map is needed, and fastv_div_log holds the kept patches in selection order, one record per prefill. Without it nothing
+changes.
 """
 import math
 import types
@@ -71,6 +76,7 @@ from transformers.cache_utils import Cache, DynamicCache
 from transformers.modeling_outputs import BaseModelOutputWithPast
 from transformers.models.llama import modeling_llama
 
+from divprune import maxmin_order
 from llava.constants import IMAGE_TOKEN_INDEX
 
 
@@ -248,6 +254,7 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
     object_cos = self.fastv_score_kind == "object_cos" or contrast or query     # ranked by an input-embedding score alone
     # IDEA-0007: ranked by the vision tower's CLS attention instead (every question, or the router's unrouted ones)
     cls_now = prefill and (self.fastv_score_kind == "cls" or (self.fastv_cls_unrouted and self.fastv_routed is False))
+    div_now = prefill and self.fastv_score_kind == "div"      # EXP-0032: DivPrune's selection, applied at the stage
     mix = self.fastv_score_kind == "mix" or query_vis
     extra = getattr(self, "fastv_extra", 0) if prefill else 0      # zoom tokens inserted right after the image (IDEA-0004)
     if prefill:
@@ -286,13 +293,18 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
                 self.fastv_input_score = self.fastv_object_cos - ref
         if cls_now:                                            # one CLS attention value per patch, from the tower
             self.fastv_input_score = self.fastv_cls_score.to(hidden.device).float()
+        if div_now:                                            # the image tokens' input embeddings, as DivPrune's
+            self.fastv_div_feats = inputs_embeds[0, start:start + n_img]
         allowed = torch.ones(n_img, dtype=torch.bool, device=hidden.device)
         if self.fastv_exclude_padding:
             allowed = ~_padding_mask(*self.fastv_image_size, round(n_img ** 0.5)).to(hidden.device)
     for idx, layer in enumerate(self.layers):
         if prefill and idx in stages:
             n_cur = kept.numel()
-            if self.fastv_generator is None and (object_cos or cls_now):
+            if div_now:                                        # no score: the selection is DivPrune's order
+                score = torch.zeros(n_cur, device=hidden.device)
+                self.fastv_last_scores = score
+            elif self.fastv_generator is None and (object_cos or cls_now):
                 score = self.fastv_input_score[kept]
                 self.fastv_last_scores = score
             elif self.fastv_generator is None and attn_weighted:   # weighted attention rows of the text after the image
@@ -316,7 +328,12 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             cover = getattr(self, "fastv_cover_mask", None) if not mix else None
             if cls_now and self.fastv_cls_log:                 # the CLS ranking's own choice, before any cover
                 self.fastv_cls_log[-1].update(used=True, own=sorted(kept[pos[score[pos].topk(count).indices]].tolist()))
-            if mix:                                            # part by the object name, the rest by FastV's score
+            if div_now:
+                order = torch.tensor(maxmin_order(self.fastv_div_feats[kept[pos]], count), device=pos.device)
+                top = pos[order].sort().values
+                if self.fastv_div_log is not None:
+                    self.fastv_div_log.append({"index": len(self.fastv_div_log), "order": kept[pos[order]].tolist()})
+            elif mix:                                          # part by the object name, the rest by FastV's score
                 side, blocks = round(n_img ** 0.5), self.fastv_stratify
                 n_q = round(count * self.fastv_visible_share) if query_vis else min(self.fastv_mix_question, count)
                 self.fastv_mix_count = n_q
@@ -359,7 +376,7 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             kept = kept[top]
             self.fastv_kept_image_positions = kept
         mask = _causal_mask(hidden) if prefill else None
-        need_attn = prefill and idx + 1 in stages and self.fastv_generator is None and not (object_cos or cls_now)
+        need_attn = prefill and idx + 1 in stages and self.fastv_generator is None and not (object_cos or cls_now or div_now)
         out = layer(hidden, attention_mask=mask, position_ids=position_ids, past_key_value=cache,
                     output_attentions=need_attn, use_cache=use_cache)
         hidden = out[0]
@@ -524,13 +541,22 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
     score_kind "cls" (IDEA-0007) ranks by the vision tower's CLS attention (set per prefill by apply_fastv's tower
     forward), plainly: no seed, position prior, blocks, row log, schedule, route, zoom or cover. cls_unrouted
     (query_vis with route only) ranks the unrouted questions that way, a cover included; the routed ones are unchanged.
+    score_kind "div" (EXP-0032) keeps DivPrune's max-min diversity choice on the image tokens' input embeddings, with the
+    same exclusions as "cls" and without exclude_padding (DivPrune does not exclude it).
     """
     if score_kind not in ("last", "object_cos", "mix", "contrast_max", "contrast_mean", "query_mean", "query_idf",
-                          "attn_idf", "query_vis", "cls"):
+                          "attn_idf", "query_vis", "cls", "div"):
         raise ValueError(f"unknown score_kind {score_kind!r}")
     if score_kind == "cls" and (seed is not None or score_prior is not None or stratify is not None or log_text_rows
                                 or schedule or route is not None or zoom or cover or object_span is not None):
         raise ValueError("cls ranks plainly: no seed, position prior, stratify, row log, schedule, route, zoom or cover")
+    if score_kind == "div" and (seed is not None or score_prior is not None or stratify is not None or log_text_rows
+                                or schedule or route is not None or zoom or cover or object_span is not None
+                                or exclude_padding or cls_unrouted):
+        raise ValueError("div selects plainly: no seed, position prior, stratify, row log, schedule, route, zoom, cover, "
+                         "padding exclusion or cls_unrouted")
+    llama_model.fastv_div_log = [] if score_kind == "div" else None
+    llama_model.fastv_div_feats = None
     if cls_unrouted and (score_kind != "query_vis" or route is None):
         raise ValueError("cls_unrouted needs query_vis with route")
     llama_model.fastv_cls_unrouted = bool(cls_unrouted)

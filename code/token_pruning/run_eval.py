@@ -8,9 +8,11 @@ Covers the benchmarks that LLaVA-1.5 evaluates through llava.eval.model_vqa_load
   python run_eval.py --method visionzip --dominant 54 --contextual 10 -- ...
   python run_eval.py --method random --fastv-k 2 --fastv-keep 30 --seed 2021 -- ...
   python run_eval.py --method sparsevlm --retained-tokens 64 -- ...   # in the sparsevlm env
+  python run_eval.py --method divprune --divprune-keep 64 --divprune-log div.json -- ...   # EXP-0032
 
 VisionZip is imported from its repository root (set VISIONZIP_ROOT or PYTHONPATH): the
 visionzip 0.1.3 wheel on PyPI ships no code.
+`divprune` is DivPrune's max-min diversity selection before the LLM, written here from the paper (divprune.py).
 `random` is FastV with the attention ranking replaced by a seeded uniform draw (same K, same count).
 `sparsevlm` runs SparseVLM's own fork of model_vqa_loader (pip install -e source/SparseVLMs), which
 prunes inside generate() from `retained_tokens`; it refuses to run against the official LLaVA loader.
@@ -45,7 +47,12 @@ def _schedule(text):
 
 def parse():
     ours = argparse.ArgumentParser()
-    ours.add_argument("--method", choices=["vanilla", "fastv", "visionzip", "random", "sparsevlm"], required=True)
+    ours.add_argument("--method", choices=["vanilla", "fastv", "visionzip", "random", "sparsevlm", "divprune"], required=True)
+    ours.add_argument("--divprune-keep", type=int, default=None,
+                      help="divprune (EXP-0032): keep this many projected patch tokens per image before the LLM, chosen by "
+                           "DivPrune's max-min diversity (divprune.py, written from the paper; cosine distance)")
+    ours.add_argument("--divprune-log", default=None,
+                      help="divprune: write one record per encoded image (JSON): the selection order and the kept patches")
     ours.add_argument("--fastv-k", type=int, default=2)
     ours.add_argument("--fastv-keep", type=int, default=288)
     ours.add_argument("--seed", type=int, default=None, help="random: seed of the token draw")
@@ -100,7 +107,7 @@ def parse():
                       help="diagnostic: per image, the largest and the mean cosine over the image tokens' input embeddings "
                            "for every vocabulary embedding (.npz, EXP-0015)")
     ours.add_argument("--fastv-score", choices=["last", "object_cos", "mix", "contrast_max", "contrast_mean", "query_mean",
-                                                "query_idf", "attn_idf", "query_vis", "cls"],
+                                                "query_idf", "attn_idf", "query_vis", "cls", "div"],
                       default="last",
                       help="fastv: rank by the last token's attention at layer K-1 (FastV), or, for POPE-style questions, "
                            "by the cosine of each image token's input embedding to the object name's (EXP-0011 D3), or "
@@ -109,7 +116,10 @@ def parse():
                            "query_mean / query_idf: by the cosine to the uniform / IDF-weighted mean input embedding of "
                            "all tokens after the image, IDF over the question file; attn_idf: the scoring layer's "
                            "attention rows of those tokens, IDF-weighted (EXP-0014); cls: by the vision tower's CLS "
-                           "attention at layer -2, VisionZip's dominant score, taken plainly (IDEA-0007)")
+                           "attention at layer -2, VisionZip's dominant score, taken plainly (IDEA-0007); div: DivPrune's "
+                           "max-min diversity on the image tokens' input embeddings, applied at the stage (EXP-0032)")
+    ours.add_argument("--fastv-div-log", default=None,
+                      help="with --fastv-score div: one record per prefill (JSON): the kept patches in selection order")
     ours.add_argument("--fastv-cls-unrouted", action="store_true",
                       help="fastv, --fastv-score query_vis with --fastv-route (IDEA-0007): rank the unrouted questions by "
                            "the vision tower's CLS attention instead of the strong baseline's score (a cover too); the "
@@ -201,6 +211,20 @@ def parse():
         ours.error("--fastv-cls-unrouted needs --fastv-score query_vis with --fastv-route")
     if (method_args.fastv_cls_log is not None) != (method_args.fastv_score == "cls" or method_args.fastv_cls_unrouted):
         ours.error("--fastv-cls-log goes with --fastv-score cls or --fastv-cls-unrouted")
+    if method_args.fastv_score == "div" and (method_args.fastv_score_prior or method_args.fastv_stratify or method_args.text_rows_log
+                                             or method_args.fastv_schedule or method_args.fastv_zoom or method_args.fastv_cover
+                                             or method_args.fastv_exclude_padding or method_args.fastv_route
+                                             or method_args.score_log):
+        ours.error("--fastv-score div selects plainly: no position prior, stratify, row log, schedule, zoom, cover, "
+                   "padding exclusion, route or score log")
+    if (method_args.fastv_div_log is not None) != (method_args.fastv_score == "div"):
+        ours.error("--fastv-div-log goes with --fastv-score div")
+    if (method_args.method == "divprune") != (method_args.divprune_keep is not None):
+        ours.error("--method divprune and --divprune-keep go together")
+    if method_args.divprune_keep is not None and not 0 < method_args.divprune_keep <= 576:
+        ours.error("--divprune-keep must be in 1..576")
+    if (method_args.divprune_log is not None) != (method_args.method == "divprune"):
+        ours.error("--divprune-log goes with --method divprune")
     zoom_on = method_args.fastv_zoom or method_args.fastv_cover
     if zoom_on and method_args.fastv_score != "query_vis":
         ours.error("--fastv-zoom and --fastv-cover need --fastv-score query_vis")
@@ -233,14 +257,14 @@ def parse():
         ours.error("--vz-cover-centre, --vz-cover-on, --vz-cover-box and --vz-cover-top need --vz-cover")
     if method_args.vz_cover_top < 0 or (method_args.vz_cover_top and method_args.vz_cover_centre):
         ours.error("--vz-cover-top must be positive and does not go with --vz-cover-centre")
-    if method_args.vocab_visibility_log and method_args.method in ("visionzip", "sparsevlm"):
+    if method_args.vocab_visibility_log and method_args.method in ("visionzip", "sparsevlm", "divprune"):
         ours.error("--vocab-visibility-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     if (method_args.fastv_score == "mix") != (method_args.fastv_mix_question is not None):
         ours.error("--fastv-score mix and --fastv-mix-question go together")
     if method_args.fastv_score == "mix" and (method_args.text_rows_log or not method_args.fastv_stratify
                                              or method_args.fastv_schedule):
         ours.error("--fastv-score mix needs --fastv-stratify, a single stage and no --text-rows-log")
-    if method_args.name_cos_log and method_args.method in ("visionzip", "sparsevlm"):
+    if method_args.name_cos_log and method_args.method in ("visionzip", "sparsevlm", "divprune"):
         ours.error("--name-cos-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     method_args.conv_mode = llava_args.conv_mode          # the contrast vocabulary is tokenised in the same template
     method_args.question_file = llava_args.question_file  # IDF weights are counted over the evaluated questions
@@ -293,6 +317,9 @@ def apply_method(model, m, tokenizer=None):
                            zoom=zoom, cover=cover, cls_unrouted=bool(getattr(m, "fastv_cls_unrouted", False)))
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
+    if m.method == "divprune":                                 # EXP-0032: DivPrune's selection before the LLM
+        from divprune import apply_divprune
+        return apply_divprune(model, m.divprune_keep, [])
     if m.method == "visionzip":
         root = os.environ.get("VISIONZIP_ROOT")
         if root:
@@ -631,6 +658,8 @@ def main():
             _VZ_MODEL.append(model)
         if method_args.fastv_cls_log:                            # IDEA-0007: its log is written at the end
             _CLS_MODEL.append(model.get_model())
+        if method_args.divprune_log or method_args.fastv_div_log:   # EXP-0032: its log is written at the end
+            _DIV_MODEL.append(model)
         if method_args.layer_token_log:
             times["n_layers"] = len(model.get_model().layers)
             for i, layer in enumerate(model.get_model().layers):
@@ -728,11 +757,20 @@ def main():
         log = _CLS_MODEL[0].fastv_cls_log if _CLS_MODEL else []
         with open(method_args.fastv_cls_log, "w") as f:
             json.dump({"n_prefills": len(log), "n_used": sum(r["used"] for r in log), "records": log}, f)
+    if method_args.divprune_log:                                # EXP-0032: one record per encoded image
+        log = _DIV_MODEL[0].divprune_log if _DIV_MODEL else []
+        with open(method_args.divprune_log, "w") as f:
+            json.dump({"n_images": len(log), "keep": method_args.divprune_keep, "records": log}, f)
+    if method_args.fastv_div_log:                               # EXP-0032: one record per prefill
+        log = _DIV_MODEL[0].get_model().fastv_div_log if _DIV_MODEL else []
+        with open(method_args.fastv_div_log, "w") as f:
+            json.dump({"n_prefills": len(log), "keep": method_args.fastv_keep, "records": log}, f)
 
 
 _ZOOM_MODEL = []
 _VZ_MODEL = []
 _CLS_MODEL = []
+_DIV_MODEL = []
 
 
 if __name__ == "__main__":

@@ -267,6 +267,12 @@ CONFIGS["fastv64k1_cls"] = ("tp", ["--method", "fastv", "--fastv-k", "1", "--fas
                                    "--fastv-exclude-padding"])
 CONFIGS["fastv64k1_qroute_cls"] = ("tp", CONFIGS["fastv64k1_qroute"][1] + ["--fastv-cls-unrouted"])
 CONFIGS["fastv64k1_qroute_cls_c16"] = ("tp", CONFIGS["fastv64k1_qroute_c16"][1] + ["--fastv-cls-unrouted"])
+# EXP-0032: DivPrune (Alvar et al., CVPR 2025), written from the paper (divprune.py): divprune64 keeps 64 of the 576
+# projected patch tokens by max-min diversity before the LLM; fastv64k1_div lets layer 0 see all 576 and from layer 1
+# on keeps the first 47 of the same greedy selection on the same features (63.5 tokens per layer), so that only where
+# the selection is applied differs.
+CONFIGS["divprune64"] = ("tp", ["--method", "divprune", "--divprune-keep", "64"])
+CONFIGS["fastv64k1_div"] = ("tp", ["--method", "fastv", "--fastv-k", "1", "--fastv-keep", "47", "--fastv-score", "div"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
@@ -367,6 +373,10 @@ def run_one(run_id, config, bench):
     scores = [method_args[i + 1] for i, a in enumerate(method_args) if a == "--fastv-score"]
     if scores[-1:] == ["cls"] or "--fastv-cls-unrouted" in method_args:     # IDEA-0007: one record per prefill
         method_args = method_args + ["--fastv-cls-log", f"{run_dir}/cls.json"]
+    if scores[-1:] == ["div"]:                                              # EXP-0032: one record per prefill
+        method_args = method_args + ["--fastv-div-log", f"{run_dir}/div.json"]
+    if method_args[method_args.index("--method") + 1] == "divprune":        # EXP-0032: one record per image
+        method_args = method_args + ["--divprune-log", f"{run_dir}/div.json"]
     if config.endswith("_names"):
         method_args = method_args + ["--answer-logit-log", f"{run_dir}/answer_logits.json",
                                      "--name-cos-log", f"{run_dir}/name_cos.npz"]
