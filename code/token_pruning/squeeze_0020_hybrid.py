@@ -45,6 +45,7 @@ def main():
                                     "A_score": float(s["scores"]["A_64"][i]), "AV_score": float(s["scores"]["AV_64"][i])} for i in flips]
     L += ["", f"test2 上 64 档 A′+B+V 与 A 得分不同的 do 题（{len(flips)} 题）：", "", "| 题目 | 多数答案 | A | A′+B+V |", "| --- | --- | --- | --- |"]
     L += [f"| {r['question']} | {r['majority']} | {r['A_64']} ({r['A_score']:.1f}) | {r['AV_64']} ({r['AV_score']:.1f}) |" for r in res["do_start_test2_flips"]]
+    # 2026-10-30 note: no rstrip(".") here, unlike the yes rate in squeeze_0020.py (line 172), so "yes." counts differently
     yes_rate = {k: float(np.mean([a.strip().lower() == "yes" for a, mm in zip(s["answers"][k], m) if mm])) for k in ("vanilla", "A_64", "AV_64")}
     maj_yes = float(np.mean([majority(s["gts"][q]["answers"]) == "yes" for q, mm in zip(s["qids"], m) if mm]))
     res["do_start_test2_yes_rate"] = {**yes_rate, "majority_yes_share": maj_yes}

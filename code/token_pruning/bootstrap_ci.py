@@ -39,6 +39,7 @@ def load_pope(run_dir):
             labels = [json.loads(line)["label"] == "yes" for line in f]
         preds = [not pope_no(a["text"]) for a in answers if questions[a["question_id"]] == split]
         items[split] = np.array(list(zip(preds, labels[:len(preds)])), dtype=bool)  # eval_pope pairs in order
+        # 2026-10-30 note: with fewer answers than labels the rest are dropped silently, as in eval_pope.py
     return items
 
 
@@ -83,7 +84,7 @@ def main():
     if len(benches) != 1 or len(a.runs) > 2:
         raise SystemExit("give one run, or two runs on the same benchmark")
     bench = benches.pop()
-    load, stat = (load_pope, pope_stat) if bench == "pope" else (load_mme, mme_stat)
+    load, stat = (load_pope, pope_stat) if bench == "pope" else (load_mme, mme_stat)   # 2026-10-30 note: any other bench reads as MME
     data = [load(r) for r in a.runs]
     sizes = {k: len(v) for k, v in data[0].items()}
     full = {k: np.arange(n) for k, n in sizes.items()}

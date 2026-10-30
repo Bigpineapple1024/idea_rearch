@@ -13,6 +13,7 @@ are inserted; with zoom on every question the routed query_vis cosine still read
 text; with cover, the baseline's own in-box count plus cover is taken inside the box by its rule and the rest outside,
 also with the centred box and at K = 1, keep 47 (EXP-0026); the box stays square and inside the image, never below the native-resolution side, and the picks skip a crop's padding;
 the layer-token and kept-token logs count the zoom tokens; argument, config and bench checks.
+Run it from a copy of the new code (e.g. D:/6CJNM007/tmp/<exp>/code): run from the repository itself, part A would compare the committed code with itself, and the check 'the regression ran the committed modules against the new ones' now fails there (2026-10-29 note).
 """
 import argparse
 import json
@@ -144,7 +145,8 @@ def main():
     checks["without zoom and cover: kept sets and answers equal the committed code's"] = all(
         k in outs[t] for t in outs for k in ("kept", "gen")) and all(outs["committed"][k] == outs["new"][k] for k in ("kept", "gen"))
     checks["the regression ran the committed modules against the new ones"] = (
-        all(under(f, COMMITTED) for f in outs["committed"].get("modules", {"none": ""}).values())
+        os.path.normcase(os.path.abspath(HERE)) != os.path.normcase(os.path.abspath(COMMITTED))   # 2026-10-29: run from the repository itself, both runs would use the same code
+        and all(under(f, COMMITTED) for f in outs["committed"].get("modules", {"none": ""}).values())
         and all(under(f, HERE) for f in outs["new"].get("modules", {"none": ""}).values()))
     checks["this check imports the new fastv_llava, run_eval and exp0002"] = all(
         under(m.__file__, HERE) for m in (fastv_llava, run_eval, exp0002))
@@ -278,7 +280,7 @@ def main():
     model, lm, got = run(a.workdir, img_path, after, idf, [False], n=16, pick="pool")
     rec, e = lm.fastv_zoom_log[0], got["embeds"][0][0].float()
     feats, crop = crop_feats(model, lm, rec)
-    checks["pool: inserted tokens = 6 x 6 block means of the crop's 576 tokens"] = (
+    checks["pool: inserted tokens = 4 x 4 block means of the crop's 576 tokens"] = (   # 2026-10-29: the label said 6 x 6 until then; the code checks 4 x 4 blocks (n = 16); old logs keep the old label
         rec["zoom"] and "picked" not in rec and torch.allclose(e[start + n_img:start + n_img + n], block_means(feats, range(24), range(24), 4), atol=1e-5))
 
     # H. source full: block means of the image's own tokens over its content rows (no crop)

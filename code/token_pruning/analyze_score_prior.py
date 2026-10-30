@@ -25,6 +25,8 @@ def main():
     blank = np.load(f"{out}/{blank_run}/scores.npy")
     real = np.load(f"{out}/{real_run}/scores.npy")
     prior = blank.mean(axis=0)
+    # 2026-10-30 note: no overwrite check; rerunning rewrites the sealed EXP-0008/analysis, including position_prior.npy,
+    # which every K = 2 prior config reads (README); do not rerun
     os.makedirs(f"{out}/analysis", exist_ok=True)
     np.save(f"{out}/analysis/position_prior.npy", prior.astype(np.float32))
     real_mean = real.mean(axis=0)

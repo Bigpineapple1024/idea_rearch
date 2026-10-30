@@ -181,7 +181,7 @@ def main():
     elif Q2:
         verdict = (("Q1 部分成立" if Q1 == "partly" else "Q1 不成立") + "、Q2 成立：增益主要来自 K = 1；覆盖不能作为方法的贡献"
                    "（Q1 部分成立时如实写出在哪个集上成立）")
-    else:
+    else:   # 2026-10-30 note: also reached when Q1 is "partly" and Q2 fails, a case the plan did not cover (EXP-0027: Q1 partly, Q2 holds)
         verdict = "Q1、Q2 都不成立：回到第 ⑨ 步"
     res["criteria"] = {"Q1": Q1, "Q1_pairs": q1, "Q2": Q2, "Q2_pairs": q2, "Q3_pairs": q3, "above_visionzip": above_vz, "verdict": verdict}
     res["checks"] = checks

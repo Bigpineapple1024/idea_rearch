@@ -90,7 +90,7 @@ def main():
     with open(LABELS) as f:
         info = [json.loads(line) for line in f]
     stats = [analyse(out, r, info) for r in run_ids]
-    os.makedirs(f"{out}/analysis", exist_ok=True)
+    os.makedirs(f"{out}/analysis", exist_ok=True)   # 2026-10-30 note: no overwrite check; do not rerun (README)
     with open(f"{out}/analysis/kept_summary.json", "w") as f:
         json.dump(stats, f, indent=2)
     lines = ["| 运行 | keep | 平均行 / 列（均匀 11.5） | 底部 1/4 占比（均匀 25%） | 4×4 块覆盖率 | 最近邻距离 | 归一化熵 | "

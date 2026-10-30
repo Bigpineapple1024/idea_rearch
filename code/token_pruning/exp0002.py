@@ -74,6 +74,9 @@ BENCHES = {
     # IDEA-0004 (make_dev_sets.py, drawn once before any development run): dev2 and GQA val400 for tuning the new module,
     # test3 kept for its pre-registered confirmation. Checksums: vqav2_val/SHA256SUMS_idea0004, gqa/SHA256SUMS_val400 and,
     # for the 400 GQA images, gqa/images_val400_SHA256SUMS (written when they were extracted)
+    # 2026-10-29 note: IDEA-0004's pre-registered confirmation on test3 never ran (IDEA-0004 ended at EXP-0025, DEC-0041); test3 then served
+    # IDEA-0005's confirmation (EXP-0027 R01-R04) and IDEA-0006's (EXP-0029). IDEA-0007 confirms on the fresh VQAv2 test4 and GQA val400b
+    # (EXP-0031), registered below (2026-10-30).
     "vqav2_dev2": {"question_file": f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_dev2.jsonl",
                    "image_folder": f"{DATA}/coco/val2014",
                    "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_dev2_annotations.jsonl"],
@@ -139,7 +142,7 @@ for b in (192, 128, 64):
                                                      str(FLAT_KEEP[b]), "--seed", str(seed)])
 # EXP-0008: FastV with its scores divided by the content-free position curve measured on blank images
 # (analyze_score_prior.py writes the curve after the blank-image run)
-SCORE_PRIOR = f"{REPO}/code/output/EXP-0008/analysis/position_prior.npy"
+SCORE_PRIOR = f"{REPO}/code/output/EXP-0008/analysis/position_prior.npy"   # 2026-10-29 note: config.json records this path but not the file's sha256 (85c73a91... in EXP-0008/analysis/SHA256SUMS); analyze_score_prior.py has no overwrite check, so do not rerun it
 for b in (192, 128, 64):
     CONFIGS[f"fastv{b}_prior"] = ("tp", CONFIGS[f"fastv{b}"][1] + ["--fastv-score-prior", SCORE_PRIOR])
 # EXP-0010: the ranking taken in turns from a 6x6 grid of 4x4-patch blocks (the blocks of the coverage statistic),
@@ -209,7 +212,7 @@ for b in (64, 128, 192):
 # located side but centres the box (the localisation control); c16 keeps the baseline's in-box count plus 16 in the box
 # (the reallocation control). K = 1 keeps 47 tokens: (576 + 31 x 47) / 32 = 63.5 tokens per layer, 64.0 with 16 zoom
 # tokens; its position prior is the blank-image score curve at layer 0 (EXP-0024-R01, fastv64k1_scores).
-PRIOR_K1 = f"{REPO}/code/output/EXP-0024/prior_k1/position_prior.npy"
+PRIOR_K1 = f"{REPO}/code/output/EXP-0024/prior_k1/position_prior.npy"   # 2026-10-29 note: sha256 60a047d7... in EXP-0024/prior_k1/SHA256SUMS, not recorded in config.json either; make_prior_k1.py refuses to overwrite
 
 
 def _at_k1(args):
@@ -406,6 +409,8 @@ def run_one(run_id, config, bench):
     with open(f"{run_dir}/cmd.txt", "w") as f:
         scoring = f"# scoring (tp env)\n{shlex.join(score_cmd)}\n" if b.get("score", True) else "# not scored (diagnostic)\n"
         f.write(f"# env: {env}\n{shlex.join(in_env(env, eval_cmd))}\n{scoring}")
+    # 2026-10-30 note: only the question file and the annotations are hashed here, not the .npy tables in method_args
+    # (visibility, position priors); see the README, "已知局限"
     config_rec = {"experiment": experiment(run_id), "run_id": run_id, "config": config, "bench": bench, "env": env,
                   "method_args": method_args, "model": MODEL, "decoding": "greedy (temperature 0), conv vicuna_v1",
                   "question_file": b["question_file"], "question_file_sha256": sha256(b["question_file"]),

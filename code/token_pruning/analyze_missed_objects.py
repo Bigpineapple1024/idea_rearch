@@ -106,7 +106,7 @@ def main():
                "per_object_miss_rate": per_object, "per_object_spearman": corr.to_dict(),
                "hardest_objects_at_64": mean_low.head(10).round(3).to_dict(), "easiest_objects_at_64": mean_low.tail(10).round(3).to_dict()}
     out_dir = f"{OUT}/EXP-0002/deepdive"
-    os.makedirs(out_dir, exist_ok=True)
+    os.makedirs(out_dir, exist_ok=True)   # 2026-10-30 note: no overwrite check; do not rerun (README)
     with open(f"{out_dir}/missed_objects.json", "w") as f:
         json.dump(summary, f, indent=2)
     lines = [f"POPE 的 {n} 个正样本（三个 split 的正样本{'相同' if same_positives else '不同'}）；集合比较用 adversarial split 的回答。", "",

@@ -2,9 +2,9 @@
 
 | 目录 | 方向 | 实验分支 | 状态 |
 | --- | --- | --- | --- |
-| [token_pruning/](token_pruning/README.md) | 视觉 token 剪枝（主 baseline FastV） | code/token-pruning | CPU 随机权重核验完成（EXP-0001），GPU 复现待执行 |
+| [token_pruning/](token_pruning/README.md) | 视觉 token 剪枝（主 baseline FastV） | code/token-pruning | CPU 随机权重核验完成（EXP-0001），GPU 复现待执行（2026-10-29 完整阅读补注，2026-10-30 更新：已过时。GPU 复现已在 EXP-0002 完成（2026-10-23～24，实验室 RTX 3090，49 次运行，含失败）；此后视觉方向的实验到 EXP-0033 都已完成，IDEA-0004～IDEA-0007 的检验都已结束（DEC-0041、DEC-0045、DEC-0054、DEC-0059）。方向格的“主 baseline FastV”也不再只指 FastV：IDEA-0006 起在 VisionZip-64 上做（DEC-0044），EXP-0032 起以本流水线中的 DivPrune-64 为底座（DEC-0061）。最新状态见 main 分支的 analysis/index.md） |
 | [env/](env/windows_env.sh) | 实验室电脑（原生 Windows）的环境脚本 | 所有分支 | 2026-10-23 在实验室电脑上运行通过；六个环境（含“再装”一列）已装好并核对 |
-| [ts_forecasting/](ts_forecasting/README.md) | 时序预测（主 baseline iTransformer） | code/ts-forecasting | 对照 DUET/TQNet/WPMixer 已在 CPU 上运行 ETTh1（EXP-0003）；iTransformer 待复现 |
+| [ts_forecasting/](ts_forecasting/README.md) | 时序预测（主 baseline iTransformer） | code/ts-forecasting | 对照 DUET/TQNet/WPMixer 已在 CPU 上运行 ETTh1（EXP-0003）；iTransformer 待复现（2026-10-29 完整阅读补注：已过时。iTransformer 已在实验室 GPU 上复现（EXP-0004，记为偏差后继续使用，DEC-0018）；DUET、TQNet、WPMixer 已按统一协议在 GPU 上重跑（EXP-0005）；之后做了 EXP-0009、EXP-0012 两个诊断；时序方向在第 ⑦ 步后暂停（DEC-0020、DEC-0021），代码在 code/ts-forecasting 分支（2026-10-29 写这条补注时为 099fead，同日补了过时说明后为 f94bc88）） |
 
 外部仓库（LLaVA、FastV、SparseVLM、VisionZip、iTransformer、DUET、TQNet、WPMixer）不放进本仓库，按 [source/README](../source/README.md) 登记的 commit 克隆到 `source/` 下（只读）；本目录只放本项目自己的代码。
 
@@ -113,6 +113,7 @@ source /d/6CJNM007/idea_rearch/code/env/windows_env.sh tp && cd /d/6CJNM007/idea
 - **装“再装”一列时用约束文件固定 torch**：LLaVA 的 peft、bitsandbytes 等不固定版本，新版可能要求更高的 torch，pip 就会从 PyPI 换成 CPU 版。每个环境用 `pip install -c <约束文件> ...`，约束文件写已装的 `torch==<版本>+cu<版本>`；`tp`、`sparsevlm` 再加 `torchvision==0.16.2+cu121` 和 `numpy==1.26.4`。
 - **peft**：LLaVA 不固定 peft，最新版要用新版 accelerate 的 `clear_device_cache`，与 LLaVA 固定的 accelerate 0.21.0 不兼容，`import peft` 报 ImportError。`tp`、`sparsevlm` 装 `peft==0.10.0`（2024-03，与 LLaVA 固定的 commit 同期）。LLaVA 只在加载 LoRA 权重时用 peft，llava-v1.5-7b 本身不受影响。
 - **setuptools**：`wpmixer` 环境没有 `pkg_resources`，WPMixer 内置的 `pytorch_wavelets/dtcwt` 需要它，装 `setuptools==69.5.1`。外部仓库里只有这一处用到 `pkg_resources`。
+- **thop**（2026-10-24 补装）：WPMixer 的 `exp/exp_main.py` 在模块顶部导入 `thop`（只用于统计 GFLOPs），但它不在 requirements.txt 里；缺少时 `run_LTF.py` 一启动就报 ModuleNotFoundError（EXP-0005-R13～R24）。用约束文件固定 torch 后装 `thop`（0.1.1.post2209072238），torch 未变，`pip check` 无冲突。（2026-10-29 完整阅读补注：本条和下表 wpmixer 一行的 thop 从 main 上的同名文件补入，此前只在 main 的副本里有。）
 - **sparsevlm 的 transformers**：按 SparseVLM 官方要求装 4.37.0 后，`pip check` 会提示 llava 要求 4.37.2，这是预期的。
 
 #### 实验室电脑上的安装结果（2026-10-23）
@@ -124,7 +125,7 @@ Git 为 PortableGit 2.56.0.3（`D:\6CJNM007\git`），Miniforge 26.7.2-1 装在 
 | `tp` | 3.10.22 | 2.1.2+cu121（torchvision 0.16.2+cu121） | 12.1 | True | llava 1.2.2.post1（`source/LLaVA`，可编辑安装）、transformers 4.37.2、tokenizers 0.15.1、accelerate 0.21.0、timm 0.6.13、peft 0.10.0、bitsandbytes 0.45.5、numpy 1.26.4 |
 | `sparsevlm` | 3.10.22 | 2.1.2+cu121（torchvision 0.16.2+cu121） | 12.1 | True | llava 1.2.2.post1（`source/SparseVLMs` v1.5，可编辑安装）、transformers 4.37.0、tokenizers 0.15.1、accelerate 0.21.0、peft 0.10.0、bitsandbytes 0.45.5、numpy 1.26.4 |
 | `itrans` | 3.10.22 | 2.0.0+cu118 | 11.8 | True | numpy 1.23.5、pandas 1.5.3、scikit-learn 1.2.2、matplotlib 3.7.0、reformer-pytorch 1.4.4 |
-| `wpmixer` | 3.10.22 | 2.0.1+cu118 | 11.8 | True | numpy 1.25.2、pandas 1.5.3、scikit-learn 1.3.0、optuna 3.6.1、PyWavelets 1.6.0、setuptools 69.5.1 |
+| `wpmixer` | 3.10.22 | 2.0.1+cu118 | 11.8 | True | numpy 1.25.2、pandas 1.5.3、scikit-learn 1.3.0、optuna 3.6.1、PyWavelets 1.6.0、setuptools 69.5.1、thop 0.1.1（2026-10-24 补装） |
 | `duet` | 3.8.20 | 2.4.1+cu121 | 12.1 | True | numpy 1.24.4、pandas 1.5.3、darts 0.25.0、salesforce-merlion 2.0.2、ray 2.10.0、pytorch-lightning 2.4.0、lightgbm 4.1.0 |
 | `tqnet` | 3.8.20 | 2.4.1+cu121 | 12.1 | True | requirements 不固定版本，装到的是 numpy 1.24.4、pandas 2.0.3、scikit-learn 1.3.2、matplotlib 3.7.5 |
 
@@ -133,6 +134,8 @@ Git 为 PortableGit 2.56.0.3（`D:\6CJNM007\git`），Miniforge 26.7.2-1 装在 
 - 各环境的完整 `pip freeze`、安装脚本和日志在 `D:\6CJNM007\backup\env_setup_2026-10-23\`。
 
 ### 原生 Windows 上的已知差异（视觉方向已在 EXP-0002 中实际运行；时序方向来自代码核查）
+
+（2026-10-29 完整阅读补注：时序方向此后也在实验室电脑上实际运行了，EXP-0004、EXP-0005 都加 `--num_workers 0`（见两份记录的配置），所以下面时序方向的条目不再只是代码核查。）
 
 - **DataLoader 子进程**：Windows 用 spawn 启动 worker，子进程会重新导入主模块。
   - LLaVA 的 `model_vqa_loader` 在 worker 中读取只在 `__main__` 里定义的 `args`，worker 数大于 0 时会报 NameError。本项目的 `run_eval.py` 换用自己的 DataLoader（数据集、collate_fn 和顺序与 LLaVA 相同），在每个 worker 启动时把 `args` 传进去，默认 4 个 worker（`--num-workers` 可改）。答案与 0 个 worker 时逐条相同（EXP-0002-R05 对 R02、R34 对 R04），每题快约 7%。

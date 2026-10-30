@@ -4,7 +4,7 @@
 
 与 run_eval 的口径相同：题目按 model_vqa_loader 的 prompt（vicuna_v1）分词，取图像之后的 id；路由 = routes_to_query；
 IDF 在各自的题目文件上计；S = sum(IDF x 可见性) / sum(IDF)，可见性表为 EXP-0015 的 visibility.npy。
-放大的题 = 不路由且 S >= 0.2。另按开头词与 VQAv2 的 question_type（只看题目文件里没有的字段时跳过）列出。
+放大的题 = 不路由且 S >= 0.2。另按开头词与 VQAv2 的 question_type（只看题目文件里没有的字段时跳过）列出。（2026-10-29 完整阅读补注：代码里没有按 question_type 分组的部分，也不读标注；实际输出只有 top_unrouted_heads，即不路由的题中最常见的开头（前两个词）、题数，以及其中被放大的比例。）
 """
 import collections
 import json
@@ -14,7 +14,7 @@ import sys
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE if os.path.exists(f"{HERE}/run_eval.py") else "D:/6CJNM007/tmp/exp0024/code")   # tmp copy until committed
+sys.path.insert(0, HERE if os.path.exists(f"{HERE}/run_eval.py") else "D:/6CJNM007/tmp/exp0024/code")   # tmp copy until committed (2026-10-29 note: committed in bfff4bc, so the tmp fallback is no longer needed)
 sys.path.insert(1, "D:/6CJNM007/idea_rearch/code/token_pruning")
 from run_eval import prompt_ids_after_image, question_idf, routes_to_query  # noqa: E402
 

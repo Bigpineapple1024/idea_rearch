@@ -35,4 +35,4 @@ r = subprocess.run([sys.executable, "-m", "llava.eval.eval_textvqa", "--annotati
                    cwd=LLAVA, capture_output=True, text=True)
 theirs = float(re.search(r"Accuracy: ([\d.]+)%", r.stdout).group(1))
 print(f"13B predictions: {len(preds)}; ours {ours:.4f}, LLaVA's eval_textvqa.py {theirs:.2f} (paper 61.3)")
-print("ok" if abs(ours - theirs) < 0.01 and abs(ours - 61.3) < 0.1 else "MISMATCH")
+print("ok" if abs(ours - theirs) < 0.01 and abs(ours - 61.3) < 0.1 else "MISMATCH")   # 2026-10-30 note: exits 0 on MISMATCH too

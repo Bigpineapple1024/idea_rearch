@@ -47,6 +47,7 @@ def load():
 
 def write(out, split, image_ids, by_image, anns):
     n = 0
+    # 2026-10-30 note: text mode, so on Windows these files are CRLF (all six VQAv2 subsets); their checksums are of those files
     with open(f"{out}/llava_vqav2_val_{split}.jsonl", "w") as fq, open(f"{out}/llava_vqav2_val_{split}_annotations.jsonl", "w") as fa:
         for image_id in sorted(image_ids):
             for q in sorted(by_image[image_id], key=lambda q: q["question_id"]):

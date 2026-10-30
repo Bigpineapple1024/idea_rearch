@@ -130,7 +130,7 @@ def main():
                 summary.setdefault("method_pairs", {})[f"{a}-{b}_{bench}"] = {
                     "diff": summary["configs"][a][bench][key] - summary["configs"][b][bench][key],
                     "ci95": interval([f"{OUT}/{done[(a, bench)]}", f"{OUT}/{done[(b, bench)]}"], bench)}
-    os.makedirs(f"{OUT}/analysis", exist_ok=True)
+    os.makedirs(f"{OUT}/analysis", exist_ok=True)   # 2026-10-30 note: no overwrite check; do not rerun (README)
     with open(f"{OUT}/analysis/summary.json", "w") as f:
         json.dump(summary, f, indent=2)
     write_markdown(summary)

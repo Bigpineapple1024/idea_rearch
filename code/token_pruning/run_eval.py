@@ -166,6 +166,7 @@ def parse():
                       help="top_m,min_side,max_side: the box around the top_m tokens by query cosine, its side in patches")
     ours.add_argument("--fastv-zoom-smin", type=float, default=0.2,
                       help="locate only when the question's visible share S is at least this")
+    # 2026-10-29 note: cover is an IDEA-0004 control in EXP-0024 (c8, c16) and IDEA-0005's method (EXP-0026, EXP-0027); the help text below says IDEA-0004 only
     ours.add_argument("--fastv-cover", type=int, default=0,
                       help="fastv, query_vis (IDEA-0004), unrouted questions: keep the strong baseline's own count of "
                            "tokens inside the box plus this many, the rest outside")

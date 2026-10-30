@@ -54,3 +54,4 @@ our_out, our_cache = run(ours)
 print("KV cache length per layer  official:", ref_cache, " fastv_llava:", our_cache)
 for step, (a, b) in enumerate(zip(our_out, ref_out)):
     print(f"{'prefill' if step == 0 else f'decode {step}'}: relative L2 difference = {((a - b).norm() / b.norm()).item():.2e}")
+# 2026-10-30 note: this prints the differences only, with no threshold, and exits 0 either way; read the printed values

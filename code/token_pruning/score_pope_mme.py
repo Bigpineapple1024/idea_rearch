@@ -2,8 +2,8 @@
 
   python score_pope_mme.py pope <answers.jsonl> <out_dir>
   python score_pope_mme.py mme  <answers.jsonl> <out_dir> [--tag NAME]
-  python score_pope_mme.py vqav2_test <answers.jsonl> <out_dir>    # or vqav2_dev (EXP-0018), vqav2_test2 (EXP-0020)
-  python score_pope_mme.py gqa_testdev <answers.jsonl> <out_dir>   # EXP-0022
+  python score_pope_mme.py vqav2_test <answers.jsonl> <out_dir>    # or vqav2_dev (EXP-0018), vqav2_test2 (EXP-0020), vqav2_dev2 / vqav2_test3 (IDEA-0004, make_dev_sets.py; 2026-10-29 note: added to this list)
+  python score_pope_mme.py gqa_testdev <answers.jsonl> <out_dir>   # EXP-0022 (gqa_val400 uses the same GQA scoring, IDEA-0004; 2026-10-29 note: added to this list)
   python score_pope_mme.py textvqa_noocr <answers.jsonl> <out_dir> # or textvqa_ocr, vstar (IDEA-0004, DEC-0036)
   python score_pope_mme.py gqa_val400b <answers.jsonl> <out_dir>   # or vqav2_test4: IDEA-0007's fresh sets (EXP-0031)
 
@@ -51,6 +51,7 @@ def score_pope(answers, log):
                  [("accuracy", "Accuracy"), ("precision", "Precision"), ("recall", "Recall"),
                   ("f1", "F1 score"), ("yes_ratio", "Yes ratio")]}
         splits[name] = {"n": int(n), "TP": tp, "FP": fp, "TN": tn, "FN": fn, **value}
+    # 2026-10-30 note: the split list is checked, not that every question has an answer (n_scored is recorded)
     if sorted(splits) != ["adversarial", "popular", "random"]:
         raise SystemExit(f"unexpected POPE splits {sorted(splits)}")
     mean = lambda key: 100 * sum(s[key] for s in splits.values()) / len(splits)
@@ -156,7 +157,7 @@ def vstar_letter(text, n_options):
     letter (optionally in brackets or followed by '.', ':' or ')'), else the first standalone letter among the options."""
     letters = "ABCD"[:n_options]
     t = text.strip()
-    m = re.match(r"^\(?([A-Za-z])\)?(?:[.:)\s]|$)", t)
+    m = re.match(r"^\(?([A-Za-z])\)?(?:[.:)\s]|$)", t)   # 2026-10-30 note: "A man ..." also reads as option A
     if m and m.group(1).upper() in letters:
         return m.group(1).upper()
     m = re.search(rf"\b([{letters}])\b", t)

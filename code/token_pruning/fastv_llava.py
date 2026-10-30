@@ -49,7 +49,7 @@ best query cosine per block ("query"), or block means of the crop's tokens ("poo
 instead the image's own tokens, no second encoding: block means with pick "pool", the same lattice over the image's
 content rows and columns with pick "grid" (EXP-0025); with centre the box keeps its side but sits at the image's centre
 (the controls). The inserted tokens are never pruned and the stage keeps keep - n image tokens, so
-the visual tokens after the stage are still keep. With cover (IDEA-0004, unrouted questions only), the strong
+the visual tokens after the stage are still keep. With cover (IDEA-0004, unrouted questions only; 2026-10-29 note: in EXP-0024 cover (c8, c16) was only a control of IDEA-0004, as a method it belongs to IDEA-0005, EXP-0026 / EXP-0027, and VisionZip's version, visionzip_cover.py, to IDEA-0006), the strong
 baseline's own count of kept tokens inside the box plus cover is taken inside the box (by its score, in blocks) and the
 rest outside; with cover_top (EXP-0026 v1.1, the no-box control) the region is instead the cover_top non-padding tokens
 most similar to the query. fastv_zoom_log holds one record per prefill. Without zoom and cover nothing changes.
@@ -145,7 +145,7 @@ def _content_band(width, height, side):
 def zoom_box(cos, allowed, side, width, height, top_m, min_side, max_side, centre=False, native=336):
     """A square box on the side x side grid around the image tokens most similar to the query. Its side is the top_m
     allowed tokens' span, clamped to [floor, max_side], floor being the larger of min_side and the side that holds
-    `native` original pixels (the crop is then never enlarged past the image's own resolution). It is centred on their
+    `native` original pixels (the crop is then never enlarged past the image's own resolution) [2026-10-29 note: this holds only while the floor ceil(side * native / max(width, height)) stays within max_side and the content band is at least as wide as the floor; with max_side 16, an image whose long side is under 504 px (24 * 336 / 16) is still enlarged a little, e.g. 500 px: floor ceil(16.13) = 17, clamped to 16, a crop of about 333 px resized to 336]. It is centred on their
     score-weighted centre (on the image's centre with centre=True) and kept inside the image's content band (rows and
     columns at least half inside the image), shrunk to the band if needed, so the crop stays square; only when the band
     is narrower than min_side (very elongated images) does the box merely stay inside the grid, its crop then carrying
@@ -320,7 +320,8 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
                     self.fastv_text_rows = attn.mean(dim=1)[0, start + n_cur:, start:start + n_cur]
                 if self.fastv_score_prior is not None:          # diagnostic: divide out a content-free position curve
                     score = score.float() / self.fastv_score_prior.to(score.device)[kept]
-            else:
+            else:   # random control (2026-10-30 note: one generator per run, so the draws follow the question order;
+                    # exp0002.py's random configs do not exclude padding)
                 score = torch.rand(n_cur, generator=self.fastv_generator, device=self.fastv_generator.device)
                 score = score.to(hidden.device)
             pos = allowed[kept].nonzero().squeeze(1)           # positions among the present image tokens that may stay
@@ -345,7 +346,7 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
                 second = rest[_stratified_top(score[rest], count - n_q, kept[rest], side, blocks, filled)]
                 top = torch.cat((first, second)).sort().values
                 self.fastv_kept_question_positions = kept[first].sort().values
-            elif cover is not None:            # IDEA-0004: the baseline's own in-box count plus `cover` taken in the box
+            elif cover is not None:            # IDEA-0004: the baseline's own in-box count plus `cover` taken in the box (2026-10-29 note: an IDEA-0004 control in EXP-0024, IDEA-0005's method in EXP-0026 / EXP-0027)
                 side, blocks = round(n_img ** 0.5), 1 if cls_now else self.fastv_stratify     # CLS: plain ranking
                 box = cover.to(hidden.device)
                 base = pos[_stratified_top(score[pos], count, kept[pos], side, blocks)]    # the baseline's own choice
@@ -392,7 +393,7 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
 def _zoom(model, lm, result):
     """IDEA-0004: locate the question's object with the IDF x visibility query and, for zoom, insert n tokens of a
     re-encoded crop of that box right after the image tokens; for cover, mark the box for the stage. One record per
-    prefill in lm.fastv_zoom_log."""
+    prefill in lm.fastv_zoom_log. (2026-10-29 note: IDEA-0004 is the zoom; cover was only an IDEA-0004 control in EXP-0024 and is IDEA-0005's method, EXP-0026 / EXP-0027.)"""
     cfg, ids = lm.fastv_zoom, lm.fastv_text_after_ids
     index = lm.fastv_zoom_count
     lm.fastv_zoom_count += 1
