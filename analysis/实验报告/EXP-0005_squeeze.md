@@ -32,7 +32,7 @@ errors_heterogeneity_and_boundary_conditions: 见“深度分析”第 4 行
 robustness_sensitivity_and_alternative_explanations: 见“深度分析”第 5 行
 new_P: [P-SQZ5-1, P-SQZ5-2]
 new_F: [F-TS8, F-TS9]（另更新 F-TS2、F-TS4）
-new_M: [M-SQZ5-1（AI）]
+new_M: [M-SQZ5-1（AI；2026-10-30 完整阅读补注：正文已改为“相关层面支持”）]
 evidence_index: 见 mode_C_input_bundle.E
 open_questions: [测试期中难段（96 档第 7 个十分位、长预测的最后一个十分位）的数据特征是什么, 验证集为什么预测不了长预测长度上的测试表现, 方法排序在其他 ETT 数据集上是否相同]
 next_routes: [量化难段与训练期的分布差异（CPU 分析，用已保存的窗口）, EXP-0004 阶段 B 完成后在 ETTh2/ETTm1/ETTm2 上复查逐窗口相关, 建立时序方向的 Mode C]
@@ -99,7 +99,7 @@ mode_C_input_bundle:
 
 | 结果 | 对照 | 差异 | 不确定性 | 实际意义 | 证据 |
 | --- | --- | --- | --- | --- | --- |
-| ETTh1 四档平均 MSE | iTransformer 0.4576 | TQNet 0.4460（−0.0116），WPMixer 0.4370（−0.0206） | 三个种子；TQNet-720 的标准差 0.0206 | 在本项目的统一协议下，两种 2025 年的方法都好于 iTransformer | E-SQZ5-1 |
+| ETTh1 四档平均 MSE | iTransformer 0.4576 | TQNet 0.4460（−0.0116），WPMixer 0.4370（−0.0206） | 三个种子；TQNet-720 的标准差 0.0206 | 在本项目的统一协议下，两种 2025 年的方法都好于 iTransformer（2026-10-30 完整阅读补注：720 档 TQNet 0.5019 ± 0.0206 对 iTransformer 0.5120 ± 0.0047，差 0.010 小于 TQNet 的种子标准差，这一档只能写“点估计更低”） | E-SQZ5-1 |
 | 与作者报告值 | TQNet 0.441、WPMixer 0.422、DUET 0.377 | +0.005、+0.015（drop_last 计分 +0.011）、+0.0025 | 同上 | WPMixer 的差距最大，与它在测试集上调参（E-WP-C04）一致，但本实验不能区分原因 | E-SQZ5-1 |
 | 数据核对 | — | TFB 与 ETDataset 逐值相同，测试窗口一致 | 确定性 | 跨框架比较成立 | E-SQZ5-2 |
 

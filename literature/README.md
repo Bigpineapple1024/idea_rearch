@@ -1,7 +1,7 @@
 # 论文解析材料
 
 - PDF 原文放 papers/，不跟踪。
-- MinerU 解析全文放 processed/<论文ID>/，保留图片、表格和公式关联。
+- MinerU 解析全文放 processed/<论文ID>/，保留图片、表格和公式关联（2026-10-30 完整阅读补注：实际只用了 flash 档，只有文本，见下文与 processed/README）。
 - 登记标题、作者、年份、DOI/URL、PDF 校验和、解析工具版本、参数与获取日期。
 - 解析全文只读。OCR、公式和表格疑点记录到笔记并回查 PDF；重解析时保留版本，不覆盖已经引用的证据。
 - 自维护笔记放在 [analysis/论文笔记/](../analysis/论文笔记/README.md)。

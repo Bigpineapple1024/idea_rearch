@@ -11,7 +11,7 @@
 | PAPER-0001 | github.com/decisionintelligence/DUET | dcc6e6780a9138731b64b9b5398a94a1d97033f0 / 2026-05-12 | MIT | 时序方向：强对照 + 组合实验素材（DEC-0012）；TFB 统一评测框架 | code/ts_forecasting/duet_test_stochasticity.py（数据用 to_tfb_format.py 转换） |
 | PAPER-0002 | github.com/ACAT-SCUT/TQNet | 15e19cb23483ed52398566c4baa959168cfffa57 / 2026-05-06 | Apache-2.0 | 时序方向：强对照 + 组合实验素材（快速诊断） | run.py + scripts/TQNet/etth1.sh 参数 |
 | PAPER-0003 | github.com/Secure-and-Intelligent-Systems-Lab/WPMixer | 74104c9dddd54d279eb8323f48934b4fd75fcae7 / 2026-06-16 | MIT | 时序方向：强对照 + 组合实验素材（需统一协议重跑） | code/ts_forecasting/wpmixer_droplast.py |
-| 待编号（iTransformer） | github.com/thuml/iTransformer | c2426e68ca13f74aaec08045c5c724d8ad328124 / 2025-07-17 | MIT | 时序方向：**主 baseline**（DEC-0012） | scripts/multivariate_forecasting/ETT/iTransformer_ETTh1.sh（数据放 ./dataset/ETT-small/；run.py 种子写死为 2023） |
+| 待编号（iTransformer）（2026-10-30 完整阅读补注：现为 PAPER-0007） | github.com/thuml/iTransformer | c2426e68ca13f74aaec08045c5c724d8ad328124 / 2025-07-17 | MIT | 时序方向：**主 baseline**（DEC-0012） | scripts/multivariate_forecasting/ETT/iTransformer_ETTh1.sh（数据放 ./dataset/ETT-small/；run.py 种子写死为 2023） |
 | 参考 | github.com/thuml/Time-Series-Library | 4e938a17 | MIT | 收录 iTransformer 等方法的统一库，可用于统一协议重跑对照 | run.py + scripts/long_term_forecast/ |
 | 待编号（CycleNet） | github.com/ACAT-SCUT/CycleNet | d807e51f | Apache-2.0 | 时序方向：备选主 baseline（DEC-0012） | 未运行 |
 | 数据 | github.com/zhouhaoyi/ETDataset | 1d16c8f4f943005d613b5bc962e9eeb06058cf07（ETTh1.csv sha256 f18de3ad…ee066） | CC BY-ND 4.0（仓库 LICENSE 文件）；转换成 TFB 格式的文件只在本地使用，不分发 | ETT 数据 | 原始 CSV，TQNet/WPMixer 直接使用 |

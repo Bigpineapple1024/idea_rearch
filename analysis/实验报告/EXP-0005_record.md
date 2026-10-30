@@ -118,7 +118,7 @@
 
 ## 结论边界与下一步
 
-- **当前证据支持**：在同一协议、同一批窗口上，ETTh1 的四个预测长度中 TQNet 与 WPMixer 都好于 iTransformer；DUET 96 档与 WPMixer 接近。iTransformer 作为“效果稍弱”的 baseline 在 ETTh1 上成立。
+- **当前证据支持**：在同一协议、同一批窗口上，ETTh1 的四个预测长度中 TQNet 与 WPMixer 都好于 iTransformer（2026-10-30 完整阅读补注：720 档 TQNet 0.5019 ± 0.0206 对 iTransformer 0.5120 ± 0.0047，差 0.010 小于 TQNet 的种子标准差，这一档只能写“点估计更低”）；DUET 96 档与 WPMixer 接近。iTransformer 作为“效果稍弱”的 baseline 在 ETTh1 上成立。
 - **当前证据不能支持**：方法之间的排序在其他数据集上是否相同；WPMixer 与论文的差距来自 GPU/AMP 还是来自测试集调参的超参数在新环境中失效。
 - **最值得深挖的现象**：不同架构在同一批窗口上出错（逐窗口相关约 0.97），误差主要由测试期中的少数“难段”决定。下一步看这些难段的数据特征（例如与训练期的分布差异）。
 - **后续路由**：squeeze-experiment（SQZ-EXP-0005）→ 时序方向的 Mode C（尚未建立）。

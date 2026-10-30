@@ -26,7 +26,7 @@
 
 ### 开发集 coco_dev3
 
-- 生成：`make_coco_dev3.py`。保留 coco_dev 的 1800 题（编号、文字、标签都不变：900 个正样本、900 个 random 负样本）；在同样 300 张图上，每张图再加 3 个 popular、3 个 adversarial 负样本（编号 1801～3600）。
+- 生成：`make_coco_dev3.py`。保留 coco_dev 的 1800 题（编号、文字、标签都不变：900 个正样本、900 个 random 负样本）；在同样 300 张图上，每张图再加 3 个 popular、3 个 adversarial 负样本（编号 1801～3600）。（2026-10-30 完整阅读补注：adversarial 负样本的类别频率与共现计数用了全部非 POPE 的 val2014 图，包括后来划进 vqav2_test 的图；去掉它们后 300 张图中有 3 张的 adversarial 负样本改变，见 EXP-0018 记录的“coco_dev3 的 adversarial 负样本”）
 - 做法按 POPE 论文（arXiv 2305.10355 第 5.1 节）的描述：
   - popular：全数据集最常见、但图中没有的 3 个类别；
   - adversarial：与图中已有类别共现最多、但图中没有的 3 个类别（共现数 = 同时含两类的图像数，对图中已有的各类求和）。

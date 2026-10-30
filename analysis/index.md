@@ -116,6 +116,7 @@
 | [analysis/实验报告/EXP-0014_squeeze.md](../analysis/实验报告/EXP-0014_squeeze.md) | SQUEEZE_REPORT：EXP-0014（POPE 上复现物体名查询 F34；MME 名字类受损 F35） |
 | [analysis/审计记录_第12步_2026-10-25.md](../analysis/审计记录_第12步_2026-10-25.md) | 第 ⑫ 步结论的独立审计与修正（DEC-0030） |
 | [analysis/跑偏检查_2026-10-25.md](../analysis/跑偏检查_2026-10-25.md) | 跑偏检查记录（2026-10-25）：对照研究流程、paper-plan 与 index 的全仓库检查，发现的问题与修正 |
+| [analysis/跑偏检查_2026-10-30.md](../analysis/跑偏检查_2026-10-30.md) | 跑偏检查与完整阅读仓库（2026-10-30 新会话，DEC-0058）：EXP-0030、EXP-0031 两个阶段的检查，11 个只读代理与 Claude 读出的问题与修复，补封存的 tmp 脚本，推迟到排队跑完之后的代码分支修复 |
 | [analysis/跑偏检查_2026-10-26.md](../analysis/跑偏检查_2026-10-26.md) | 跑偏检查与完整阅读仓库（2026-10-26 读，10-29 修完；DEC-0053）：EXP-0025～EXP-0029 各阶段的检查，读者报告的 120 条问题与修复，关机与额度中断后的恢复 |
 | [analysis/IDEA-0003_按题目句式路由.md](../analysis/IDEA-0003_按题目句式路由.md) | IDEA_PACKAGE：按题目句式路由（助动词或 how many 开头的题用题目查询，其余用强对照；P11） |
 | [analysis/实验报告/EXP-0020_record.md](../analysis/实验报告/EXP-0020_record.md) | EXPERIMENT_RECORD：按题目句式路由在新抽的 VQAv2 test2 上的预注册确认（第 ⑫ 步第六轮） |

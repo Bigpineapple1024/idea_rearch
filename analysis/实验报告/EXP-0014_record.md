@@ -135,7 +135,7 @@ A′+B 与物体名查询的保留集合平均重合 97.2%。
 | EXP-0014-R03 | `fastv64_attnidf_strat_nopad_kl` × POPE | 23:52 / 10-25 00:13 | completed | 同上；0.143 秒 | 5e4ace0f… | df 表一致 |
 
 - **预算**：7 次运行，约 1.6 GPU 小时；候选 1 累计 22 次，约 4.4 GPU 小时（上限 30 次或 20 GPU 小时）。
-- **偏差**（审计补记）：POPE 运行进行时提前看过 MME 的结果（tmp/exp0014/peek_mme.py）（2026-10-29 完整阅读补注：截至该日，这份脚本只在 tmp/exp0014/peek_mme.py（849 字节，文件时间 2026-10-24 23:15:58，sha256 daa18182…），没有封存进 code/output/EXP-0014，也不在 D:\6CJNM007\backup\EXP-0014 里；这条偏差的证据还没有封存，待补），分析脚本在此之前已写好、未改。探索性检查（squeeze）的脚本错了两次（v1 的 MME 部分为空，v2 用错了 MME 的 prompt），三版都保留，采用 v3，见 [SQZ-EXP-0014](EXP-0014_squeeze.md)。（2026-10-29 完整阅读补注：三个目录封存的 squeeze_query.py 是同一个文件（sha256 8b4fd191…，即 v3），tmp/exp0014/run_sq3.sh 用它一起封存了三个目录；v1、v2 的脚本没有保留，squeeze/、squeeze_v2/ 的输出不能用目录里的脚本复现，只作为出错版本的输出保留，结论只用 v3。）
+- **偏差**（审计补记）：POPE 运行进行时提前看过 MME 的结果（tmp/exp0014/peek_mme.py；2026-10-30 完整阅读补注：已封存到 code/output/EXP-0014/late_sealed_20261030/，SHA256SUMS 49c5cd9d…，已备份）（2026-10-29 完整阅读补注：截至该日，这份脚本只在 tmp/exp0014/peek_mme.py（849 字节，文件时间 2026-10-24 23:15:58，sha256 daa18182…），没有封存进 code/output/EXP-0014，也不在 D:\6CJNM007\backup\EXP-0014 里；这条偏差的证据还没有封存，待补），分析脚本在此之前已写好、未改。探索性检查（squeeze）的脚本错了两次（v1 的 MME 部分为空，v2 用错了 MME 的 prompt），三版都保留，采用 v3，见 [SQZ-EXP-0014](EXP-0014_squeeze.md)。（2026-10-29 完整阅读补注：三个目录封存的 squeeze_query.py 是同一个文件（sha256 8b4fd191…，即 v3），tmp/exp0014/run_sq3.sh 用它一起封存了三个目录；v1、v2 的脚本没有保留，squeeze/、squeeze_v2/ 的输出不能用目录里的脚本复现，只作为出错版本的输出保留，结论只用 v3。）
 
 ### 跑偏检查（2026-10-25）
 
