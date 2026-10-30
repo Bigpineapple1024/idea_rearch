@@ -103,6 +103,17 @@ BENCHES = {
               "image_folder": f"{DATA}/downloads/vstar_bench",
               "annotations": [f"{DATA}/llava_eval/vstar/llava_vstar_test_annotations.jsonl"],
               "archives_sha256": f"{DATA}/downloads/vstar_bench/SHA256SUMS"},
+    # IDEA-0008's confirmation data (make_confirm_sets2.py, drawn once while EXP-0034 ran, before any EXP-0034 result):
+    # every question on 1000 further val2014 images and every balanced question on 400 further GQA val images. Checksums:
+    # vqav2_val/SHA256SUMS_test5, gqa/SHA256SUMS_val400c and, for the 400 images, gqa/images_val400c_SHA256SUMS
+    "vqav2_test5": {"question_file": f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test5.jsonl",
+                    "image_folder": f"{DATA}/coco/val2014",
+                    "annotations": [f"{DATA}/llava_eval/vqav2_val/llava_vqav2_val_test5_annotations.jsonl"],
+                    "archives_sha256": f"{DATA}/downloads/vqav2/SHA256SUMS"},
+    "gqa_val400c": {"question_file": f"{DATA}/llava_eval/gqa/llava_gqa_val400c.jsonl",
+                    "image_folder": f"{DATA}/gqa/images_val400c",
+                    "annotations": [f"{DATA}/llava_eval/gqa/llava_gqa_val400c_annotations.jsonl"],
+                    "archives_sha256": f"{DATA}/downloads/gqa/SHA256SUMS"},
     # IDEA-0007's confirmation data (make_confirm_sets.py, drawn once before any EXP-0030 result): every question on 1000
     # further val2014 images and every balanced question on 400 further GQA val images. Checksums: vqav2_val/SHA256SUMS_test4,
     # gqa/SHA256SUMS_val400b and, for the 400 images, gqa/images_val400b_SHA256SUMS
