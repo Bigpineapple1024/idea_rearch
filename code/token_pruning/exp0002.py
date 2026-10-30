@@ -305,6 +305,11 @@ for _name, _mode in (("peek", "prefill"), ("nopeek", "none"), ("peektext", "text
     CONFIGS[f"fastv61k1_div_{_name}"] = ("tp", ["--method", "fastv", "--fastv-k", "1", "--fastv-keep", "61", "--fastv-score", "div",
                                               "--fastv-div-peek", _mode])
     CONFIGS[f"fastv61k1_div_{_name}_kll"] = CONFIGS[f"fastv61k1_div_{_name}"]   # with the kept patches, log-probabilities, layer counts
+# EXP-0037 (IDEA-0008, budget 16): DivPrune-16 before the LLM, and the same peek keeping 13 from layer 1 (with the dropped
+# patches' keys and values only at layer 0, 0.999 times DivPrune-16's prefill FLOPs; the rule that gave 61 for 64).
+CONFIGS["divprune16"] = ("tp", ["--method", "divprune", "--divprune-keep", "16"])
+CONFIGS["fastv13k1_div_peek_kll"] = ("tp", ["--method", "fastv", "--fastv-k", "1", "--fastv-keep", "13", "--fastv-score", "div",
+                                            "--fastv-div-peek", "prefill"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
