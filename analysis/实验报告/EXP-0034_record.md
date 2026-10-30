@@ -61,3 +61,10 @@
 ### 预算
 
 - 6 次，每次约 15 分钟（VQAv2 dev2）、13 分钟（GQA val400），约 1.6 GPU 小时；IDEA-0008 上限 30 次或 20 GPU 小时。
+
+## 开门前的阅读（DEC-0055，2026-10-31 凌晨）
+
+- **读的范围**：上一道门（EXP-0033，2026-10-30 20:08）以来的改动：main 的 6cc20a6（SQZ-EXP-0032）、de38c5a（EXP-0033 的结果、DEC-0062、DEC-0063、PAPER-0010～0020 的笔记）、e7001b4（MODE_C-0002 回流 25、IDEA-0008、本计划）；code/token-pruning 的 9dae438（DEC-0058 推迟的修复：说明与注释、sealed_copies，check_zoom.py 的回归核对加一个条件；提交前 check_zoom 77/77、check_k1cls 32/32、check_divprune 26/26、check_combo 32/32）；新的运行产物：EXP-0033 的 analysis、squeeze、squeeze_types（都已封存并独立核对）。本实验要提交的代码：五个文件相对 9dae438 的差异（fastv_llava.py +42 / −4、run_eval.py +9 / −1、exp0002.py +12 / −1，check_peek.py、analyze_0034.py 为新文件），run_analyze_0034.sh、seal_0034.sh、提交说明 msg_code66.txt 与排队脚本 chain_0034.sh。
+- **核对**：五个文件的 sha256 记在 `D:\6CJNM007\tmp\exp0034\MANIFEST`；代码目录里其余文件与 HEAD 逐字节相同；不加 --fastv-div-peek 时 fastv_llava 的计算不变（新分支只在 div_peek 有值时走；预填充时多一句 `self.fastv_peek_drop = None`，解码时它为 None 就不加遮罩），回归 check_divprune 26/26、check_k1cls 32/32、check_zoom 77/77（新代码对已提交代码）都通过；check_peek 29/29；analyze_0034 用替身数据空跑通过。第一版的实现在预填充后删第 0 层缓存里被剪的 token，check_peek 发现这会让 generate 算错已处理的长度（第二步送进 2 个 token），改为保留缓存、解码时在第 0 层遮住（语义相同），这个改动在上面的核对之前。
+- **发现**：代码与计划 v1 一致，没有要改的。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0034.done`。
