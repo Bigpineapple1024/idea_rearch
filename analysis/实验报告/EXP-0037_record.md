@@ -59,3 +59,10 @@
 ### 预算
 
 - 4 次，每次约 14～16 分钟，约 1 GPU 小时。IDEA-0008 共 29 / 30 次，约 9.3 / 20 GPU 小时。
+
+## 开门前的阅读（DEC-0055，2026-10-31 早上 7 点前；EXP-0036 运行中）
+
+- **读的范围**：上一道门（EXP-0036，2026-10-31 凌晨 4 点前）以来的改动：main 的 c2ff81e（EXP-0035 的结果、F91～F93、DEC-0067；提交前用脚本核对，文中 25 个区间与其余数字都能在封存的输出里找到原样）、a98fc26（本计划 v1、DEC-0068）；code/token-pruning 的 8cd98f3（EXP-0036 的分析脚本，由 chain_0036 在核对 exp0036/MANIFEST 后提交，开门前已读）；新的运行产物：EXP-0035 的 R01～R10、analysis（独立核对 ALL OK）与 secondary（已封存）。EXP-0036 的运行产物正在生成，本实验不用它们，没有读。tmp 里备好的 CDPruner 移植不进本实验。本实验要提交的代码：exp0002.py 相对 8cd98f3 只加两个配置（+5 行：divprune16、fastv13k1_div_peek_kll），analyze_0037.py（新）；sha256 记在 `D:\6CJNM007\tmp\exp0037\MANIFEST`；run_analyze_0037.sh、seal_0037.sh、提交说明 msg_code69.txt 与排队脚本 chain_0037.sh。
+- **核对**：analyze_0037.py 的运行表、读法与计划相同；用 EXP-0034 的 peek 61 与 EXP-0032 的 DivPrune-64 作替身空跑，32 项核对都通过，算出的配对差（+0.18 [−0.45, +0.88] / +2.34 [+1.27, +3.39]）与 FLOPs（0.9975 / 0.9976）与 EXP-0034 封存的逐位相同。fastv_llava 对留下个数没有限制，K = 1 的借看路径与 EXP-0034、EXP-0035 相同，只是留 13 个。chain_0037.sh：等 chain_0036 写出“EXP-0036 analysis sealed”（停下就停）、等本门、GPU 空闲、工作区干净、HEAD 是 EXP-0036 的代码提交、MANIFEST 相同、exp0002.py 只加不删、本计划在 main 上，再提交、推送、核对配置、运行、分析、封存；bash -n 语法检查通过。
+- **发现**：①本门在 EXP-0036 的结果出来之前打开：EXP-0037 不用 EXP-0036 的任何产物。②本实验之后 IDEA-0008 用了 29 / 30 次，再做要先问用户（计划已写）。③其余与计划 v1 一致。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0037.done`。
