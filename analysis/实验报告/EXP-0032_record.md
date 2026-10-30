@@ -104,3 +104,10 @@ VQAv2 dev2（5192 题、1000 张图）、GQA val400（4786 题、400 张图）�
 chain_0031b 推送 EXP-0031 的代码时被 GitHub 拒绝而停下，chain_0032b 随之停下（日志 `run_vision_0032.log` 保留），本实验还没有开始。改用 `D:\6CJNM007\tmp\chain_0032c.sh`：与 chain_0032b.sh 相同，只改两处——等待的日志改为 chain_0031c 的 `run_vision_0031c.log`；推送失败时隔 60 秒再试、最多 3 次，并核对远端等于 HEAD。门（EXP-0032.done）、核对、运行与分析都不变。见 EXP-0031 记录的“运行中的记录”。
 
 - 2026-10-29 14:20 补：用户要求暂停，chain_0032c 随 EXP-0031 停下（没有开始任何运行）。恢复时用 `chain_0032d.sh`（只把等待的日志改为 run_vision_0031d.log），见 EXP-0031 记录的“暂停”。
+
+## 开门前的阅读（DEC-0055，2026-10-30 新会话）
+
+- **读的范围**：新会话按用户要求完整阅读了仓库（DEC-0058；问题清单 `D:\6CJNM007\tmp\read_repo\fullread_20261030_findings.md`），其中包括上一道门（EXP-0031，2026-10-29 12:46）以来的全部改动：main 的 4763351、33ba49f、1f36c51、de70180、e2ca632 与本会话的 3c63eca（EXP-0031 的结果）；code/token-pruning 没有新提交（HEAD 889f287）；新的运行产物：EXP-0031 的 analysis 与 splice_analysis、SQZ-EXP-0030。本实验要提交的代码：`D:\6CJNM007\tmp\read_repo\diff_20261030\` 中 fastv_llava.py（+30 / −4 行）、run_eval.py（+43 / −5）、exp0002_on0031.py（+10）相对 HEAD 的差异，divprune.py、check_divprune.py、analyze_0032.py 的全文，run_analyze_0032.sh、seal_0032.sh、提交说明 msg_code64.txt 与排队脚本 chain_0032d.sh。
+- **核对**：HEAD 中 fastv_llava.py、run_eval.py 与 tmp/exp0030/code 的底本相同，exp0002.py 与 tmp/exp0031/code 的底本相同，两个 exp0002 变体做的是同一处改动；exp0032/MANIFEST 通过；exp0002_on0031.py 的 816 个配置都带 `--method`，新加的 `method_args.index("--method")` 不会在任何配置上出错（`D:\6CJNM007\tmp\read_repo\check_exp0032_configs.sh`）；divprune64、fastv64k1_div、fastv64k1_div_kl 与计划相同。
+- **发现**：代码与计划一致，没有要改的。写现状的文档已在 3c63eca 更新；完整阅读发现的其余文档问题按用户同意的顺序在本实验运行期间修、EXP-0033 开门之前修完（DEC-0058）；代码分支上的问题等排队跑完再提交（排队脚本核对 HEAD）。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0032.done`。
