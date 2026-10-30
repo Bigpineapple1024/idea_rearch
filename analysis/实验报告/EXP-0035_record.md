@@ -1,6 +1,6 @@
 # EXPERIMENT_RECORD：IDEA-0008 的确认（新抽的 VQAv2 test5、GQA val400c；TextVQA 描述）
 
-状态：计划 v1（2026-10-31 凌晨），**在看到 EXP-0034 的任何结果之前写定**（写计划时 EXP-0034 正在运行，进度只看了运行号与答题数）。只在 EXP-0034 的读法把 IDEA-0008 送进确认时运行（EXP-0034 计划 v1：Q1“有希望”，或“部分”且两集平均 ≥ +0.5；读 code/output/EXP-0034/analysis/0034.json 的 criteria.confirmation_next）；否则不运行，本记录写明原因。
+状态：计划 v1（2026-10-31 凌晨），**在看到 EXP-0034 的任何结果之前写定**（写计划时 EXP-0034 正在运行，进度只看了运行号与答题数）。只在 EXP-0034 的读法把 IDEA-0008 送进确认时运行（EXP-0034 计划 v1：Q1“有希望”，或“部分”且两集平均 ≥ +0.5；读 code/output/EXP-0034/analysis/0034.json 的 criteria.confirmation_next）；否则不运行，本记录写明原因。（2026-10-31 3 点补：EXP-0034 的读法是“部分”、两集平均 +1.26，送进确认，DEC-0065；开门前的阅读见文末。）
 
 - 实验 ID：EXP-0035。
 - IDEA ID：[IDEA-0008](../IDEA-0008_第0层借看全部patch.md)；DEC-0064（确认用新抽的数据）。
@@ -48,3 +48,10 @@
 ### 预算
 
 - 10 次：peek / nopeek / DivPrune-64 每次约 15 分钟，TextVQA 约 18 分钟，不剪枝约 24 分钟；约 2.9 GPU 小时。IDEA-0008 共 16 / 30 次。
+
+## 开门前的阅读（DEC-0055，2026-10-31 凌晨 3 点）
+
+- **读的范围**：上一道门（EXP-0034，2026-10-31 01:20）以来的改动：main 的 7fb5ab9（EXP-0034 开门前的阅读）、2fdba1f（本计划 v1）、482ffdf（EXP-0034 的结果、F84～F87、DEC-0065；提交前用脚本核对，文中 58 个“差 [区间]”与 22 个准确率都能在已封存的分析里找到原样，新加的表格行与相邻行的单元格数相同）；code/token-pruning 的 e3f721e（EXP-0034 的代码，由 chain_0034 提交，开门前已读，与 exp0034/MANIFEST 一致）；新的运行产物：EXP-0034 的 R01～R06 与 analysis（已封存并独立核对）。本实验要提交的代码：exp0002.py 相对 e3f721e +11 行（只加 vqav2_test5、gqa_val400c 两个 bench 的登记），score_pope_mme.py +4 / −3（两个 bench 名，gqa_val400c 与 val400 同样计分），analyze_0035.py、make_confirm_sets2.py 为新文件；run_analyze_0035.sh、seal_0035.sh、提交说明 msg_code67.txt 与排队脚本 chain_0035.sh。代码目录里其余文件与 HEAD 逐字节相同。
+- **核对**：四个文件的 sha256 与 `D:\6CJNM007\tmp\exp0035\MANIFEST` 相同；HEAD 的 exp0002.py、score_pope_mme.py 与 EXP-0034 的副本相同（排队脚本的前提）；EXP-0035 的输出目录与计分冒烟测试的目录都还不存在；GPU 空闲；工作区干净、在 code/token-pruning。analyze_0035.py：先读 EXP-0034 封存的 criteria.confirmation_next，不为真就停；10 个运行的编号、配置与数据与计划相同；核对项与计划相同；Q1、Q2 按两个新集的 95% 区间读，两集平均 ≥ +1.5 另记“提升大”，Q3 只作描述，与计划写定的一致；区间每个集内按图像重抽 1000 次（种子 0）。make_confirm_sets2.py 01:22 已运行一次（日志在 tmp），新数据的校验和由排队脚本在提交之前再核。chain_0035.sh：等 EXP-0034 的分析封存、读 confirmation_next（02:55 读到 True）、等本门，之后的步骤与计划一致。
+- **发现**：①计划写“同时报告……计算量三种口径（见 EXP-0034 计划）”，analyze_0035.py 没有算计算量；结果出来之后用 analyze_0034.py 的同一公式（macs()）在新数据每题的实际长度上补算，只作描述，不影响读法，记为偏差。②其余与计划 v1 一致，没有要改的代码。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0035.done`。
