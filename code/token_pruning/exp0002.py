@@ -285,6 +285,15 @@ CONFIGS["vz128_fastv60_kll"] = CONFIGS["vz128_fastv60"]   # the same, with the k
 CONFIGS["vzcand128_div64"] = ("tp", ["--method", "vzcand_div", "--combo-cand", "128", "--combo-keep", "64"])
 CONFIGS["div64_qroute"] = ("tp", ["--method", "div_qroute", "--combo-keep", "64", "--combo-visibility", "D:/6CJNM007/idea_rearch/code/output/EXP-0015/visibility/visibility.npy"])
 CONFIGS["div54_ctx10"] = ("tp", ["--method", "div_ctx", "--combo-keep", "54", "--combo-contextual", "10"])
+# EXP-0034 (IDEA-0008): K = 1, keep 61 by DivPrune's selection on the input embeddings, made before layer 0; layer 0 lets
+# every token see all patches (peek, as K = 1), none of the dropped ones (nopeek) or only the text after the image
+# (peektext); decoding never sees the dropped patches (masked at layer 0). If layer 0 computed only the
+# keys and values of the 515 dropped patches (about 1/6 of a token's work in a layer), 61 kept tokens would cost about the
+# FLOPs of 64 in every layer (EXP-0034 plan); the token count per layer is (576 + 31 x 61) / 32 = 77.1.
+for _name, _mode in (("peek", "prefill"), ("nopeek", "none"), ("peektext", "text")):
+    CONFIGS[f"fastv61k1_div_{_name}"] = ("tp", ["--method", "fastv", "--fastv-k", "1", "--fastv-keep", "61", "--fastv-score", "div",
+                                              "--fastv-div-peek", _mode])
+    CONFIGS[f"fastv61k1_div_{_name}_kll"] = CONFIGS[f"fastv61k1_div_{_name}"]   # with the kept patches, log-probabilities, layer counts
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
@@ -410,12 +419,14 @@ def run_one(run_id, config, bench):
         scoring = f"# scoring (tp env)\n{shlex.join(score_cmd)}\n" if b.get("score", True) else "# not scored (diagnostic)\n"
         f.write(f"# env: {env}\n{shlex.join(in_env(env, eval_cmd))}\n{scoring}")
     # 2026-10-30 note: only the question file and the annotations are hashed here, not the .npy tables in method_args
-    # (visibility, position priors); see the README, "已知局限"
+    # (visibility, position priors); see the README, "已知局限". 2026-10-31 (EXP-0034): the .npy tables in method_args
+    # are hashed too (input_tables_sha256)
     config_rec = {"experiment": experiment(run_id), "run_id": run_id, "config": config, "bench": bench, "env": env,
                   "method_args": method_args, "model": MODEL, "decoding": "greedy (temperature 0), conv vicuna_v1",
                   "question_file": b["question_file"], "question_file_sha256": sha256(b["question_file"]),
                   "image_folder": b["image_folder"],
                   "annotations_sha256": {os.path.basename(p): sha256(p) for p in b["annotations"]},
+                  "input_tables_sha256": {p: sha256(p) for p in method_args if p.endswith(".npy") and os.path.isfile(p)},
                   "data_archives_sha256_file": b.get("archives_sha256", f"{DATA}/downloads/SHA256SUMS")}
     with open(f"{run_dir}/config.json", "w") as f:
         json.dump(config_rec, f, indent=2)

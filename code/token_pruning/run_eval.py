@@ -138,6 +138,10 @@ def parse():
                            "max-min diversity on the image tokens' input embeddings, applied at the stage (EXP-0032)")
     ours.add_argument("--fastv-div-log", default=None,
                       help="with --fastv-score div: one record per prefill (JSON): the kept patches in selection order")
+    ours.add_argument("--fastv-div-peek", choices=["prefill", "none", "text"], default=None,
+                      help="with --fastv-score div at K = 1 (EXP-0034): what layer 0 lets see the patches to be dropped: "
+                           "every token (prefill, as K = 1), none, or only the text after the image; decoding never sees "
+                           "them (their layer-0 cache entries are masked out)")
     ours.add_argument("--fastv-cls-unrouted", action="store_true",
                       help="fastv, --fastv-score query_vis with --fastv-route (IDEA-0007): rank the unrouted questions by "
                            "the vision tower's CLS attention instead of the strong baseline's score (a cover too); the "
@@ -239,6 +243,9 @@ def parse():
                    "padding exclusion, route or score log")
     if (method_args.fastv_div_log is not None) != (method_args.fastv_score == "div"):
         ours.error("--fastv-div-log goes with --fastv-score div")
+    if method_args.fastv_div_peek is not None and (method_args.method != "fastv" or method_args.fastv_score != "div"
+                                                   or method_args.fastv_k != 1):
+        ours.error("--fastv-div-peek goes with --method fastv --fastv-score div at --fastv-k 1")
     if (method_args.method == "divprune") != (method_args.divprune_keep is not None):
         ours.error("--method divprune and --divprune-keep go together")
     if method_args.divprune_keep is not None and not 0 < method_args.divprune_keep <= 576:
@@ -347,7 +354,8 @@ def apply_method(model, m, tokenizer=None):
                            mix_question=getattr(m, "fastv_mix_question", None), contrast_ids=contrast_ids,
                            token_weights=weights,
                            visibility=np.load(m.fastv_visibility) if score_kind == "query_vis" else None, route=route,
-                           zoom=zoom, cover=cover, cls_unrouted=bool(getattr(m, "fastv_cls_unrouted", False)))
+                           zoom=zoom, cover=cover, cls_unrouted=bool(getattr(m, "fastv_cls_unrouted", False)),
+                           div_peek=getattr(m, "fastv_div_peek", None))
     if m.method == "random":
         return apply_fastv(model, k=m.fastv_k, keep=m.fastv_keep, seed=m.seed, schedule=schedule)
     if m.method == "divprune":                                 # EXP-0032: DivPrune's selection before the LLM

@@ -66,6 +66,15 @@ diversity, cosine distance) on the same features DivPrune uses before the LLM, t
 projector's output), so only where the selection is applied differs; padding is not excluded (as DivPrune), no attention
 map is needed, and fastv_div_log holds the kept patches in selection order, one record per prefill. Without it nothing
 changes.
+With div_peek (EXP-0034, IDEA-0008; score_kind "div" at K = 1 only) the same selection is made before layer 0, and layer 0
+either lets every token see all patches as K = 1 does ("prefill"), hides the patches to be dropped from every token ("none":
+the kept tokens and the text then see what DivPrune would hand them, at their original positions), or lets only the text
+after the image see them ("text"). In all three the generated tokens never see the dropped patches: their layer-0 keys
+and values stay in the cache (so generate's bookkeeping of the cache length is unchanged) but are masked out at layer 0
+while decoding, so decoding sees only the kept image tokens at every layer. In "prefill" and "text" the dropped patches
+serve layer 0 only as keys and values, so an implementation could skip their queries, attention outputs and MLP and drop
+their cache entries after the prefill; this one computes them and throws them away (same outputs). Without div_peek
+nothing changes.
 """
 import math
 import types
@@ -298,6 +307,17 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
         allowed = torch.ones(n_img, dtype=torch.bool, device=hidden.device)
         if self.fastv_exclude_padding:
             allowed = ~_padding_mask(*self.fastv_image_size, round(n_img ** 0.5)).to(hidden.device)
+    peek = self.fastv_div_peek if div_now else None
+    if prefill:
+        self.fastv_peek_drop = None                            # set below for this prompt's decoding, when div_peek is on
+    if peek:                                                   # EXP-0034: the stage's selection, known before layer 0
+        pos0 = allowed[kept].nonzero().squeeze(1)
+        order0 = torch.tensor(maxmin_order(self.fastv_div_feats[kept[pos0]], min(stages[1] - extra, pos0.numel())),
+                              device=pos0.device)
+        peek_top = pos0[order0].sort().values
+        drop = torch.ones(n_img, dtype=torch.bool, device=hidden.device)
+        drop[peek_top] = False
+        self.fastv_peek_drop = past_len + start + drop.nonzero().squeeze(1)    # their columns in the layer-0 cache
     for idx, layer in enumerate(self.layers):
         if prefill and idx in stages:
             n_cur = kept.numel()
@@ -332,8 +352,11 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             if div_now:
                 order = torch.tensor(maxmin_order(self.fastv_div_feats[kept[pos]], count), device=pos.device)
                 top = pos[order].sort().values
+                if peek and not torch.equal(top, peek_top):
+                    raise RuntimeError("div_peek: the stage's selection differs from the one made before layer 0")
                 if self.fastv_div_log is not None:
-                    self.fastv_div_log.append({"index": len(self.fastv_div_log), "order": kept[pos[order]].tolist()})
+                    self.fastv_div_log.append({"index": len(self.fastv_div_log), "order": kept[pos[order]].tolist(),
+                                               **({"peek": peek} if peek else {})})
             elif mix:                                          # part by the object name, the rest by FastV's score
                 side, blocks = round(n_img ** 0.5), self.fastv_stratify
                 n_q = round(count * self.fastv_visible_share) if query_vis else min(self.fastv_mix_question, count)
@@ -377,6 +400,15 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             kept = kept[top]
             self.fastv_kept_image_positions = kept
         mask = _causal_mask(hidden) if prefill else None
+        if not prefill and idx == 0 and self.fastv_peek_drop is not None:     # EXP-0034: decoding never sees them at layer 0
+            kv_len = cache.get_seq_length(0) + q_len
+            mask = torch.zeros(1, 1, q_len, kv_len, dtype=hidden.dtype, device=hidden.device)
+            mask[:, :, :, self.fastv_peek_drop.to(hidden.device)] = torch.finfo(hidden.dtype).min
+        if prefill and idx == 0 and peek in ("none", "text"):  # EXP-0034: the patches to be dropped are hidden at layer 0
+            cols = self.fastv_peek_drop - past_len
+            rows = slice(None) if peek == "none" else slice(start, start + n_img)
+            mask = mask.clone()
+            mask[:, :, rows, cols] = torch.finfo(mask.dtype).min
         need_attn = prefill and idx + 1 in stages and self.fastv_generator is None and not (object_cos or cls_now or div_now)
         out = layer(hidden, attention_mask=mask, position_ids=position_ids, past_key_value=cache,
                     output_attentions=need_attn, use_cache=use_cache)
@@ -523,7 +555,7 @@ def _cls_tower_forward(self, images):
 
 def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
                score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None,
-               token_weights=None, visibility=None, route=None, zoom=None, cover=0, cls_unrouted=False):
+               token_weights=None, visibility=None, route=None, zoom=None, cover=0, cls_unrouted=False, div_peek=None):
     """Turn a transformers LlamaModel into FastV in place (image span set by the caller).
 
     seed=None keeps FastV's attention ranking; an integer selects random image tokens from that seed.
@@ -544,6 +576,8 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
     (query_vis with route only) ranks the unrouted questions that way, a cover included; the routed ones are unchanged.
     score_kind "div" (EXP-0032) keeps DivPrune's max-min diversity choice on the image tokens' input embeddings, with the
     same exclusions as "cls" and without exclude_padding (DivPrune does not exclude it).
+    div_peek (EXP-0034; "prefill", "none" or "text", div at K = 1 only): what layer 0 lets see the patches to be dropped
+    during the prefill; decoding never sees them (see the module docstring).
     """
     if score_kind not in ("last", "object_cos", "mix", "contrast_max", "contrast_mean", "query_mean", "query_idf",
                           "attn_idf", "query_vis", "cls", "div"):
@@ -558,6 +592,10 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
                          "padding exclusion or cls_unrouted")
     llama_model.fastv_div_log = [] if score_kind == "div" else None
     llama_model.fastv_div_feats = None
+    if div_peek is not None and (div_peek not in ("prefill", "none", "text") or score_kind != "div" or schedule or k != 1):
+        raise ValueError("div_peek (prefill, none or text) works with score_kind div at K = 1 only")
+    llama_model.fastv_div_peek = div_peek
+    llama_model.fastv_peek_drop = None
     if cls_unrouted and (score_kind != "query_vis" or route is None):
         raise ValueError("cls_unrouted needs query_vis with route")
     llama_model.fastv_cls_unrouted = bool(cls_unrouted)
@@ -633,11 +671,11 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
 
 def apply_fastv(model, k=2, keep=288, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
                 score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None,
-                token_weights=None, visibility=None, route=None, zoom=None, cover=0, cls_unrouted=False):
+                token_weights=None, visibility=None, route=None, zoom=None, cover=0, cls_unrouted=False, div_peek=None):
     """Enable FastV (or its random-selection control when seed is given) on a loaded LlavaLlamaForCausalLM."""
     lm = bind_fastv(model.get_model(), k, keep, seed, schedule, score_prior, stratify, log_text_rows, score_kind,
                     object_span, exclude_padding, mix_question, contrast_ids, token_weights, visibility, route, zoom,
-                    cover, cls_unrouted)
+                    cover, cls_unrouted, div_peek)
     if lm.fastv_cls_log is not None:                           # IDEA-0007: the tower returns its CLS attention too
         tower = lm.get_vision_tower()
         if tower.select_layer != -2 or tower.select_feature != "patch":
