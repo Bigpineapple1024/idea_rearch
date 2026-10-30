@@ -1,6 +1,6 @@
 # EXPERIMENT_RECORD：本流程中的 DivPrune-64，以及一层全看对多样性选择的作用（IDEA-0007 的机制检验）
 
-状态：计划 v1（2026-10-26 11 点 45 分），在 EXP-0032 的任何运行之前写定。写计划时 EXP-0029 正在运行，没有看过 EXP-0029、EXP-0030 的任何结果。
+状态：运行中（2026-10-30 19:05:17 起，代码 e1daaab；见文末“运行中的记录”）。前一状态：计划 v1（2026-10-26 11 点 45 分），在 EXP-0032 的任何运行之前写定。写计划时 EXP-0029 正在运行，没有看过 EXP-0029、EXP-0030 的任何结果。
 
 - 实验 ID：EXP-0032。
 - IDEA ID：[IDEA-0007](../IDEA-0007_一层全看再按编码器排序.md)（机制：一层全看）；DEC-0052。
@@ -111,3 +111,8 @@ chain_0031b 推送 EXP-0031 的代码时被 GitHub 拒绝而停下，chain_0032b
 - **核对**：HEAD 中 fastv_llava.py、run_eval.py 与 tmp/exp0030/code 的底本相同，exp0002.py 与 tmp/exp0031/code 的底本相同，两个 exp0002 变体做的是同一处改动；exp0032/MANIFEST 通过；exp0002_on0031.py 的 816 个配置都带 `--method`，新加的 `method_args.index("--method")` 不会在任何配置上出错（`D:\6CJNM007\tmp\read_repo\check_exp0032_configs.sh`）；divprune64、fastv64k1_div、fastv64k1_div_kl 与计划相同。
 - **发现**：代码与计划一致，没有要改的。写现状的文档已在 3c63eca 更新；完整阅读发现的其余文档问题按用户同意的顺序在本实验运行期间修、EXP-0033 开门之前修完（DEC-0058）；代码分支上的问题等排队跑完再提交（排队脚本核对 HEAD）。
 - **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0032.done`。
+
+## 运行中的记录（2026-10-30）
+
+- **开门**：19:04 写门文件（读的范围见上一节）。chain_0032d 的核对全部通过（chain_0031 以 0031 状态结束、GPU 空闲、在 code/token-pruning、工作区干净、HEAD 是 EXP-0031 的代码提交、三个底本相同、MANIFEST、计划 v1 在 main 上），提交并推送 EXP-0032 的代码（code/token-pruning e1daaab，exp0002.py 用 0031 的底本），在仓库里重跑 check_divprune.py 26/26、check_k1cls.py 32/32，配置核对通过，19:05:17 在 e1daaab 上开始 R01。
+- R01 的运行状态：每秒约 6.1 题，GPU 占用约 76%、显存约 15.6 GB。进度检查只看运行号、状态与答题数（`D:\6CJNM007\tmp\queue_status.sh`）。
