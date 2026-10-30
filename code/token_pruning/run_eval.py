@@ -9,10 +9,16 @@ Covers the benchmarks that LLaVA-1.5 evaluates through llava.eval.model_vqa_load
   python run_eval.py --method random --fastv-k 2 --fastv-keep 30 --seed 2021 -- ...
   python run_eval.py --method sparsevlm --retained-tokens 64 -- ...   # in the sparsevlm env
   python run_eval.py --method divprune --divprune-keep 64 --divprune-log div.json -- ...   # EXP-0032
+  python run_eval.py --method visionzip --dominant 108 --contextual 20 --vz-fastv 2,60 -- ...   # EXP-0033 X1
+  python run_eval.py --method vzcand_div --combo-cand 128 --combo-keep 64 --combo-log c.json -- ...   # X2
+  python run_eval.py --method div_qroute --combo-keep 64 --combo-visibility v.npy --combo-log c.json -- ...   # X3
+  python run_eval.py --method div_ctx --combo-keep 54 --combo-contextual 10 --combo-log c.json -- ...   # X4
 
 VisionZip is imported from its repository root (set VISIONZIP_ROOT or PYTHONPATH): the
 visionzip 0.1.3 wheel on PyPI ships no code.
 `divprune` is DivPrune's max-min diversity selection before the LLM, written here from the paper (divprune.py).
+`vzcand_div`, `div_qroute`, `div_ctx` are EXP-0033's exploratory combinations (combo.py), all before the LLM;
+`--vz-fastv K,keep` adds plain FastV (last-token attention, keep from layer K) after VisionZip (EXP-0033's X1).
 `random` is FastV with the attention ranking replaced by a seeded uniform draw (same K, same count).
 `sparsevlm` runs SparseVLM's own fork of model_vqa_loader (pip install -e source/SparseVLMs), which
 prunes inside generate() from `retained_tokens`; it refuses to run against the official LLaVA loader.
@@ -47,12 +53,24 @@ def _schedule(text):
 
 def parse():
     ours = argparse.ArgumentParser()
-    ours.add_argument("--method", choices=["vanilla", "fastv", "visionzip", "random", "sparsevlm", "divprune"], required=True)
+    ours.add_argument("--method", choices=["vanilla", "fastv", "visionzip", "random", "sparsevlm", "divprune", "vzcand_div",
+                                           "div_qroute", "div_ctx"], required=True)
     ours.add_argument("--divprune-keep", type=int, default=None,
                       help="divprune (EXP-0032): keep this many projected patch tokens per image before the LLM, chosen by "
                            "DivPrune's max-min diversity (divprune.py, written from the paper; cosine distance)")
     ours.add_argument("--divprune-log", default=None,
                       help="divprune: write one record per encoded image (JSON): the selection order and the kept patches")
+    ours.add_argument("--combo-keep", type=int, default=None,
+                      help="vzcand_div / div_qroute / div_ctx (EXP-0033): patches kept by the max-min order before the LLM")
+    ours.add_argument("--combo-cand", type=int, default=None,
+                      help="vzcand_div: candidates = the top patches by VisionZip's dominant score (CLS attention, layer -2)")
+    ours.add_argument("--combo-contextual", type=int, default=None,
+                      help="div_ctx: the other patches merge into this many tokens by VisionZip's contextual rule")
+    ours.add_argument("--combo-visibility", default=None,
+                      help="div_qroute: .npy with one visibility per vocabulary id (EXP-0015), for the IDF x visibility query")
+    ours.add_argument("--combo-log", default=None, help="the combinations: one record per encoded image (JSON)")
+    ours.add_argument("--vz-fastv", default=None,
+                      help="visionzip (EXP-0033 X1): 'K,keep': plain FastV after VisionZip, keeping `keep` from layer K")
     ours.add_argument("--fastv-k", type=int, default=2)
     ours.add_argument("--fastv-keep", type=int, default=288)
     ours.add_argument("--seed", type=int, default=None, help="random: seed of the token draw")
@@ -182,8 +200,9 @@ def parse():
     llava_args = llava.parse_args(argv[split + 1:])
     if method_args.method == "random" and method_args.seed is None:
         ours.error("--method random needs --seed")
-    if method_args.kept_token_log and method_args.method not in ("fastv", "random"):
-        ours.error("--kept-token-log needs --method fastv or random")
+    if method_args.kept_token_log and method_args.method not in ("fastv", "random") and not (
+            method_args.method == "visionzip" and method_args.vz_fastv):    # EXP-0033 X1: FastV after VisionZip
+        ours.error("--kept-token-log needs --method fastv or random (or visionzip with --vz-fastv)")
     if (method_args.score_log or method_args.fastv_score_prior or method_args.fastv_stratify
             or method_args.text_rows_log) and method_args.method != "fastv":
         ours.error("--score-log, --fastv-score-prior, --fastv-stratify and --text-rows-log need --method fastv")
@@ -225,6 +244,17 @@ def parse():
         ours.error("--divprune-keep must be in 1..576")
     if (method_args.divprune_log is not None) != (method_args.method == "divprune"):
         ours.error("--divprune-log goes with --method divprune")
+    combo = method_args.method in ("vzcand_div", "div_qroute", "div_ctx")       # EXP-0033
+    if combo != (method_args.combo_keep is not None) or combo != (method_args.combo_log is not None):
+        ours.error("the combinations need --combo-keep and --combo-log, and only they take them")
+    if (method_args.method == "vzcand_div") != (method_args.combo_cand is not None):
+        ours.error("--method vzcand_div and --combo-cand go together")
+    if (method_args.method == "div_ctx") != (method_args.combo_contextual is not None):
+        ours.error("--method div_ctx and --combo-contextual go together")
+    if (method_args.method == "div_qroute") != (method_args.combo_visibility is not None):
+        ours.error("--method div_qroute and --combo-visibility go together")
+    if method_args.vz_fastv is not None and (method_args.method != "visionzip" or method_args.vz_cover):
+        ours.error("--vz-fastv goes with --method visionzip, without --vz-cover")
     zoom_on = method_args.fastv_zoom or method_args.fastv_cover
     if zoom_on and method_args.fastv_score != "query_vis":
         ours.error("--fastv-zoom and --fastv-cover need --fastv-score query_vis")
@@ -257,14 +287,16 @@ def parse():
         ours.error("--vz-cover-centre, --vz-cover-on, --vz-cover-box and --vz-cover-top need --vz-cover")
     if method_args.vz_cover_top < 0 or (method_args.vz_cover_top and method_args.vz_cover_centre):
         ours.error("--vz-cover-top must be positive and does not go with --vz-cover-centre")
-    if method_args.vocab_visibility_log and method_args.method in ("visionzip", "sparsevlm", "divprune"):
+    if method_args.vocab_visibility_log and method_args.method in ("visionzip", "sparsevlm", "divprune", "vzcand_div", "div_qroute",
+                                                                   "div_ctx"):
         ours.error("--vocab-visibility-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     if (method_args.fastv_score == "mix") != (method_args.fastv_mix_question is not None):
         ours.error("--fastv-score mix and --fastv-mix-question go together")
     if method_args.fastv_score == "mix" and (method_args.text_rows_log or not method_args.fastv_stratify
                                              or method_args.fastv_schedule):
         ours.error("--fastv-score mix needs --fastv-stratify, a single stage and no --text-rows-log")
-    if method_args.name_cos_log and method_args.method in ("visionzip", "sparsevlm", "divprune"):
+    if method_args.name_cos_log and method_args.method in ("visionzip", "sparsevlm", "divprune", "vzcand_div", "div_qroute",
+                                                            "div_ctx"):
         ours.error("--name-cos-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     method_args.conv_mode = llava_args.conv_mode          # the contrast vocabulary is tokenised in the same template
     method_args.question_file = llava_args.question_file  # IDF weights are counted over the evaluated questions
@@ -320,6 +352,18 @@ def apply_method(model, m, tokenizer=None):
     if m.method == "divprune":                                 # EXP-0032: DivPrune's selection before the LLM
         from divprune import apply_divprune
         return apply_divprune(model, m.divprune_keep, [])
+    if m.method in ("vzcand_div", "div_qroute", "div_ctx"):    # EXP-0033: exploratory combinations, before the LLM
+        import combo
+        model.combo_log = []
+        if m.method == "vzcand_div":
+            return combo.apply_vzcand_div(model, m.combo_cand, m.combo_keep, model.combo_log)
+        if m.method == "div_ctx":
+            return combo.apply_div_ctx(model, m.combo_keep, m.combo_contextual, model.combo_log)
+        idf = getattr(m, "fastv_idf", None) or question_idf(tokenizer, m.question_file, getattr(m, "conv_mode", "vicuna_v1"))
+        m.fastv_idf = idf
+        return combo.apply_div_qroute(model, m.combo_keep, lambda ids: [idf["idf"].get(t, idf["unseen"]) for t in ids],
+                                      np.load(m.combo_visibility), lambda ids: routes_to_query(tokenizer.decode(ids)),
+                                      model.combo_log)
     if m.method == "visionzip":
         root = os.environ.get("VISIONZIP_ROOT")
         if root:
@@ -335,6 +379,9 @@ def apply_method(model, m, tokenizer=None):
                                   np.load(m.vz_visibility), route=lambda ids: routes_to_query(tokenizer.decode(ids)),
                                   on=getattr(m, "vz_cover_on", "unrouted"), centre=bool(getattr(m, "vz_cover_centre", False)),
                                   box=(top_m, min_side, max_side), top=getattr(m, "vz_cover_top", 0))
+        if getattr(m, "vz_fastv", None):                       # EXP-0033 X1: plain FastV on VisionZip's tokens
+            k, keep = (int(x) for x in m.vz_fastv.split(","))
+            model = apply_fastv(model, k=k, keep=keep)
         return model
     return model
 
@@ -660,6 +707,8 @@ def main():
             _CLS_MODEL.append(model.get_model())
         if method_args.divprune_log or method_args.fastv_div_log:   # EXP-0032: its log is written at the end
             _DIV_MODEL.append(model)
+        if method_args.combo_log:                                 # EXP-0033: its log is written at the end
+            _COMBO_MODEL.append(model)
         if method_args.layer_token_log:
             times["n_layers"] = len(model.get_model().layers)
             for i, layer in enumerate(model.get_model().layers):
@@ -731,7 +780,8 @@ def main():
         _write_layer_tokens(method_args.layer_token_log, times["n_layers"])
     if method_args.kept_token_log:
         schedule = method_args.fastv_schedule
-        _write_kept(method_args.kept_token_log, schedule[-1][1] if schedule else method_args.fastv_keep)
+        _write_kept(method_args.kept_token_log, schedule[-1][1] if schedule else
+                    int(method_args.vz_fastv.split(",")[1]) if method_args.vz_fastv else method_args.fastv_keep)
     if method_args.score_log:
         np.save(method_args.score_log, np.stack(_SCORES))
     if method_args.text_rows_log:
@@ -765,12 +815,18 @@ def main():
         log = _DIV_MODEL[0].get_model().fastv_div_log if _DIV_MODEL else []
         with open(method_args.fastv_div_log, "w") as f:
             json.dump({"n_prefills": len(log), "keep": method_args.fastv_keep, "records": log}, f)
+    if method_args.combo_log:                                   # EXP-0033: one record per encoded image
+        log = _COMBO_MODEL[0].combo_log if _COMBO_MODEL else []
+        with open(method_args.combo_log, "w") as f:
+            json.dump({"n_images": len(log), "method": method_args.method, "keep": method_args.combo_keep,
+                       "cand": method_args.combo_cand, "contextual": method_args.combo_contextual, "records": log}, f)
 
 
 _ZOOM_MODEL = []
 _VZ_MODEL = []
 _CLS_MODEL = []
 _DIV_MODEL = []
+_COMBO_MODEL = []
 
 
 if __name__ == "__main__":

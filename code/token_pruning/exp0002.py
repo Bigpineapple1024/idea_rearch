@@ -273,6 +273,15 @@ CONFIGS["fastv64k1_qroute_cls_c16"] = ("tp", CONFIGS["fastv64k1_qroute_c16"][1] 
 # the selection is applied differs.
 CONFIGS["divprune64"] = ("tp", ["--method", "divprune", "--divprune-keep", "64"])
 CONFIGS["fastv64k1_div"] = ("tp", ["--method", "fastv", "--fastv-k", "1", "--fastv-keep", "47", "--fastv-score", "div"])
+# EXP-0033 (step 4, round 2): exploratory combinations, each against its two single methods at a layer average of 64.
+# X1 (MODE_C-0002's C4): VisionZip-128 into the LLM, then plain FastV keeps 60 from layer 2: (2 x 128 + 30 x 60) / 32 = 64.25.
+# X2: VisionZip's CLS top-128 patches as candidates, DivPrune's max-min picks 64. X3: DivPrune-64 with the router's
+# IDF x visibility query taking round(64 S) first on routed questions. X4: DivPrune 54 + VisionZip's contextual merge 10.
+CONFIGS["vz128_fastv60"] = ("tp", CONFIGS["visionzip128"][1] + ["--vz-fastv", "2,60"])
+CONFIGS["vz128_fastv60_kll"] = CONFIGS["vz128_fastv60"]   # the same, with the kept patches, log-probabilities, layer counts
+CONFIGS["vzcand128_div64"] = ("tp", ["--method", "vzcand_div", "--combo-cand", "128", "--combo-keep", "64"])
+CONFIGS["div64_qroute"] = ("tp", ["--method", "div_qroute", "--combo-keep", "64", "--combo-visibility", "D:/6CJNM007/idea_rearch/code/output/EXP-0015/visibility/visibility.npy"])
+CONFIGS["div54_ctx10"] = ("tp", ["--method", "div_ctx", "--combo-keep", "54", "--combo-contextual", "10"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic
 CONFIGS.update({f"{name}_scores": spec for name, spec in list(CONFIGS.items()) if name.startswith("fastv")})
 # "<config>_layers": the same run with --layer-token-log, for the per-layer token-count diagnostic
@@ -366,6 +375,9 @@ def run_one(run_id, config, bench):
                                      "--answer-logit-log", f"{run_dir}/answer_logits.json"]
     if config.endswith("_ksl"):
         method_args = method_args + ["--score-log", f"{run_dir}/scores.npy"]
+    if config.endswith("_kll"):      # EXP-0033 X1: the kept patches, the log-probabilities and the tokens entering each layer
+        method_args = method_args + ["--kept-token-log", f"{run_dir}/kept_tokens.json", "--answer-logit-log",
+                                     f"{run_dir}/answer_logits.json", "--layer-token-log", f"{run_dir}/layer_tokens.json"]
     if "--fastv-zoom" in method_args or "--fastv-cover" in method_args:     # IDEA-0004: one record per prefill
         method_args = method_args + ["--fastv-zoom-log", f"{run_dir}/zoom.json"]
     if "--vz-cover" in method_args:                                         # IDEA-0006: one record per prefill
@@ -377,6 +389,8 @@ def run_one(run_id, config, bench):
         method_args = method_args + ["--fastv-div-log", f"{run_dir}/div.json"]
     if method_args[method_args.index("--method") + 1] == "divprune":        # EXP-0032: one record per image
         method_args = method_args + ["--divprune-log", f"{run_dir}/div.json"]
+    if method_args[method_args.index("--method") + 1] in ("vzcand_div", "div_qroute", "div_ctx"):   # EXP-0033
+        method_args = method_args + ["--combo-log", f"{run_dir}/combo.json"]
     if config.endswith("_names"):
         method_args = method_args + ["--answer-logit-log", f"{run_dir}/answer_logits.json",
                                      "--name-cos-log", f"{run_dir}/name_cos.npz"]
