@@ -42,6 +42,7 @@
 | EXP-0034 | IDEA-0008 | K = 1、DivPrune 的 61 个在第 0 层之前选好，第 0 层：都看被剪的 patch（peek）、都看不到（nopeek）、只有题目看得到（peektext）；按 FLOPs 约与 DivPrune-64 相等；VQAv2 dev2、GQA val400，6 次 | [EXP-0034_record](实验报告/EXP-0034_record.md)（计划 v1） | 分析 code/output/EXP-0034/analysis（01a6355b…）；[SQZ-EXP-0034](实验报告/EXP-0034_squeeze.md)（code/output/EXP-0034/squeeze，17af06d5…） | completed（2026-10-31 01:20:57～02:54:16，代码 e3f721e；Q1“部分”：GQA +2.34、VQAv2 +0.18；Q2 两集都有作用；送确认 EXP-0035；DEC-0065；原写 planned（DEC-0064；开门前按 DEC-0055 读改动部分）） |
 | EXP-0035 | IDEA-0008（确认） | peek、DivPrune-64、nopeek 在新抽的 VQAv2 test5（5356 题）、GQA val400c（5106 题）上，TextVQA 描述，不剪枝参照；10 次 | [EXP-0035_record](实验报告/EXP-0035_record.md)（计划 v1） | 分析 code/output/EXP-0035/analysis（0f3db5b6…）；二级分析 code/output/EXP-0035/secondary（75ee21fd…） | completed（2026-10-31 03:09:06～06:11:31，代码 88cb1cb；Q1 部分成立（GQA +1.53、VQAv2 +0.28），Q2 成立，二级分析四条都重现；交用户决定；DEC-0067；原写 running（2026-10-31 03:09:01 起，代码 88cb1cb；开门前的阅读见记录；计划 v1.1 在看到结果之前加了二级分析；原写 planned（EXP-0034 的读法已送进确认，DEC-0065；开门前按 DEC-0055 读改动部分；原写 planned（条件式：只在 EXP-0034 的读法送进确认时运行；DEC-0064））） |
 | EXP-0036 | IDEA-0008（推广）；P18、P19 | peek、DivPrune-64、nopeek 在 MME（2374 题）、V*（191 题）、POPE（8910 题）上，不剪枝复用；9 次 | [EXP-0036_record](实验报告/EXP-0036_record.md)（计划 v1） | — | running（2026-10-31 06:12:36 起，代码 8cd98f3；开门前的阅读见记录；原写 planned（排在 EXP-0035 之后；开门前按 DEC-0055 读改动部分；DEC-0066）） |
+| EXP-0037 | IDEA-0008（16 档，探索） | DivPrune-16 与 peek 留 13（FLOPs 约相等）在 VQAv2 dev2、GQA val400 上；4 次 | [EXP-0037_record](实验报告/EXP-0037_record.md)（计划 v1） | — | planned（排在 EXP-0036 之后；开门前按 DEC-0055 读改动部分；DEC-0068） |
 
 ## 全部运行
 

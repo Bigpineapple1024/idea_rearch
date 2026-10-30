@@ -163,6 +163,7 @@
 | [analysis/实验报告/EXP-0034_squeeze.md](../analysis/实验报告/EXP-0034_squeeze.md) | SQUEEZE_REPORT：EXP-0034（脚本写于看到结果之前；nopeek 偏答“是”、借看去掉它 F88；连续编号丢掉空间布局 F89；借看的增益与被点名的物体留下多少无关 F90；官方代码的位置编号） |
 | [analysis/实验报告/EXP-0035_record.md](../analysis/实验报告/EXP-0035_record.md) | EXPERIMENT_RECORD：IDEA-0008 的确认（计划 v1，条件式：新抽的 VQAv2 test5、GQA val400c，TextVQA 描述，10 次；在看到 EXP-0034 的结果之前写定）；2026-10-31 补：已完成，Q1 部分成立，DEC-0067） |
 | [analysis/实验报告/EXP-0036_record.md](../analysis/实验报告/EXP-0036_record.md) | EXPERIMENT_RECORD：IDEA-0008 与 F88、F89 在 MME、V*、POPE 上（计划 v1：9 次；Q1 推广，Q2 POPE 上的偏“是”，Q3 位置题；在看到 EXP-0035 的结果之前写定） |
+| [analysis/实验报告/EXP-0037_record.md](../analysis/实验报告/EXP-0037_record.md) | EXPERIMENT_RECORD：IDEA-0008 在 16 档（计划 v1：开发集 4 次，探索；peek 留 13 对 DivPrune-16；在看到 EXP-0036 的结果之前写定） |
 | [analysis/实验报告/EXP-0020_squeeze.md](../analysis/实验报告/EXP-0020_squeeze.md) | SQUEEZE_REPORT：EXP-0020（增益来自 yes/no 与 number F42；与 VisionZip 的差距在开放式题，是底座的差距 F43） |
 | [analysis/论文主张与证据_草稿.md](../analysis/论文主张与证据_草稿.md) | 论文主张与证据对照（草稿）：可以写的主张 CL-1～CL-10、不能写的主张、共同的限定 |
 | [analysis/实验报告/EXP-0018_squeeze.md](../analysis/实验报告/EXP-0018_squeeze.md) | SQUEEZE_REPORT：EXP-0018（答案类型上效应相反 F38；损失集中在问点名物体属性的题 F39；一般题目上 FastV 一族低于 VisionZip F40） |
