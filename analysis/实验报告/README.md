@@ -14,6 +14,8 @@
 | EXP-0001 | 视觉 token 剪枝三个仓库的代码级核验（CPU，随机权重） | [EXP-0001_record](EXP-0001_record.md)（completed） | [SQZ-EXP-0001](EXP-0001_squeeze.md)（完成，2026-10-23；原写“待补做”） |
 | EXP-0002 | 视觉 token 剪枝 GPU 复现（vanilla、FastV、VisionZip、SparseVLM、随机剪枝） | [EXP-0002_record](EXP-0002_record.md)（completed，2026-10-24；原写“待执行”） | [SQZ-EXP-0002](EXP-0002_squeeze.md)（完成，2026-10-24；原写“—”） |
 | EXP-0003 | 时序预测三个仓库在 ETTh1 上的 CPU 复现与评测协议核验 | [EXP-0003_record](EXP-0003_record.md)（partial：计划内运行全部结束，WPMixer 192 档被手动停止） | [SQZ-EXP-0003](EXP-0003_squeeze.md)（完成，2026-10-23，只基于记录中抄录的数字；原写“待补做”） |
+| EXP-0041 | IDEA-0011 的开发运行（虚拟填补，CDPruner 底座，开发集） | [EXP-0041_record](EXP-0041_record.md)（completed） | [SQZ-EXP-0041](EXP-0041_squeeze.md)（2026-11-01 补成单独的报告） |
+| EXP-0042 | IDEA-0011 的确认（新数据与 MME、POPE） | [EXP-0042_record](EXP-0042_record.md)（completed） | [SQZ-EXP-0042](EXP-0042_squeeze.md)（2026-11-01 补成单独的报告） |
 
 原始产物放在 `code/output/<实验ID>/<运行ID>/`，并备份到实验室电脑的 `D:\6CJNM007\backup\<实验ID>\<运行ID>\`，记录中登记校验和与备份路径。
 

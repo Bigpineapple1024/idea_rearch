@@ -164,6 +164,8 @@
 | [analysis/实验报告/EXP-0033_squeeze.md](../analysis/实验报告/EXP-0033_squeeze.md) | SQUEEZE_REPORT：EXP-0033（脚本写于看到结果之前；X2 少铺开而准确率不变 F80；DivPrune 底座上的题目查询没有帮助 F79；64 档的缺口与 K = 1 在 GQA 属性、二选一题上的补回 F77、F78；按题目文字挑方法几乎没有提升 F83） |
 | [analysis/实验报告/EXP-0034_record.md](../analysis/实验报告/EXP-0034_record.md) | EXPERIMENT_RECORD：IDEA-0008 的开发运行（计划 v1：VQAv2 dev2、GQA val400，6 次；Q1 peek − DivPrune-64，Q2 peek − nopeek；2026-10-31 补：已完成，DEC-0065） |
 | [analysis/实验报告/EXP-0034_squeeze.md](../analysis/实验报告/EXP-0034_squeeze.md) | SQUEEZE_REPORT：EXP-0034（脚本写于看到结果之前；nopeek 偏答“是”、借看去掉它 F88；连续编号丢掉空间布局 F89；借看的增益与被点名的物体留下多少无关 F90；官方代码的位置编号） |
+| [analysis/实验报告/EXP-0041_squeeze.md](../analysis/实验报告/EXP-0041_squeeze.md) | SQUEEZE_REPORT：EXP-0041（2026-11-01 从记录的“深挖”一节补成单独的报告；F109 GQA 位置题的补回集中在二选一题、靠原始编号；F110 增益不靠代表拟合得好） |
+| [analysis/实验报告/EXP-0042_squeeze.md](../analysis/实验报告/EXP-0042_squeeze.md) | SQUEEZE_REPORT：EXP-0042（2026-11-01 补成单独的报告；F112 POPE 上 CDPruner-64 因多答“是”高于不剪枝、fill 回到不剪枝；F113 fill 让回答更接近不剪枝；P23、C42） |
 | [analysis/实验报告/EXP-0035_record.md](../analysis/实验报告/EXP-0035_record.md) | EXPERIMENT_RECORD：IDEA-0008 的确认（计划 v1，条件式：新抽的 VQAv2 test5、GQA val400c，TextVQA 描述，10 次；在看到 EXP-0034 的结果之前写定）；2026-10-31 补：已完成，Q1 部分成立，DEC-0067） |
 | [analysis/实验报告/EXP-0036_record.md](../analysis/实验报告/EXP-0036_record.md) | EXPERIMENT_RECORD：IDEA-0008 与 F88、F89 在 MME、V*、POPE 上（计划 v1：9 次；Q1 推广，Q2 POPE 上的偏“是”，Q3 位置题；在看到 EXP-0035 的结果之前写定）；2026-10-31 补：已完成，Q1 没有一个更高，DEC-0069） |
 | [analysis/实验报告/EXP-0037_record.md](../analysis/实验报告/EXP-0037_record.md) | EXPERIMENT_RECORD：IDEA-0008 在 16 档（计划 v1：开发集 4 次，探索；peek 留 13 对 DivPrune-16；在看到 EXP-0036 的结果之前写定）；2026-10-31 补：已完成，不像，DEC-0070） |
@@ -186,6 +188,7 @@
 | [analysis/实验报告/EXP-0015_record.md](../analysis/实验报告/EXP-0015_record.md) | EXPERIMENT_RECORD：按词的可视性分配名额的题目查询（第 ⑨～⑫ 步第二轮，P10） |
 | [analysis/1a-4b_FastV不如随机选择.md](../analysis/1a-4b_FastV不如随机选择.md) | 1a–4b 机制分析：同预算下 FastV 为什么不如随机选择（第 1 轮，到 2b） |
 | [analysis/1a-4b_选择与题目无关漏掉被问的小物体.md](../analysis/1a-4b_选择与题目无关漏掉被问的小物体.md) | 1a–4b 机制分析（第 ⑧ 步，候选 1）：选择与题目无关时，被问的小物体为什么被删掉（第 1 轮，到 2b；COCO 物体框） |
+| [analysis/1a-4b_剪枝后的偏是与布局.md](../analysis/1a-4b_剪枝后的偏是与布局.md) | 1a–4b 机制分析（1A4B-0004，2026-11-01 事后补走流程）：先剪后送之后，是非判断为什么偏“是”、空间布局为什么丢掉（F88～F113；3a–4b 用 EXP-0041、EXP-0042；下一轮追问含注意力测量、最便宜的填法、领域 B 候选） |
 | [analysis/1a-4b_四种架构在同一批窗口上出错.md](../analysis/1a-4b_四种架构在同一批窗口上出错.md) | 1a–4b 机制分析：时序四种架构为什么在同一批窗口上出错（第 1 轮，到 2b；误差的水平/形状拆分） |
 | [analysis/第7步_改进方向排序.md](../analysis/第7步_改进方向排序.md) | 第 ⑦ 步：改进方向排序（视觉与时序两个方向的候选排序） |
 | [analysis/实验报告/EXP-0009_record.md](../analysis/实验报告/EXP-0009_record.md) | EXPERIMENT_RECORD：iTransformer 检查点在验证期上的预测（不训练；已完成，48 次运行；原写“计划”，2026-10-25 跑偏检查补注） |
