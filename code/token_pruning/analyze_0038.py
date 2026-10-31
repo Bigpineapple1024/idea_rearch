@@ -4,10 +4,13 @@ pruning when the numbering is the same (contiguous from layer 1, as DivPrune bef
   python analyze_0038.py          # writes code/output/EXP-0038/analysis/{0038.md,0038.json}
   python analyze_0038.py --dry    # the same code on EXP-0034 / EXP-0032 runs as stand-ins -> tmp; not results
 
-Runs (VQAv2 dev2 / GQA val400): peekc R01 / R02 (K = 1, DivPrune's 61 chosen before layer 0, layer 0 lets every token see all
+Runs (VQAv2 dev2 / GQA val400): peekc R01 / R07 (K = 1, DivPrune's 61 chosen before layer 0, layer 0 lets every token see all
 patches at the prompt's own positions, from layer 1 on the kept tokens and the text numbered contiguously); nopeekc R03 / R04
 (the same, layer 0 sees none of the dropped patches); DivPrune-61 R05 / R06 (before the LLM). Reused: DivPrune-64
 (EXP-0032-R01 / R02), peek and nopeek with the original numbering (EXP-0034-R01 to R04), unpruned (EXP-0033-R03 / R04).
+v1.1 (plan v1.1, written before R07 ran): peekc on GQA val400 is R07, the rerun of R02, which exited with code 127 about 30 s
+after it started, before its first answer and with no Python error (as EXP-0002-R16, EXP-0018-R01, EXP-0022-R03, EXP-0024-R16
+and EXP-0026-R05 did); R02 stays a failed run. Nothing else changed.
 Q1 (at about equal FLOPs): peekc - DivPrune-64; 95% interval above 0 on both sets -> "promising", on one -> "partly", neither
 but two-set mean > 0 -> "positive, not detected", else "unlike"; two-set mean >= +1.5 noted "large". Q2 (the peek alone, the
 same numbering at every layer): peekc - nopeekc, read the same way. Described: nopeekc - DivPrune-61, DivPrune-61 - DivPrune-64,
@@ -40,7 +43,7 @@ if DRY:
     DIV61_KEEP = 64
 else:
     DST = f"{OUT}/EXP-0038/analysis"
-    NEW = {"peekc": ("EXP-0038", ("R01", "R02"), "fastv61k1_div_peekc_kll", "prefill"),
+    NEW = {"peekc": ("EXP-0038", ("R01", "R07"), "fastv61k1_div_peekc_kll", "prefill"),
            "nopeekc": ("EXP-0038", ("R03", "R04"), "fastv61k1_div_nopeekc_kll", "none"),
            "div61": ("EXP-0038", ("R05", "R06"), "divprune61", None)}
     DIV61_KEEP = 61
