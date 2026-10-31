@@ -171,6 +171,7 @@
 | [analysis/实验报告/EXP-0039_record.md](../analysis/实验报告/EXP-0039_record.md) | EXPERIMENT_RECORD：本流程中的 CDPruner-64（计划 v1：VQAv2 dev2、GQA val400，2 次；Q1 CDPruner-64 − DivPrune-64，决定下一轮 IDEA 的底座；2026-10-31 补：已完成，CDPruner-64 − DivPrune-64 +0.74 / +2.49，更强，DEC-0076） |
 | [analysis/实验报告/EXP-0040_record.md](../analysis/实验报告/EXP-0040_record.md) | EXPERIMENT_RECORD：IDEA-0010 的开发运行（计划 v1：VQAv2 dev2、GQA val400，6 次；Q1 f127 − CDPruner-64，Q2 f127 − b127；2026-10-31 补：已完成，f127 − CDPruner-64 +0.59 / −0.46，方向为正、未检出，IDEA-0010 停在开发集，DEC-0078） |
 | [analysis/实验报告/EXP-0041_record.md](../analysis/实验报告/EXP-0041_record.md) | EXPERIMENT_RECORD：IDEA-0011 的开发运行（计划 v1：VQAv2 dev2、GQA val400，8 次；Q1 fill − CDPruner-64，Q2 fill − shuffle，Q3 fill − orig） |
+| [analysis/实验报告/EXP-0042_record.md](../analysis/实验报告/EXP-0042_record.md) | EXPERIMENT_RECORD：IDEA-0011 的确认（计划 v1，条件性；VQAv2 test6、GQA val400d、MME、POPE，10 次；在 EXP-0041 的任何结果之前写定） |
 | [analysis/实验报告/EXP-0020_squeeze.md](../analysis/实验报告/EXP-0020_squeeze.md) | SQUEEZE_REPORT：EXP-0020（增益来自 yes/no 与 number F42；与 VisionZip 的差距在开放式题，是底座的差距 F43） |
 | [analysis/论文主张与证据_草稿.md](../analysis/论文主张与证据_草稿.md) | 论文主张与证据对照（草稿）：可以写的主张 CL-1～CL-10、不能写的主张、共同的限定 |
 | [analysis/实验报告/EXP-0018_squeeze.md](../analysis/实验报告/EXP-0018_squeeze.md) | SQUEEZE_REPORT：EXP-0018（答案类型上效应相反 F38；损失集中在问点名物体属性的题 F39；一般题目上 FastV 一族低于 VisionZip F40） |

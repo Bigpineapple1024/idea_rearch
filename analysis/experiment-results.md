@@ -47,6 +47,7 @@
 | EXP-0039 | 对照（CDPruner） | 本流程中的 CDPruner-64 在 VQAv2 dev2、GQA val400 上，与 DivPrune-64、VisionZip-64 比；2 次 | [EXP-0039_record](实验报告/EXP-0039_record.md)（计划 v1） | 分析 code/output/EXP-0039/analysis（b3755ecd…） | completed（2026-10-31 11:20～11:55，代码 fc76f1a；CDPruner-64 − DivPrune-64 +0.74 / +2.49，更强；DEC-0076；原写 planned（DEC-0075；开门前按 DEC-0055 读改动部分）） |
 | EXP-0040 | IDEA-0010 | CDPruner 留 127 个、在 ShortV 的 19 层冻住（FLOPs 约等于 CDPruner-64），与不冻住的 127 个、冻住的 64 个在 VQAv2 dev2、GQA val400 上；6 次 | [EXP-0040_record](实验报告/EXP-0040_record.md)（计划 v1） | 分析 code/output/EXP-0040/analysis（cf5d31c9…） | completed（2026-10-31 12:04～14:03，代码 a1ae3da；Q1 f127 − CDPruner-64 +0.59 / −0.46，方向为正、未检出；Q2 冻住的代价 −0.89 / −1.76，代价大；IDEA-0010 停在开发集，DEC-0078；原写 planned（DEC-0077；开门前按 DEC-0055 读改动部分）） |
 | EXP-0041 | IDEA-0011 | CDPruner-64 加四种布局：fill（剪掉的位置用最相似的保留 token 的 K、V 填上）、shuffle、orig、mass，在 VQAv2 dev2、GQA val400 上；8 次 | [EXP-0041_record](实验报告/EXP-0041_record.md)（计划 v1） | — | planned（DEC-0079；开门前按 DEC-0055 读改动部分） |
+| EXP-0042 | IDEA-0011 | 确认（条件性）：fill 对 CDPruner-64，在新抽的 VQAv2 test6、GQA val400d 与 MME、POPE 上；10 次 | [EXP-0042_record](实验报告/EXP-0042_record.md)（计划 v1，条件性） | — | planned（条件性：EXP-0041 的 Q1 满足时才运行；DEC-0080） |
 
 ## 全部运行
 
