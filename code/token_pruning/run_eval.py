@@ -14,6 +14,7 @@ Covers the benchmarks that LLaVA-1.5 evaluates through llava.eval.model_vqa_load
   python run_eval.py --method div_qroute --combo-keep 64 --combo-visibility v.npy --combo-log c.json -- ...   # X3
   python run_eval.py --method div_ctx --combo-keep 54 --combo-contextual 10 --combo-log c.json -- ...   # X4
   python run_eval.py --method cdpruner --cdpruner-keep 64 --cdpruner-log cdp.json -- ...   # CDPruner (cdpruner.py)
+  python run_eval.py --method divprune --divprune-keep 127 --freeze-layers 0,2,3,12,17-31 --freeze-log f.json -- ...   # IDEA-0010
 
 VisionZip is imported from its repository root (set VISIONZIP_ROOT or PYTHONPATH): the
 visionzip 0.1.3 wheel on PyPI ships no code.
@@ -66,6 +67,13 @@ def parse():
                            "DPP (cdpruner.py, ported from the official code at 9541616c; CLIP text relevance)")
     ours.add_argument("--cdpruner-log", default=None,
                       help="cdpruner: write one record per encoded image (JSON): the DPP order, the kept patches, the text")
+    ours.add_argument("--freeze-layers", default=None,
+                      help="IDEA-0010: freeze the image tokens in these LLM layers (comma list, ranges a-b; ShortV): they keep "
+                           "their input states and the other tokens attend to them as keys and values (freeze.py); with "
+                           "--method vanilla, divprune or cdpruner")
+    ours.add_argument("--freeze-log", default=None,
+                      help="--freeze-layers: write the layers and, per prefill, the image span, the prompt length and how many "
+                           "layers restored it (JSON)")
     ours.add_argument("--combo-keep", type=int, default=None,
                       help="vzcand_div / div_qroute / div_ctx (EXP-0033): patches kept by the max-min order before the LLM")
     ours.add_argument("--combo-cand", type=int, default=None,
@@ -269,6 +277,18 @@ def parse():
         ours.error("--cdpruner-keep must be in 1..576")
     if (method_args.cdpruner_log is not None) and method_args.method != "cdpruner":
         ours.error("--cdpruner-log goes with --method cdpruner")
+    if method_args.freeze_layers is not None:
+        if method_args.method not in ("vanilla", "divprune", "cdpruner"):
+            ours.error("--freeze-layers goes with --method vanilla, divprune or cdpruner")
+        if method_args.layer_rows_log or method_args.name_cos_log or method_args.vocab_visibility_log:
+            ours.error("--freeze-layers does not go with --layer-rows-log, --name-cos-log or --vocab-visibility-log")
+        import freeze
+        try:
+            freeze.parse_layers(method_args.freeze_layers, 32)
+        except ValueError as e:
+            ours.error(f"--freeze-layers: {e}")
+    if (method_args.freeze_log is not None) and method_args.freeze_layers is None:
+        ours.error("--freeze-log goes with --freeze-layers")
     combo = method_args.method in ("vzcand_div", "div_qroute", "div_ctx")       # EXP-0033
     if combo != (method_args.combo_keep is not None) or combo != (method_args.combo_log is not None):
         ours.error("the combinations need --combo-keep and --combo-log, and only they take them")
@@ -726,6 +746,10 @@ def main():
             kw["attn_implementation"] = method_args.attn_implementation   # LLaVA's builder forwards kwargs
         tokenizer, model, image_processor, context_len = original_load(*a, **kw)
         model = apply_method(model, method_args, tokenizer)
+        if method_args.freeze_layers:                             # IDEA-0010: frozen image tokens (freeze.py)
+            import freeze
+            _FREEZE_LOG.update({"spec": method_args.freeze_layers})
+            freeze.apply_freeze(model, freeze.parse_layers(method_args.freeze_layers, len(model.get_model().layers)), _FREEZE_LOG)
         if method_args.fastv_zoom or method_args.fastv_cover:    # IDEA-0004: the original image of every prefill, in order
             lm = model.get_model()
             lm.fastv_image_processor = image_processor
@@ -846,6 +870,9 @@ def main():
         log = _DIV_MODEL[0].divprune_log if _DIV_MODEL else []
         with open(method_args.divprune_log, "w") as f:
             json.dump({"n_images": len(log), "keep": method_args.divprune_keep, "records": log}, f)
+    if method_args.freeze_log:                                  # IDEA-0010: the frozen layers and one record per prefill
+        with open(method_args.freeze_log, "w") as f:
+            json.dump({**_FREEZE_LOG, "n_prefills": len(_FREEZE_LOG.get("prefills", []))}, f)
     if method_args.cdpruner_log:                                # CDPruner: one record per encoded image
         log = _CDP_MODEL[0].cdpruner_log if _CDP_MODEL else []
         with open(method_args.cdpruner_log, "w") as f:
@@ -867,6 +894,7 @@ _CLS_MODEL = []
 _DIV_MODEL = []
 _COMBO_MODEL = []
 _CDP_MODEL = []
+_FREEZE_LOG = {}
 
 
 if __name__ == "__main__":
