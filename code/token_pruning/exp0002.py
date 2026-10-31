@@ -302,6 +302,9 @@ CONFIGS["fastv64k1_div"] = ("tp", ["--method", "fastv", "--fastv-k", "1", "--fas
 # CDPruner (Zhang et al.), ported from its official code (cdpruner.py; github.com/Theia-4869/CDPruner at 9541616c, Apache-2.0):
 # 64 of the 576 projected patch tokens by the conditional DPP before the LLM, numbered contiguously as the official code.
 CONFIGS["cdpruner64"] = ("tp", ["--method", "cdpruner", "--cdpruner-keep", "64"])
+# EXP-0043 (IDEA-0011 at other budgets): the same CDPruner keeping 128 or 192 ("_logits" below adds the log-probabilities).
+for _keep in (128, 192):
+    CONFIGS[f"cdpruner{_keep}"] = ("tp", ["--method", "cdpruner", "--cdpruner-keep", str(_keep)])
 # IDEA-0010 (EXP-0040): 127 tokens before the LLM with the image tokens frozen in ShortV's 19 layers for LLaVA-1.5-7B
 # (its Table 8: 0, 2, 3, 12, 17-31): at about the FLOPs of 64 unfrozen (a frozen image token costs its K and V projections);
 # 127 unfrozen and 64 frozen are the controls. "_logits": the first answer token's yes / no log-probabilities.
@@ -316,6 +319,9 @@ for _base in ("divprune", "cdpruner"):
 for _base in ("divprune", "cdpruner"):
     for _mode in ("orig", "fill", "shuffle", "mass"):
         CONFIGS[f"{_base}64_{_mode}_logits"] = ("tp", ["--method", _base, f"--{_base}-keep", "64", "--layout", _mode])
+# EXP-0043: the fill on CDPruner keeping 128 or 192 (DivPrune-64's fill is divprune64_fill_logits above).
+for _keep in (128, 192):
+    CONFIGS[f"cdpruner{_keep}_fill_logits"] = ("tp", ["--method", "cdpruner", "--cdpruner-keep", str(_keep), "--layout", "fill"])
 # EXP-0033 (step 4, round 2): exploratory combinations, each against its two single methods at a layer average of 64.
 # X1 (MODE_C-0002's C4): VisionZip-128 into the LLM, then plain FastV keeps 60 from layer 2: (2 x 128 + 30 x 60) / 32 = 64.25.
 # X2: VisionZip's CLS top-128 patches as candidates, DivPrune's max-min picks 64. X3: DivPrune-64 with the router's
