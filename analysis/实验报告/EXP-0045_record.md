@@ -76,3 +76,12 @@
   不因 fill 改变由 check_vzfill 在 CPU 上核对（EXP-0044）。analyze_0045.py 按此写（替身空跑 98 项通过）。
 - 已知的局限（写在这里，结果里同样报告）：A 部分 MME、POPE 的 DivPrune-64 复用 EXP-0036（代码 8cd98f3），不是同一份代码重跑；核对留下的 patch 相同，
   LLM 部分的运算没有逐题重跑核对。
+
+## 开门前的阅读（DEC-0055，2026-11-01 凌晨 4 点半后）
+
+- **读的范围**：上一道门（EXP-0044，6f05801）以来的改动：main 的 578f8d5（EXP-0046、EXP-0047 的计划 v1，DEC-0092）、55f457f（SQZ-EXP-0043 的单独报告、F117、F118、回流 34）、fa27945（EXP-0044 的结果、DEC-0093、F119）；code/token-pruning 的 a23e1d2（EXP-0044 的代码，开门前已读，由 chain_0044 核对 MANIFEST 后提交）；新的运行产物：EXP-0044 的 R05～R08 与分析（b09dd146…，verify_seal ALL OK）、SQZ-EXP-0043（576f323e…，已备份）。
+- **运行的部分**：A、B、C（EXP-0043 的 Q1、Q2“有希望”，Q3“部分”且两集平均 +0.81，DEC-0090）；D 不运行（它的条件是 EXP-0044 的 Q1，计划 v1.2 拿掉了，DEC-0091；D 的问题改由 EXP-0047 做，DEC-0092）。`tmp/exp0045/PARTS` = “A B C”，`BASE_HEAD` = a23e1d2；运行 R01～R16（16 次）。
+- **本实验要提交的代码**（相对 a23e1d2 的代码副本；其余 102 个 .py 文件与 EXP-0044 的代码副本逐字节相同；sha256 记在 `D:\6CJNM007\tmp\exp0045\MANIFEST`）：exp0002.py（+12 行，登记 vqav2_test7、gqa_val400e）；score_pope_mme.py（3 处，让两个新集能计分）；make_confirm_sets4.py（2026-10-31 23:15 运行过的原样）；analyze_0045.py（新：按 runs.tsv 里实际有的运行判断哪些部分运行；A1、B、C 的读法同 EXP-0043；A2 的 MME、POPE 读法同 EXP-0042，另有 POPE 对不剪枝的次要读法；实现核对；替身空跑 98 项）。排队脚本 `chain_0045.sh`（计划提交 6825b9f、c1c8794、52c9079；只运行 PARTS 里的部分）、run_analyze_0045.sh、seal_0045.sh、提交说明 msg_code80.txt（写明这次只跑 A、B、C）：都 bash -n 通过。
+- **核对**：不改任何方法的计算（只登记数据集、加分析）。GPU 冒烟测试（新集前 8 题，A 另加 MME、POPE 前 8 题；答案不计分、不看）：14 项里 13 项第一次就正常结束；GQA val400e 上的 DivPrune-64 加 fill 第一次在答第 1 题时中止（退出码 127，日志里没有报错、没有回溯），用同样的 8 题与参数单独重跑一次正常（8 题、布局正确、留下的 patch 与底座相同 8 / 8、对数概率每题一条），判断为偶发退出（EXP-0038 的 R02 也遇到过），不是代码路径的问题；正式运行中若再出现，按计划用新编号（R21 起）重跑，在分析之前写计划 v1.3 说明读哪一号。其余：fill 与底座留下的 patch 相同（比较的五处各 8 / 8）；布局日志是 fill、每题一条、64 / 128 / 192 个图像 token 在 35 个 token 之后、576 个槽、位置正确、32 层；记录对数概率的运行每题一条；用全错的替身答案查两个新集能计分（vqav2_test7 5229 题、gqa_val400e 5037 题都计上）。仓库里的 check_vfill、check_vzfill、check_cdpruner、check_divprune 由排队脚本在提交后重跑。
+- **发现**：代码与计划 v1～v1.2 一致，没有要改的。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0045.done`。
