@@ -58,3 +58,10 @@
 ### 预算
 
 - 10 次，约 3.7 GPU 小时；IDEA-0011 合计 28 次、约 9.4 GPU 小时（上限 50 次、20 GPU 小时，DEC-0083）。
+
+## 开门前的阅读（DEC-0055，2026-10-31 晚上）
+
+- **读的范围**：上一道门（EXP-0042，2026-10-31 17:33 之前）以来的改动：main 的 01d0228（EXP-0042 的结果与深挖、DEC-0082、F111～F113）、4512bfb（回流 33：P23、M28、C42，傍晚的查新补充）、9b67379（DEC-0083、本计划 v1）；code/token-pruning 的 cea78da（EXP-0042 的代码，开门前已读，由 chain_0042 核对 MANIFEST 后提交）、d6c6fdf（README 补登 EXP-0034 以后的脚本、六个深挖脚本按字节收入 sealed_copies 与 MANIFEST 第 70～75 行；不改代码）；新的运行产物：EXP-0042 的 R01～R10、分析与深挖（已封存，verify_seal ALL OK）。本实验要提交的代码：exp0002.py 相对 d6c6fdf 加 6 行（登记 cdpruner128、cdpruner192 与它们加 fill 的配置）；analyze_0043.py 为新文件；导出的其余 99 个 .py 文件与 d6c6fdf 相同；sha256 记在 `D:\6CJNM007\tmp\exp0043\MANIFEST`；run_analyze_0043.sh、seal_0043.sh、提交说明 msg_code78.txt 与排队脚本 chain_0043.sh（bash -n 通过）。
+- **核对**：不改任何方法的计算（只登记配置）；tmp 的代码副本上 check_vfill 44 / 44、check_cdpruner 43 / 43、check_divprune 26 / 26（check_divprune 第一次调用漏了 --workdir，参数错误、没有运行核对，随后补跑）；配置与数据登记正确。GPU 冒烟测试（VQAv2 dev2 前 8 题，五个新配置）：都正常结束；DivPrune-64 加 fill 留下的 patch 与 EXP-0032-R01 的前 8 题相同（8 / 8）；CDPruner-128、-192 加与不加 fill 留下的 patch 相同（各 8 / 8）；布局日志是 fill、每题一条（64 / 128 / 192 个图像 token 在 35 个 token 之后、576 个槽、位置正确、32 层用了布局），第一个答案 token 的记录每题一条；答案不计分、不看。analyze_0043.py 的替身空跑（准确率部分用已封存的 EXP-0032、EXP-0040、EXP-0041 运行当替身，日志核对用冒烟测试的 8 题）104 项都通过（替身不是结果）。
+- **发现**：代码与计划 v1 一致，没有要改的。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0043.done`。
