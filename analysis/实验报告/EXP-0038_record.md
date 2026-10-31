@@ -50,3 +50,10 @@
 ### 预算
 
 - 6 次，约 1.5 GPU 小时；IDEA-0009 上限 30 次或 20 GPU 小时。
+
+## 开门前的阅读（DEC-0055，2026-10-31 上午）
+
+- **读的范围**：上一道门（EXP-0037，2026-10-31 早上 7 点前）以来的改动：main 的 971db0a（EXP-0036 的结果）、54bf807（EXP-0037 的结果）、ea84350（DEC-0071）、77f1f0c（笔记的第二人复核、查新补充、DEC-0072）、5624546（MODE_C-0002 回流 27）、d5811d2（本计划 v1、IDEA-0009、DEC-0073）；code/token-pruning 的 f981196（EXP-0037 的代码，由 chain_0037 核对 MANIFEST 后提交）、008bbee（后封存的 8 个脚本收入 sealed_copies，与封存副本逐字节相同）；新的运行产物：EXP-0036、EXP-0037 的运行与分析（都已封存并独立核对 ALL OK）。本实验要提交的代码：fastv_llava.py（pos_after：剪枝点的重新编号、解码时第 1 层起减去偏移）、run_eval.py（--fastv-pos-after）、exp0002.py（三个配置）相对 008bbee 的差异，check_peekc.py、analyze_0038.py 为新文件；sha256 记在 `D:\6CJNM007\tmp\exp0038\MANIFEST`；run_analyze_0038.sh、seal_0038.sh、提交说明 msg_code71.txt 与排队脚本 chain_0038.sh（bash -n 通过）。
+- **核对**：不加 --fastv-pos-after 时 fastv_llava 的计算不变（新分支只在 peek 与 pos_after 都有值时走；解码时 fastv_pos_shift 为 None 就不改位置），回归 check_peek 29/29、check_divprune 26/26、check_k1cls 32/32（新代码对已提交代码）；check_peekc 19/19；analyze_0038.py 的替身空跑 72 项都通过、数字与 EXP-0034 封存的逐位相同。
+- **发现**：代码与计划 v1 一致，没有要改的。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0038.done`。
