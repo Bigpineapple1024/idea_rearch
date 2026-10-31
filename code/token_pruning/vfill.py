@@ -19,6 +19,14 @@ apply_layout(model, mode, log=None, seed=0), after the selection (run_eval: appl
   its slots would have in "fill" if they all sat at its own position).
 The KV cache keeps only the real tokens (so generate's bookkeeping of the cache length is unchanged); in "fill" and
 "shuffle" each layer's N rotated slot keys and values are kept beside it for the decoding steps of the same prompt.
+compact=True (EXP-0044, "fill" and "shuffle" only): nothing is kept beside the cache. The slots replace the image tokens'
+keys in every attention, so the cache's image part, never read rotated, holds the image tokens' keys before RoPE instead;
+each decoding step rebuilds the N slot keys from them with the same gather and rotation as the prefill (the values are
+the cached ones). The image part of the KV cache is then n tokens, as the base's, and the arithmetic is the same, so the
+outputs are identical (check_vfill.py).
+A selection may hand over the layout itself (vzfill.py for VisionZip, EXP-0044): prune_last = {"rep", "kept", "n_slots",
+"sim_mean"}, with kept the slot of each image token in the LLM's order and rep the representative of each of the n_slots
+slots (VisionZip: its CLS token gets a slot of its own before the patch grid, so 577); only "fill" takes it.
 Batch size 1, one image per prompt, transformers 4.37's LlamaAttention / LlamaSdpaAttention arithmetic (pretraining_tp 1).
 """
 import math
@@ -69,45 +77,60 @@ def remap_positions(pid, start, kept, n_slots=N_SLOTS):
 
 
 def _stash(model):
-    """The selection's features and kept patches of the current image: set by divprune / cdpruner's encode_images."""
+    """The selection's record of the current image: set by divprune / cdpruner's encode_images (features and kept
+    patches) or by vzfill's (the layout itself)."""
     last = getattr(model, "prune_last", None)
     if last is None:
-        raise ValueError("vfill needs a selection before the LLM that records prune_last (divprune or cdpruner)")
+        raise ValueError("vfill needs a selection before the LLM that records prune_last (divprune, cdpruner or vzfill)")
     model.prune_last = None
-    return last["features"], last["kept"]
+    return last
 
 
-def apply_layout(model, mode, log=None, seed=0):
+def apply_layout(model, mode, log=None, seed=0, compact=False):
     """Apply one of MODES on top of the selection already applied to `model`. log: a dict that gets the mode and one
-    record per prefill."""
+    record per prefill. compact: see the module's docstring ("fill" and "shuffle")."""
     if mode not in MODES:
         raise ValueError(f"layout mode must be one of {MODES}")
+    if compact and mode not in ("fill", "shuffle"):
+        raise ValueError("compact goes with fill or shuffle")
     lm = model.get_model()
     if getattr(lm, "layout_mode", None) is not None:
         raise ValueError("apply_layout was already applied to this model")
-    if not (hasattr(model, "divprune_keep") or hasattr(model, "cdpruner_keep")):
-        raise ValueError("apply_layout needs --method divprune or cdpruner")
+    vz = bool(getattr(model, "vz_layout", False))
+    if not (hasattr(model, "divprune_keep") or hasattr(model, "cdpruner_keep") or vz):
+        raise ValueError("apply_layout needs --method divprune or cdpruner, or vzfill on VisionZip")
+    if vz and mode != "fill":
+        raise ValueError("on VisionZip only fill is implemented")
     _record_image_span(model)
-    lm.layout_mode, lm.layout_ctx, lm.layout_slots = mode, None, {}
+    lm.layout_mode, lm.layout_ctx, lm.layout_slots, lm.layout_compact = mode, None, {}, compact
     if log is not None:
-        log.update({"mode": mode, "seed": seed if mode == "shuffle" else None, "prefills": []})
+        log.update({"mode": mode, "seed": seed if mode == "shuffle" else None, "compact": compact, "prefills": []})
     gen = torch.Generator().manual_seed(seed) if mode == "shuffle" else None
-    plain_encode = model.encode_images
+    enc = "encode_images_visionzip" if vz else "encode_images"       # VisionZip's LLaVA calls its own encoder
+    plain_encode = getattr(model, enc)
 
     def encode_images(self, images):
         out = plain_encode(images)
-        feats, kept = _stash(self)
-        rep, sim_mean = assignment(feats, kept, gen)
+        last = _stash(self)
+        extra = {}
+        if "rep" in last:                                 # the selection's own layout (vzfill)
+            kept, rep, n_slots, sim_mean = last["kept"], last["rep"], last["n_slots"], last["sim_mean"]
+            extra = {k: last[k] for k in ("dominant", "targets") if k in last}
+        else:
+            kept, n_slots = last["kept"], N_SLOTS
+            rep, sim_mean = assignment(last["features"], kept, gen)
         n = len(kept)
         counts = torch.bincount(rep, minlength=n)
-        lm.layout_ctx = {"kept": torch.as_tensor(kept, dtype=torch.long), "rep": rep, "counts": counts, "used": False}
+        lm.layout_ctx = {"kept": torch.as_tensor(kept, dtype=torch.long), "rep": rep, "counts": counts, "used": False,
+                         "n_slots": n_slots}
         if log is not None:
             log["prefills"].append({"n": n, "slots": int(rep.numel()), "count_max": int(counts.max()),
                                     "count_ones": int((counts == 1).sum()), "sim_mean": round(sim_mean, 6),
-                                    "rep": rep.tolist(), "layers": 0, "decode_steps": 0})
+                                    "rep": rep.tolist(), "layers": 0, "decode_steps": 0,
+                                    **({"kept": [int(x) for x in kept], **extra} if vz else {})})
         return out
 
-    model.encode_images = types.MethodType(encode_images, model)
+    setattr(model, enc, types.MethodType(encode_images, model))
     plain_forward = lm.forward
 
     def forward(*args, **kw):
@@ -132,10 +155,10 @@ def apply_layout(model, mode, log=None, seed=0):
         if pid is None:
             pid = torch.arange(past, past + q_len, device=x.device).unsqueeze(0)
         if mode != "mass":
-            pid = remap_positions(pid, ctx["start"], ctx["kept"], N_SLOTS)
+            pid = remap_positions(pid, ctx["start"], ctx["kept"], ctx["n_slots"])
         if q_len > 1 and log is not None:                     # the prompt's positions as the layers see them
             log["prefills"][-1]["positions_ok"] = bool(torch.equal(pid[0].cpu(), expected_positions(
-                q_len, ctx["start"], ctx["kept"], mode)))
+                q_len, ctx["start"], ctx["kept"], mode, ctx["n_slots"])))
         kw["position_ids"] = pid
         return plain_forward(**kw)
 
@@ -147,20 +170,20 @@ def apply_layout(model, mode, log=None, seed=0):
         if mode != "mass":                                    # positions beyond the cache length
             att.rotary_emb.forward = types.MethodType(_full_rotary_forward, att.rotary_emb)
         if mode != "orig":
-            att.forward = types.MethodType(_make_attention(lm, mode, log), att)
+            att.forward = types.MethodType(_make_attention(lm, mode, log, compact), att)
     return model
 
 
-def expected_positions(q_len, start, kept, mode):
+def expected_positions(q_len, start, kept, mode, n_slots=N_SLOTS):
     """The prefill's position ids under `mode` (for the log's check)."""
     kept = torch.as_tensor(kept, dtype=torch.long).cpu()
     n = kept.numel()
     if mode == "mass":
         return torch.arange(q_len)
-    return torch.cat((torch.arange(start), start + kept, torch.arange(start + N_SLOTS, start + N_SLOTS + q_len - start - n)))
+    return torch.cat((torch.arange(start), start + kept, torch.arange(start + n_slots, start + n_slots + q_len - start - n)))
 
 
-def _make_attention(lm, mode, log):
+def _make_attention(lm, mode, log, compact=False):
     def forward(self, hidden_states, attention_mask=None, position_ids=None, past_key_value=None, output_attentions=False,
                 use_cache=False, **kwargs):
         if output_attentions:
@@ -201,18 +224,26 @@ def _make_attention(lm, mode, log):
             else:
                 mask = bias[None, None, None, :].expand(1, 1, q_len, -1)
         else:
-            if prefill:
+            n_slots = ctx["n_slots"]
+            if prefill or compact:
+                # prefill: this layer's keys before RoPE; compact decoding: the cache's image part holds them (below)
+                src_k, src_v = (k, v) if prefill else (k_all, v_all)
                 rep = ctx["rep"].to(dev)
-                slot_pos = start + torch.arange(N_SLOTS, device=dev)
-                kp = k[:, :, start:start + n][:, :, rep]                       # the representatives' keys, before RoPE
+                slot_pos = start + torch.arange(n_slots, device=dev)
+                kp = src_k[:, :, start:start + n][:, :, rep]                   # the representatives' keys, before RoPE
                 cs, sn = cos[slot_pos][None, None], sin[slot_pos][None, None]
-                lm.layout_slots[self.layer_idx] = (kp * cs + rotate_half(kp) * sn, v[:, :, start:start + n][:, :, rep])
-            ks, vs = lm.layout_slots[self.layer_idx]
+                ks, vs = kp * cs + rotate_half(kp) * sn, src_v[:, :, start:start + n][:, :, rep]
+                if prefill and compact:                       # the slots replace the image keys: keep them unrotated
+                    k_all[:, :, start:start + n] = k[:, :, start:start + n]
+                elif prefill:
+                    lm.layout_slots[self.layer_idx] = (ks, vs)
+            else:
+                ks, vs = lm.layout_slots[self.layer_idx]
             keys = torch.cat((k_all[:, :, :start], ks, k_all[:, :, start + n:]), dim=2)
             vals = torch.cat((v_all[:, :, :start], vs, v_all[:, :, start + n:]), dim=2)
             if prefill:
-                key_pos = torch.cat((torch.arange(start, device=dev), start + torch.arange(N_SLOTS, device=dev),
-                                     torch.arange(start + n, k_all.shape[2], device=dev) + (N_SLOTS - n)))
+                key_pos = torch.cat((torch.arange(start, device=dev), start + torch.arange(n_slots, device=dev),
+                                     torch.arange(start + n, k_all.shape[2], device=dev) + (n_slots - n)))
                 mask = torch.where(key_pos[None, :] <= position_ids[0][:, None], 0.0, torch.finfo(dtype).min).to(dtype)[None, None]
             else:
                 mask = None                                   # one new token, the last position: every key is visible
@@ -230,12 +261,14 @@ def _make_attention(lm, mode, log):
 @torch.no_grad()
 def reference_logits(ref, embeds, start, kept, rep, mode, counts=None):
     """For the check: the layers of a plain LLaVA (same weights) by hand, eager arithmetic with a float32 softmax, on the
-    pruned prompt's embeddings; `mode` as in apply_layout. Returns the last row's logits."""
+    pruned prompt's embeddings; `mode` as in apply_layout (kept: each image token's slot; rep: each slot's representative,
+    so len(rep) slots: N_SLOTS, or 577 on VisionZip). Returns the last row's logits."""
     lm = ref.get_model()
     L = embeds.shape[1]
     kept = torch.as_tensor(kept, dtype=torch.long)
     n = kept.numel()
-    pos = expected_positions(L, start, kept, mode)
+    n_slots = len(rep) if mode in ("fill", "shuffle") else N_SLOTS
+    pos = expected_positions(L, start, kept, mode, n_slots)
     h = embeds
     for layer in lm.layers:
         att = layer.self_attn
@@ -243,13 +276,13 @@ def reference_logits(ref, embeds, start, kept, rep, mode, counts=None):
         q = att.q_proj(x).view(1, L, att.num_heads, att.head_dim).transpose(1, 2)
         k = att.k_proj(x).view(1, L, att.num_key_value_heads, att.head_dim).transpose(1, 2)
         v = att.v_proj(x).view(1, L, att.num_key_value_heads, att.head_dim).transpose(1, 2)
-        big = int(pos.max()) + N_SLOTS + 2
+        big = int(pos.max()) + n_slots + 2
         cos, sin = att.rotary_emb.cos_cached[:big].to(q.dtype), att.rotary_emb.sin_cached[:big].to(q.dtype)
         if big > att.rotary_emb.max_seq_len_cached:
             raise ValueError("reference: positions beyond the rotary table")
         qr, kr = apply_rotary_pos_emb(q, k, cos, sin, pos.unsqueeze(0))
         if mode in ("fill", "shuffle"):
-            slot_pos = start + torch.arange(N_SLOTS)
+            slot_pos = start + torch.arange(n_slots)
             kp = k[:, :, start:start + n][:, :, rep]
             ks = kp * cos[slot_pos][None, None] + rotate_half(kp) * sin[slot_pos][None, None]
             vs = v[:, :, start:start + n][:, :, rep]

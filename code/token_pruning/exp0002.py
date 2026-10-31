@@ -322,6 +322,10 @@ for _base in ("divprune", "cdpruner"):
 # EXP-0043: the fill on CDPruner keeping 128 or 192 (DivPrune-64's fill is divprune64_fill_logits above).
 for _keep in (128, 192):
     CONFIGS[f"cdpruner{_keep}_fill_logits"] = ("tp", ["--method", "cdpruner", "--cdpruner-keep", str(_keep), "--layout", "fill"])
+# EXP-0044: the fill on VisionZip-64 (vzfill.py gives vfill VisionZip's layout: CLS in a slot of its own, 577 slots), and
+# CDPruner-64's fill with the compact cache (no slots kept beside the KV cache; the same outputs).
+CONFIGS["visionzip64_fill_logits"] = ("tp", CONFIGS["visionzip64"][1] + ["--layout", "fill"])
+CONFIGS["cdpruner64_fillc_logits"] = ("tp", ["--method", "cdpruner", "--cdpruner-keep", "64", "--layout", "fill", "--layout-compact"])
 # EXP-0033 (step 4, round 2): exploratory combinations, each against its two single methods at a layer average of 64.
 # X1 (MODE_C-0002's C4): VisionZip-128 into the LLM, then plain FastV keeps 60 from layer 2: (2 x 128 + 30 x 60) / 32 = 64.25.
 # X2: VisionZip's CLS top-128 patches as candidates, DivPrune's max-min picks 64. X3: DivPrune-64 with the router's

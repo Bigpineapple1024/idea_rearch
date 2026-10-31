@@ -83,6 +83,10 @@ def parse():
                            "logit + log(1 + the pruned patches it represents)")
     ours.add_argument("--layout-log", default=None, help="--layout: write the mode and one record per prefill (JSON)")
     ours.add_argument("--layout-seed", type=int, default=0, help="--layout shuffle: the permutation generator's seed")
+    ours.add_argument("--layout-compact", action="store_true",
+                      help="--layout fill / shuffle (EXP-0044): keep no slots beside the KV cache; its image part holds the keys "
+                           "before RoPE and each decoding step rebuilds the slots (same outputs, the base's cache size). "
+                           "--method visionzip takes --layout fill through vzfill.py (EXP-0044)")
     ours.add_argument("--combo-keep", type=int, default=None,
                       help="vzcand_div / div_qroute / div_ctx (EXP-0033): patches kept by the max-min order before the LLM")
     ours.add_argument("--combo-cand", type=int, default=None,
@@ -299,13 +303,17 @@ def parse():
     if (method_args.freeze_log is not None) and method_args.freeze_layers is None:
         ours.error("--freeze-log goes with --freeze-layers")
     if method_args.layout is not None:
-        if method_args.method not in ("divprune", "cdpruner"):
-            ours.error("--layout goes with --method divprune or cdpruner")
+        vz_fill = (method_args.method == "visionzip" and method_args.layout == "fill" and not method_args.vz_cover
+                   and not method_args.vz_fastv)                         # EXP-0044: VisionZip through vzfill.py
+        if method_args.method not in ("divprune", "cdpruner") and not vz_fill:
+            ours.error("--layout goes with --method divprune or cdpruner (or fill with plain --method visionzip)")
         if (method_args.freeze_layers or method_args.layer_rows_log or method_args.name_cos_log
                 or method_args.vocab_visibility_log):
             ours.error("--layout does not go with --freeze-layers, --layer-rows-log, --name-cos-log or --vocab-visibility-log")
     if (method_args.layout_log is not None) and method_args.layout is None:
         ours.error("--layout-log goes with --layout")
+    if method_args.layout_compact and method_args.layout not in ("fill", "shuffle"):
+        ours.error("--layout-compact goes with --layout fill or shuffle")
     combo = method_args.method in ("vzcand_div", "div_qroute", "div_ctx")       # EXP-0033
     if combo != (method_args.combo_keep is not None) or combo != (method_args.combo_log is not None):
         ours.error("the combinations need --combo-keep and --combo-log, and only they take them")
@@ -769,7 +777,10 @@ def main():
             freeze.apply_freeze(model, freeze.parse_layers(method_args.freeze_layers, len(model.get_model().layers)), _FREEZE_LOG)
         if method_args.layout:                                    # IDEA-0011: the pruned image as a layout (vfill.py)
             import vfill
-            vfill.apply_layout(model, method_args.layout, _LAYOUT_LOG, method_args.layout_seed)
+            if method_args.method == "visionzip":                 # EXP-0044: VisionZip's own layout (vzfill.py)
+                import vzfill
+                vzfill.apply(model)
+            vfill.apply_layout(model, method_args.layout, _LAYOUT_LOG, method_args.layout_seed, method_args.layout_compact)
         if method_args.fastv_zoom or method_args.fastv_cover:    # IDEA-0004: the original image of every prefill, in order
             lm = model.get_model()
             lm.fastv_image_processor = image_processor

@@ -12,6 +12,10 @@ cache; with nothing pruned every mode equals vanilla; the logged assignment is t
 projected features) with the kept slots mapped to themselves, and shuffle's is a permutation of it over the pruned slots
 (same counts); the positions the layers saw are the expected ones; one log record per prefill with the layers that used
 the layout and the decoding steps; argument and config checks.
+EXP-0044, the compact cache (fill and shuffle): its prefill logits and generations are identical (torch.equal) to the
+plain implementation's, nothing is kept beside the KV cache, the cache's image part holds the keys before RoPE, and the
+cache has the base's length. VisionZip's layout (vzfill.py) is checked by check_vzfill.py in its own process (VisionZip
+patches CLIP's classes).
 """
 import argparse
 import json
@@ -37,11 +41,11 @@ def margs(keep):
     return argparse.Namespace(method="divprune", divprune_keep=keep)
 
 
-def build(workdir, keep, mode):
+def build(workdir, keep, mode, compact=False):
     model = run_eval.apply_method(build_tiny_llava(workdir), margs(keep))
     log = {}
     if mode is not None:
-        vfill.apply_layout(model, mode, log, seed=0)
+        vfill.apply_layout(model, mode, log, seed=0, compact=compact)
     return model, log
 
 
@@ -141,6 +145,41 @@ def main():
         _, l, g = run(model)
         checks[f"keep 576, {mode}: = vanilla (logits atol 1e-5, generate)"] = all(
             torch.allclose(x, y, atol=1e-5, rtol=1e-4) for x, y in zip(l, van_l)) and g == van_g
+    # EXP-0044: the compact cache gives the same outputs, keeps nothing beside the cache, and the cache's image part holds
+    # the keys before RoPE (rotated at the image tokens' positions they are the plain implementation's cached keys)
+    for mode in ("fill", "shuffle"):
+        model, log = build(a.workdir, KEEP, mode, compact=True)
+        ids, logits, gens = run(model)
+        checks[f"compact {mode}: prefill logits identical to the plain implementation's (torch.equal)"] = all(
+            torch.equal(x, y) for x, y in zip(logits, results[mode][0]))
+        checks[f"compact {mode}: generations identical to the plain implementation's"] = gens == results[mode][1]
+        checks[f"compact {mode}: nothing kept beside the KV cache; logged as compact"] = (
+            model.get_model().layout_slots == {} and log["compact"] is True and log["mode"] == mode and len(log["prefills"]) == 4)
+        cm, _ = build(a.workdir, KEEP, mode, compact=True)
+        pm, _ = build(a.workdir, KEEP, mode)
+        with torch.no_grad():
+            oc = cm(input_ids=ids, images=cp.image(0), image_sizes=[(WIDTH, HEIGHT)], use_cache=True)
+            op = pm(input_ids=ids, images=cp.image(0), image_sizes=[(WIDTH, HEIGHT)], use_cache=True)
+        ctx = cm.get_model().layout_ctx
+        start, n = ctx["start"], ctx["n"]
+        pos = start + ctx["kept"]
+        ok = torch.equal(oc.logits, op.logits)
+        for li, layer in enumerate(cm.get_model().layers):
+            kc, vc = oc.past_key_values[li]
+            kq, vq = op.past_key_values[li]
+            c = layer.self_attn.rotary_emb.cos_cached.to(kc.dtype)[pos][None, None]
+            s = layer.self_attn.rotary_emb.sin_cached.to(kc.dtype)[pos][None, None]
+            img = kc[:, :, start:start + n]
+            ok = ok and kc.shape == kq.shape and kc.shape[2] == SYS_LEN + KEEP + TEXT_LEN and torch.equal(vc, vq) and (
+                torch.equal(kc[:, :, :start], kq[:, :, :start]) and torch.equal(kc[:, :, start + n:], kq[:, :, start + n:])
+                and torch.equal(img * c + vfill.rotate_half(img) * s, kq[:, :, start:start + n])
+                and not torch.equal(img, kq[:, :, start:start + n]))
+        checks[f"compact {mode}: the cache has the base's length, its image part the keys before RoPE, the rest as plain"] = ok
+    try:
+        build(a.workdir, KEEP, "orig", compact=True)
+        checks["compact with orig is refused"] = False
+    except ValueError:
+        checks["compact with orig is refused"] = True
     # positions
     pid = torch.arange(SYS_LEN + KEEP + 4).unsqueeze(0)
     kept = list(range(0, 2 * KEEP, 2))
@@ -181,6 +220,22 @@ def main():
     checks["configs: the eight IDEA-0011 configurations"] = all(C.get(k) == v for k, v in want.items())
     checks["configs: each with the logs run_one adds parses"] = all(
         not refused(v[1] + [f"--{v[1][1]}-log", "x.json", "--answer-logit-log", "l.json", "--layout-log", "y.json"]) for v in want.values())
+    checks["arguments: --layout-compact with fill or shuffle is accepted; with orig, mass or without --layout refused"] = (
+        not refused(["--method", "cdpruner", "--cdpruner-keep", "64", "--layout", "fill", "--layout-compact"])
+        and not refused(["--method", "divprune", "--divprune-keep", "64", "--divprune-log", "d.json", "--layout", "shuffle", "--layout-compact"])
+        and refused(["--method", "cdpruner", "--cdpruner-keep", "64", "--layout", "orig", "--layout-compact"])
+        and refused(["--method", "cdpruner", "--cdpruner-keep", "64", "--layout", "mass", "--layout-compact"])
+        and refused(["--method", "cdpruner", "--cdpruner-keep", "64", "--layout-compact"]))
+    checks["arguments: --layout fill with plain visionzip is accepted; another mode or with --vz-fastv refused"] = (
+        not refused(["--method", "visionzip", "--dominant", "54", "--contextual", "10", "--layout", "fill"])
+        and refused(["--method", "visionzip", "--dominant", "54", "--contextual", "10", "--layout", "orig"])
+        and refused(["--method", "visionzip", "--dominant", "108", "--contextual", "20", "--vz-fastv", "2,60", "--layout", "fill"]))
+    vz, fc = C.get("visionzip64_fill_logits"), C.get("cdpruner64_fillc_logits")
+    checks["configs: EXP-0044's visionzip64_fill_logits and cdpruner64_fillc_logits, with the logs run_one adds"] = (
+        vz == ("tp", ["--method", "visionzip", "--dominant", "54", "--contextual", "10", "--layout", "fill"])
+        and fc == ("tp", ["--method", "cdpruner", "--cdpruner-keep", "64", "--layout", "fill", "--layout-compact"])
+        and not refused(vz[1] + ["--answer-logit-log", "l.json", "--layout-log", "y.json"])
+        and not refused(fc[1] + ["--cdpruner-log", "x.json", "--answer-logit-log", "l.json", "--layout-log", "y.json"]))
     for name, ok in checks.items():
         print(f"{'ok  ' if ok else 'FAIL'} {name}")
     print(f"{sum(bool(v) for v in checks.values())}/{len(checks)} checks pass")
