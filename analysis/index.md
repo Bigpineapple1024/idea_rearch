@@ -95,7 +95,7 @@
 | [analysis/archied/2026-10-23_SOP-v1_从论文到融合方案.md](../analysis/archied/2026-10-23_SOP-v1_从论文到融合方案.md) | 已归档：SOP v1（被研究流程 v2.0 取代） |
 | [analysis/实验室会话交接.md](../analysis/实验室会话交接.md) | 实验室电脑新会话的交接说明 |
 | [analysis/MODE_C-0001_视觉token剪枝.md](../analysis/MODE_C-0001_视觉token剪枝.md) | MODE_C_PACKAGE：多模态大模型视觉 token 剪枝（历史版本，已由 MODE_C-0002 取代） |
-| [analysis/MODE_C-0002_视觉token剪枝.md](../analysis/MODE_C-0002_视觉token剪枝.md) | MODE_C_PACKAGE：视觉 token 剪枝合并版（原文版 + 源码版 + EXP-0001/0002 回流；之后回流 1～13，2026-10-25 跑偏检查补注；2026-10-31 补注：现为回流 1～27；2026-10-29 补注：现为回流 1～23，回流 20～23 是 SQZ-EXP-0027、SQZ-EXP-0028、查新补充与 SQZ-EXP-0029） |
+| [analysis/MODE_C-0002_视觉token剪枝.md](../analysis/MODE_C-0002_视觉token剪枝.md) | MODE_C_PACKAGE：视觉 token 剪枝合并版（原文版 + 源码版 + EXP-0001/0002 回流；之后回流 1～13，2026-10-25 跑偏检查补注；2026-10-31 补注：现为回流 1～27（傍晚补注：现为回流 1～31，回流 31 是 EXP-0041 与查新补充）；2026-10-29 补注：现为回流 1～23，回流 20～23 是 SQZ-EXP-0027、SQZ-EXP-0028、查新补充与 SQZ-EXP-0029） |
 | [analysis/MODE_C-0003_时序预测.md](../analysis/MODE_C-0003_时序预测.md) | MODE_C-0003：时序预测的问题—现象—机制矩阵（iTransformer 为 baseline） |
 | [analysis/IDEA-0002_题目词按信息量加权.md](../analysis/IDEA-0002_题目词按信息量加权.md) | 跨领域迁移方案：用 IDF 给题目加权，构造图像 token 的查询（第 ⑨～⑪ 步，领域 B 信息检索，领域 C BERTScore / SIF） |
 | [analysis/IDEA-0001_编码器侧压缩的位置编号.md](../analysis/IDEA-0001_编码器侧压缩的位置编号.md) | IDEA_PACKAGE：编码器侧压缩的位置编号（融合路线候选，deferred） |
