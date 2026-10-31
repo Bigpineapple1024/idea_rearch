@@ -297,6 +297,13 @@ for _base in ("divprune", "cdpruner"):
     CONFIGS[f"{_base}127_logits"] = ("tp", ["--method", _base, f"--{_base}-keep", "127"])
     CONFIGS[f"{_base}127_f19_logits"] = ("tp", ["--method", _base, f"--{_base}-keep", "127", "--freeze-layers", "0,2,3,12,17-31"])
     CONFIGS[f"{_base}64_f19_logits"] = ("tp", ["--method", _base, f"--{_base}-keep", "64", "--freeze-layers", "0,2,3,12,17-31"])
+# IDEA-0011 (EXP-0041): the pruned image given back as a layout (vfill.py): the 64 kept tokens at their original positions
+# (orig), and every pruned slot holding its most similar kept token's key and value at its own position in every layer
+# (fill), the same with the slots' representatives permuted (shuffle), or contiguous with each kept token's attention
+# mass (mass).
+for _base in ("divprune", "cdpruner"):
+    for _mode in ("orig", "fill", "shuffle", "mass"):
+        CONFIGS[f"{_base}64_{_mode}_logits"] = ("tp", ["--method", _base, f"--{_base}-keep", "64", "--layout", _mode])
 # EXP-0033 (step 4, round 2): exploratory combinations, each against its two single methods at a layer average of 64.
 # X1 (MODE_C-0002's C4): VisionZip-128 into the LLM, then plain FastV keeps 60 from layer 2: (2 x 128 + 30 x 60) / 32 = 64.25.
 # X2: VisionZip's CLS top-128 patches as candidates, DivPrune's max-min picks 64. X3: DivPrune-64 with the router's
@@ -435,6 +442,8 @@ def run_one(run_id, config, bench):
         method_args = method_args + ["--divprune-log", f"{run_dir}/div.json"]
     if "--freeze-layers" in method_args:                                    # IDEA-0010: one record per prefill
         method_args = method_args + ["--freeze-log", f"{run_dir}/freeze.json"]
+    if "--layout" in method_args:                                           # IDEA-0011: one record per prefill
+        method_args = method_args + ["--layout-log", f"{run_dir}/layout.json"]
     if method_args[method_args.index("--method") + 1] == "cdpruner":        # CDPruner: one record per image
         method_args = method_args + ["--cdpruner-log", f"{run_dir}/cdp.json"]
     if method_args[method_args.index("--method") + 1] in ("vzcand_div", "div_qroute", "div_ctx"):   # EXP-0033

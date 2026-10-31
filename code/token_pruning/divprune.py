@@ -5,6 +5,8 @@ The greedy order does not depend on how many are taken, so the first 47 of a 64-
 
 - apply_divprune(model, keep, log): before the LLM (DivPrune's default, "layer 0"): LLaVA's encode_images keeps the
   `keep` projector outputs of each image chosen this way, in their original order, so the LLM sees only those.
+- The last encoded image's projected features and kept patches stay in model.prune_last (IDEA-0011's vfill reads
+  them; nothing in the computation changes).
 - maxmin_order is also used inside the LLM by fastv_llava's score kind "div" (K = 1: layer 0 sees all patches, the
   selection is made on the same input embeddings and applied from layer 1 on).
 """
@@ -46,6 +48,7 @@ def apply_divprune(model, keep, log=None):
             order = maxmin_order(feats[b], keep)
             idx = sorted(order)
             out.append(feats[b, idx])
+            self.prune_last = {"features": feats[b], "kept": idx}     # IDEA-0011 (vfill.py); batch size 1 there
             if log is not None:
                 log.append({"index": len(log), "order": order, "kept": idx})
         return torch.stack(out)

@@ -15,6 +15,7 @@ Covers the benchmarks that LLaVA-1.5 evaluates through llava.eval.model_vqa_load
   python run_eval.py --method div_ctx --combo-keep 54 --combo-contextual 10 --combo-log c.json -- ...   # X4
   python run_eval.py --method cdpruner --cdpruner-keep 64 --cdpruner-log cdp.json -- ...   # CDPruner (cdpruner.py)
   python run_eval.py --method divprune --divprune-keep 127 --freeze-layers 0,2,3,12,17-31 --freeze-log f.json -- ...   # IDEA-0010
+  python run_eval.py --method cdpruner --cdpruner-keep 64 --layout fill --layout-log l.json -- ...   # IDEA-0011
 
 VisionZip is imported from its repository root (set VISIONZIP_ROOT or PYTHONPATH): the
 visionzip 0.1.3 wheel on PyPI ships no code.
@@ -74,6 +75,14 @@ def parse():
     ours.add_argument("--freeze-log", default=None,
                       help="--freeze-layers: write the layers and, per prefill, the image span, the prompt length and how many "
                            "layers restored it (JSON)")
+    ours.add_argument("--layout", choices=["orig", "fill", "shuffle", "mass"], default=None,
+                      help="IDEA-0011 (vfill.py), with --method divprune or cdpruner: orig = the kept image tokens at their "
+                           "original positions and the text numbered as unpruned; fill = orig, and in every layer each pruned "
+                           "slot holds the key and value of its most similar kept token at its own position; shuffle = fill "
+                           "with the pruned slots' representatives permuted; mass = contiguous, each kept token's attention "
+                           "logit + log(1 + the pruned patches it represents)")
+    ours.add_argument("--layout-log", default=None, help="--layout: write the mode and one record per prefill (JSON)")
+    ours.add_argument("--layout-seed", type=int, default=0, help="--layout shuffle: the permutation generator's seed")
     ours.add_argument("--combo-keep", type=int, default=None,
                       help="vzcand_div / div_qroute / div_ctx (EXP-0033): patches kept by the max-min order before the LLM")
     ours.add_argument("--combo-cand", type=int, default=None,
@@ -289,6 +298,14 @@ def parse():
             ours.error(f"--freeze-layers: {e}")
     if (method_args.freeze_log is not None) and method_args.freeze_layers is None:
         ours.error("--freeze-log goes with --freeze-layers")
+    if method_args.layout is not None:
+        if method_args.method not in ("divprune", "cdpruner"):
+            ours.error("--layout goes with --method divprune or cdpruner")
+        if (method_args.freeze_layers or method_args.layer_rows_log or method_args.name_cos_log
+                or method_args.vocab_visibility_log):
+            ours.error("--layout does not go with --freeze-layers, --layer-rows-log, --name-cos-log or --vocab-visibility-log")
+    if (method_args.layout_log is not None) and method_args.layout is None:
+        ours.error("--layout-log goes with --layout")
     combo = method_args.method in ("vzcand_div", "div_qroute", "div_ctx")       # EXP-0033
     if combo != (method_args.combo_keep is not None) or combo != (method_args.combo_log is not None):
         ours.error("the combinations need --combo-keep and --combo-log, and only they take them")
@@ -750,6 +767,9 @@ def main():
             import freeze
             _FREEZE_LOG.update({"spec": method_args.freeze_layers})
             freeze.apply_freeze(model, freeze.parse_layers(method_args.freeze_layers, len(model.get_model().layers)), _FREEZE_LOG)
+        if method_args.layout:                                    # IDEA-0011: the pruned image as a layout (vfill.py)
+            import vfill
+            vfill.apply_layout(model, method_args.layout, _LAYOUT_LOG, method_args.layout_seed)
         if method_args.fastv_zoom or method_args.fastv_cover:    # IDEA-0004: the original image of every prefill, in order
             lm = model.get_model()
             lm.fastv_image_processor = image_processor
@@ -873,6 +893,9 @@ def main():
     if method_args.freeze_log:                                  # IDEA-0010: the frozen layers and one record per prefill
         with open(method_args.freeze_log, "w") as f:
             json.dump({**_FREEZE_LOG, "n_prefills": len(_FREEZE_LOG.get("prefills", []))}, f)
+    if method_args.layout_log:                                  # IDEA-0011: the mode and one record per prefill
+        with open(method_args.layout_log, "w") as f:
+            json.dump({**_LAYOUT_LOG, "n_prefills": len(_LAYOUT_LOG.get("prefills", []))}, f)
     if method_args.cdpruner_log:                                # CDPruner: one record per encoded image
         log = _CDP_MODEL[0].cdpruner_log if _CDP_MODEL else []
         with open(method_args.cdpruner_log, "w") as f:
@@ -895,6 +918,7 @@ _DIV_MODEL = []
 _COMBO_MODEL = []
 _CDP_MODEL = []
 _FREEZE_LOG = {}
+_LAYOUT_LOG = {}
 
 
 if __name__ == "__main__":

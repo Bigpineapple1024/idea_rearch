@@ -9,6 +9,8 @@ query relevance from CLIP's text tower as in llava/model/multimodal_encoder/clip
   relevance = mean over segments of the negative cosine, min-max normalised over the image's patches.
 - Kernel: relevance_i * cos(projected_i, projected_j) * relevance_j; greedy MAP inference of the DPP for `keep` steps.
 - The kept tokens go to the LLM in their original order, numbered contiguously (as the official code: position_ids None).
+- The image's projected features and kept patches stay in model.prune_last (IDEA-0011's vfill reads them; nothing in
+  the computation changes).
 - The question for the current prefill: combo._stash_text keeps the prompt ids after the image; text_of maps them back to
   the question file's text (prompt_ids_after_image in run_eval, exactly as model_vqa_loader builds the prompt).
 Precision as the official code under LLaVA's device_map="auto": the vision tower, CLIP's text tower and visual_projection
@@ -97,6 +99,7 @@ def apply_cdpruner(model, keep, text_of, aux, log=None):
         kept, order = cdpp_select(image_features, image_embeds, text_embeds(aux, question, image_features.device), keep)
         if log is not None:
             log.append({"index": len(log), "order": order[0].tolist(), "kept": kept[0].tolist(), "text": question})
+        self.prune_last = {"features": image_features[0], "kept": kept[0].tolist()}     # IDEA-0011 (vfill.py)
         return image_features[:, kept[0]]
 
     model.encode_images = types.MethodType(encode_images, model)
