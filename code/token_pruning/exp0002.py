@@ -308,6 +308,12 @@ for _name, _mode in (("peek", "prefill"), ("nopeek", "none"), ("peektext", "text
 # EXP-0037 (IDEA-0008, budget 16): DivPrune-16 before the LLM, and the same peek keeping 13 from layer 1 (with the dropped
 # patches' keys and values only at layer 0, 0.999 times DivPrune-16's prefill FLOPs; the rule that gave 61 for 64).
 CONFIGS["divprune16"] = ("tp", ["--method", "divprune", "--divprune-keep", "16"])
+# EXP-0038 (IDEA-0009): the same K = 1 peek / nopeek keeping DivPrune's 61, but from layer 1 on the kept tokens and the
+# text are numbered contiguously (as DivPrune before the LLM numbers them); divprune61: DivPrune keeping 61 before the LLM.
+for _name, _mode in (("peekc", "prefill"), ("nopeekc", "none")):
+    CONFIGS[f"fastv61k1_div_{_name}_kll"] = ("tp", ["--method", "fastv", "--fastv-k", "1", "--fastv-keep", "61", "--fastv-score", "div",
+                                                  "--fastv-div-peek", _mode, "--fastv-pos-after", "contiguous"])
+CONFIGS["divprune61"] = ("tp", ["--method", "divprune", "--divprune-keep", "61"])
 CONFIGS["fastv13k1_div_peek_kll"] = ("tp", ["--method", "fastv", "--fastv-k", "1", "--fastv-keep", "13", "--fastv-score", "div",
                                             "--fastv-div-peek", "prefill"])
 # "<config>_scores": FastV with --score-log, for the score-curve diagnostic

@@ -310,6 +310,7 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
     peek = self.fastv_div_peek if div_now else None
     if prefill:
         self.fastv_peek_drop = None                            # set below for this prompt's decoding, when div_peek is on
+        self.fastv_pos_shift = None                            # IDEA-0009: set at the stage when pos_after is contiguous
     if peek:                                                   # EXP-0034: the stage's selection, known before layer 0
         pos0 = allowed[kept].nonzero().squeeze(1)
         order0 = torch.tensor(maxmin_order(self.fastv_div_feats[kept[pos0]], min(stages[1] - extra, pos0.numel())),
@@ -397,6 +398,10 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
                                   torch.arange(start + n_cur, hidden.shape[1], device=hidden.device)))
             hidden = hidden[:, keep_idx]
             position_ids = position_ids[:, keep_idx]
+            if peek and getattr(self, "fastv_pos_after", None) == "contiguous":    # IDEA-0009: renumber from this layer on
+                n_small = keep_idx.numel()
+                self.fastv_pos_shift = int(position_ids[0, -1]) - (past_len + n_small - 1)
+                position_ids = torch.arange(past_len, past_len + n_small, device=position_ids.device).unsqueeze(0)
             kept = kept[top]
             self.fastv_kept_image_positions = kept
         mask = _causal_mask(hidden) if prefill else None
@@ -410,7 +415,10 @@ def fastv_forward(self, input_ids=None, attention_mask=None, position_ids=None, 
             mask = mask.clone()
             mask[:, :, rows, cols] = torch.finfo(mask.dtype).min
         need_attn = prefill and idx + 1 in stages and self.fastv_generator is None and not (object_cos or cls_now or div_now)
-        out = layer(hidden, attention_mask=mask, position_ids=position_ids, past_key_value=cache,
+        pid = position_ids
+        if not prefill and idx >= 1 and getattr(self, "fastv_pos_shift", None) is not None:   # IDEA-0009: decoding
+            pid = position_ids - self.fastv_pos_shift
+        out = layer(hidden, attention_mask=mask, position_ids=pid, past_key_value=cache,
                     output_attentions=need_attn, use_cache=use_cache)
         hidden = out[0]
         if need_attn:
@@ -555,7 +563,8 @@ def _cls_tower_forward(self, images):
 
 def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
                score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None,
-               token_weights=None, visibility=None, route=None, zoom=None, cover=0, cls_unrouted=False, div_peek=None):
+               token_weights=None, visibility=None, route=None, zoom=None, cover=0, cls_unrouted=False, div_peek=None,
+               pos_after=None):
     """Turn a transformers LlamaModel into FastV in place (image span set by the caller).
 
     seed=None keeps FastV's attention ranking; an integer selects random image tokens from that seed.
@@ -578,6 +587,9 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
     same exclusions as "cls" and without exclude_padding (DivPrune does not exclude it).
     div_peek (EXP-0034; "prefill", "none" or "text", div at K = 1 only): what layer 0 lets see the patches to be dropped
     during the prefill; decoding never sees them (see the module docstring).
+    pos_after (IDEA-0009; "contiguous", with div_peek only): from layer 1 on, the kept tokens and the text are numbered
+    contiguously, as when the same tokens are fed to the LLM without the others (layer 0 keeps the prompt's own numbering);
+    while decoding, layers 1 to 31 take the generated tokens' positions shifted by the same amount.
     """
     if score_kind not in ("last", "object_cos", "mix", "contrast_max", "contrast_mean", "query_mean", "query_idf",
                           "attn_idf", "query_vis", "cls", "div"):
@@ -596,6 +608,10 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
         raise ValueError("div_peek (prefill, none or text) works with score_kind div at K = 1 only")
     llama_model.fastv_div_peek = div_peek
     llama_model.fastv_peek_drop = None
+    if pos_after is not None and (pos_after != "contiguous" or div_peek is None):
+        raise ValueError("pos_after (contiguous) works with div_peek only")
+    llama_model.fastv_pos_after = pos_after
+    llama_model.fastv_pos_shift = None
     if cls_unrouted and (score_kind != "query_vis" or route is None):
         raise ValueError("cls_unrouted needs query_vis with route")
     llama_model.fastv_cls_unrouted = bool(cls_unrouted)
@@ -671,11 +687,12 @@ def bind_fastv(llama_model, k, keep, seed=None, schedule=None, score_prior=None,
 
 def apply_fastv(model, k=2, keep=288, seed=None, schedule=None, score_prior=None, stratify=None, log_text_rows=False,
                 score_kind="last", object_span=None, exclude_padding=False, mix_question=None, contrast_ids=None,
-                token_weights=None, visibility=None, route=None, zoom=None, cover=0, cls_unrouted=False, div_peek=None):
+                token_weights=None, visibility=None, route=None, zoom=None, cover=0, cls_unrouted=False, div_peek=None,
+                pos_after=None):
     """Enable FastV (or its random-selection control when seed is given) on a loaded LlavaLlamaForCausalLM."""
     lm = bind_fastv(model.get_model(), k, keep, seed, schedule, score_prior, stratify, log_text_rows, score_kind,
                     object_span, exclude_padding, mix_question, contrast_ids, token_weights, visibility, route, zoom,
-                    cover, cls_unrouted, div_peek)
+                    cover, cls_unrouted, div_peek, pos_after)
     if lm.fastv_cls_log is not None:                           # IDEA-0007: the tower returns its CLS attention too
         tower = lm.get_vision_tower()
         if tower.select_layer != -2 or tower.select_feature != "patch":
