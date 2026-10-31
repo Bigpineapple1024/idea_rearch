@@ -75,3 +75,16 @@
 - **EXP-0045 的 D 部分**：条件是本实验的 Q1；Q1 没有运行，D 不运行。EXP-0045 运行 A、B、C 与不剪枝，最多 16 次（DEC-0090、DEC-0091）。
 - **预算**：4 次，约 1.2 GPU 小时；IDEA-0011 合计 32 次，加 EXP-0045 最多 16 次，合计最多 48 次（上限 60 次、20 GPU 小时）。
 - 写时已看过 EXP-0043 的结果（与本计划的 Q2、Q3 无关）；没有看过 EXP-0044 的任何结果（还没有运行）。
+
+## 开门前的阅读（DEC-0055，2026-11-01 凌晨）
+
+- **读的范围**：上一道门（EXP-0043，3fb0898）以来的改动：main 的 6825b9f（EXP-0045 计划 v1、DEC-0084）、c1c8794（本计划 v1、EXP-0045 v1.1、DEC-0085）、a3c9f10（时间更正）、52c9079（EXP-0045 v1.2）、ba8f903（SQZ-EXP-0041、SQZ-EXP-0042 的单独报告，1A4B-0004）、c19fadd（DEC-0086、本计划 v1.1）、1e63748（素材库、README）、fd92c8c（DEC-0087）、60e101a（DEC-0088）、f99a591（DEC-0089：外部审查的核对与措辞更正）、6017307（查新第 6 节）、182f82b（SQZ-EXP-0038 的单独报告）、bcb772c（素材库 MAT-0049～MAT-0053）、56bb299（EXP-0043 的结果，DEC-0090）、eb5bdfc（本计划 v1.2，DEC-0091）；code/token-pruning 的 ae7242e（EXP-0043 的代码，开门前已读）；新的运行产物：EXP-0043 的 R01～R10 与分析（已封存，ec1736f4…，verify_seal ALL OK）。
+- **本实验要提交的代码**（相对 ae7242e；导出的其余 97 个 .py 文件与 ae7242e 逐字节相同；sha256 记在 `D:\6CJNM007\tmp\exp0044\MANIFEST`）：
+  - vfill.py：①紧凑实现（`compact=True`，只用于 fill、shuffle）：预填时算槽与普通实现相同，之后把缓存里图像那一段换成这一层旋转前的 K（槽代替了图像 token 的 K，缓存的这一段不会以旋转后的样子被读到）；解码时从缓存的这一段用同样的取数与旋转现算 576 个槽（V 用缓存里的）；旁边不存槽，缓存长度与底座相同，算术与普通实现相同。②接受选法自己给的布局（prune_last 带 rep、kept、n_slots）；槽数从固定的 576 改为每题的 n_slots（编号、掩码、参考计算都随之改）；VisionZip 上只接受 fill。
+  - vzfill.py（新）：VisionZip-64 的布局（CLS 占网格之前的 0 号槽，主导 patch 占自己的槽，上下文 token 占它的目标 patch 的槽，其余槽放投影后特征余弦最大的非 CLS token，共 577 个槽）。GPU 上把 float32 的第 −2 层状态直接送进半精度的投影层而报错（计划 v1.2）；本实验不用它，照读过的样子提交。
+  - run_eval.py：`--layout-compact`（只与 fill、shuffle 一起）；`--layout fill` 可与普通的 `--method visionzip` 一起（先接 vzfill 再接 vfill）。exp0002.py：登记 visionzip64_fill_logits、cdpruner64_fillc_logits（名字带 _logits 自动记第一个答案 token 的对数几率，带 --layout 自动记布局日志）。
+  - check_vfill.py（加 12 项）、check_vzfill.py（新）、analyze_0044.py v1.2（计划 v1.1 的 Q2、Q3 与实现核对；Q1 放在开关 Q1 = False 后面）。
+  - 排队脚本 `D:\6CJNM007\tmp\chain_0044.sh`（计划提交 c1c8794、c19fadd、eb5bdfc；只运行 R05～R08）、run_analyze_0044.sh、seal_0044.sh、提交说明 msg_code79.txt（都 bash -n 通过；说明写了 vzfill.py 的问题）。
+- **核对**：不改任何已有方法的计算（DivPrune、CDPruner、普通 fill 的路径不变，check_vfill 原有的各项照旧通过）；tmp 的代码副本上 check_vfill 56 / 56（紧凑实现：fill、shuffle 的预填对数几率与普通实现 torch.equal、生成相同、旁边不存槽、缓存长度与底座相同且图像段是旋转前的 K；参数与配置的登记）、check_vzfill 13 / 13（CPU、float32）；回归 check_cdpruner 43 / 43、check_divprune 26 / 26、check_vzcover 45 / 45。GPU 冒烟测试（VQAv2 dev2 前 8 题；答案不计分、不看）：VisionZip-64 正常；**VisionZip-64 加 fill 跑不通**（见计划 v1.2）；CDPruner-64 加 fill 的普通与紧凑实现都正常，答案与第一个答案 token 的对数概率 8 / 8 相同、留下的 patch 8 / 8 相同，布局日志正确（64 个、576 个槽、位置正确、32 层、紧凑实现标为 compact），峰值显存紧凑 14.44 GiB、普通 14.72 GiB；DivPrune-64 重跑留下的 patch 与 EXP-0032-R01 的前 8 题相同（8 / 8）。analyze_0044.py v1.2 的替身空跑（已封存的 EXP-0032、EXP-0039、EXP-0041、EXP-0033 运行当替身，日志核对用冒烟测试的 8 题）73 项都通过（替身不是结果）。
+- **发现**：VisionZip-64 加 fill 在 GPU 上的数据类型问题——按 DEC-0088 ② 不修，计划 v1.2 拿掉 Q1，修复等用户决定；其余代码与计划 v1、v1.1、v1.2 一致，没有要改的。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0044.done`。
