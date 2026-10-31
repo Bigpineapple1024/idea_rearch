@@ -60,3 +60,10 @@
 ### 预算
 
 - 8 次，约 2.8 GPU 小时；IDEA-0011 上限 30 次或 20 GPU 小时。
+
+## 开门前的阅读（DEC-0055，2026-10-31 下午）
+
+- **读的范围**：上一道门（EXP-0040，2026-10-31 12:04 之前）以来的改动：main 的 18533cf（EXP-0040 的结果、DEC-0078、F103～F105）、8ce62e8（回流 30、IDEA-0011、本计划 v1、DEC-0079）；code/token-pruning 的 a1ae3da（EXP-0040 的代码，开门前已读，由 chain_0040 核对 MANIFEST 后提交，仓库里 check_freeze 24 / 24、check_cdpruner 43 / 43）；新的运行产物：EXP-0040 的 R01～R06 与分析（已封存，verify_seal ALL OK）。本实验要提交的代码：divprune.py、cdpruner.py（各多记一个属性 prune_last，3 行）、run_eval.py（--layout 的参数、校验、施加与日志，24 行）、exp0002.py（八个配置与布局的日志，9 行）相对 a1ae3da 的差异；vfill.py、check_vfill.py、analyze_0041.py 为新文件；sha256 记在 `D:\6CJNM007\tmp\exp0041\MANIFEST`；run_analyze_0041.sh、seal_0041.sh、提交说明 msg_code75.txt 与排队脚本 chain_0041.sh（bash -n 通过）。
+- **核对**：不加 --layout 时其余方法的计算不变（新代码只在这个参数存在时施加；divprune.py、cdpruner.py 只多记一个属性；回归 check_freeze 24 / 24、check_cdpruner 43 / 43、check_peekc 19 / 19、check_peek 29 / 29、check_divprune 26 / 26、check_k1cls 32 / 32）；check_vfill 44 / 44；GPU 冒烟测试 40 题正常，四种模式留下的 patch 与 EXP-0039-R01 的前 40 题完全相同（40 / 40）；analyze_0041.py 的替身空跑 72 项都通过。
+- **发现**：代码与计划 v1 一致，没有要改的。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0041.done`。
