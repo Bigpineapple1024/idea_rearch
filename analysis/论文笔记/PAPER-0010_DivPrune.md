@@ -132,7 +132,7 @@
 - 每个数都是单次结果；全文没有标准差、置信区间、随机种子或重复（UN）。各 benchmark 用了多少题，没有写（UN）。
 - 视频的开放题用 gpt-4o-mini 打分（p.5），评分本身有波动（AI）。
 - 正文常把“点”写成“%”：GQA 从 61.96 到 56.85 写成降 5.1%，其实是 5.11 个点（p.6）；COCO 的“12.7%”又是相对降幅（p.6）。引用时要换算（AI）。
-- 机制方面只有描述性的图：t-SNE 上 DivPrune 的点覆盖所有簇（Fig. 3a、Fig. 5a–e），所选 token 两两最小距离的分布高于 FastV（Fig. 3b，SeedBench 1000 个样本；Fig. 5f，GQA 1000 个样本）（p.5–6；p.9）。图上的数字解析全文看不到（UN）。
+- 机制方面只有描述性的图：t-SNE 上 DivPrune 的点覆盖所有簇（Fig. 3a、Fig. 5a–e），所选 token 两两最小距离的分布高于 FastV（Fig. 3b，SeedBench 1000 个样本；Fig. 5f，GQA 1000 个样本）（p.5–6；附录 B 文字在 p.9，Fig. 5 图和图注在 p.11）（复核时改正：原写“p.9”，Fig. 5 的图注在解析全文 p.11 页标记之后）。图上的数字解析全文看不到（UN）。
 
 ## 证据与实现核对
 
@@ -154,9 +154,9 @@
 | E-DP-14 | DE | Table 3 的 Layer 0 行与 Table 1 的 DivPrune 行四个分数相同，TFLOP 比例一为 19.61%、一为 15.63%；Table 5 为 13.29% | p.6；p.8；p.9 | 原因未写（UN）；可能是平均文本长度不同（AI） |
 | E-DP-15 | DE | Table 4：余弦 62.34、ℓ1 61.94、ℓ2 62.22、随机 56.66、Min-Max 46.53 | p.8 Table 4 | 单次；随机只有一次抽样（AI） |
 | E-DP-16 | DE | 效率只在视频模型上测：显存 14.06→13.51 GB，预填充 0.330→0.161 s，端到端 4.37→3.39 s；预填充比 FastV、VTW（0.150 s）慢 | p.7 Table 2；p.8 §4.5 | LLaVA-1.5 上没有时延；正文的“约 400MB、约 55%”与表有出入（AI） |
-| E-DP-17 | SC | 多样性高的子集更能代表全部 token：t-SNE 覆盖所有簇；最小距离分布高于 FastV | p.5 Fig. 3；p.9 附录 B、Fig. 5 | 描述性；直方图比的正是 DivPrune 自己优化的量，几乎必然更高（AI） |
+| E-DP-17 | SC | 多样性高的子集更能代表全部 token：t-SNE 覆盖所有簇；最小距离分布高于 FastV | p.5 Fig. 3；p.9 附录 B 文字；p.11 Fig. 5（复核时改正：原写 Fig. 5 在 p.9） | 描述性；直方图比的正是 DivPrune 自己优化的量，几乎必然更高（AI） |
 | E-DP-18 | DE | 8 × V100（32GB）；lmms-eval 默认提示；batch 1；GPT 打分用 gpt-4o-mini | p.5；p.9 附录 A；p.10 Table 6 | 解码方式、种子、重复次数未写 |
-| E-DP-19 | DE | 全文没有局限一节；作者写到的例外：较高 TFLOP 比例下 FitPrune 略好；PruMerge 在 SQA 上更好；M³、PruMerge 在 TextVQA 上更好；预填充略慢 | p.7（Fig. 1 讨论）；p.6；p.10；p.8 | — |
+| E-DP-19 | DE | 全文没有局限一节；作者写到的例外：较高 TFLOP 比例下 FitPrune 略好；PruMerge 在 SQA 上更好；M³ 在 TextVQA 上更好（p.10 明写）；预填充略慢（复核时改正：原写“M³、PruMerge 在 TextVQA 上更好”并列为作者写到的例外；p.10 只明写不如 M³，对 PruMerge 只写 VizWiz、VQAv2 更高，TextVQA 上 PruMerge 更高是读 Table 5 得出，37.70 对 35.97） | p.7（Fig. 1 讨论）；p.6；p.10；p.8 | — |
 | E-DP-20 | DE | 代码地址 https://github.com/vbdi/divprune；许可全文未见 | p.1 摘要与脚注 | 代码未下载、未核验（需许可） |
 | E-DP-21 | DE | 全文没有提到保留 token 的顺序、位置编号、填充区、CLS | 全文 p.1–17（检索 order、position、pad、CLS 等，无相关命中） | Algorithm 1 返回的列表按选中先后排列（AI 读法） |
 | E-DP-22 | DE | 13B、1.6-7B、视频模型上 DivPrune 都远高于 FastV、VTW；1.6-7B 上微调的 M³ 更高 | p.6 Table 1；p.7 Table 2 | 单次 |
@@ -205,7 +205,7 @@
 - **对照集偏窄**：没有 VisionZip、SparseVLM 等在 LLM 之前或之内的强方法（E-DP-7）。[AI] “state-of-the-art”只相对这几个对照。与 PruMerge 的比较（按它的比例，Ours\*）是表中最公平的一组，DivPrune 在 11 项中 10 项更高（p.6）。与微调的 M³ 比，作者说“相当或更好”（p.7），读表是 M³ 在 7B 上 11 项中 9 项更高（AI）。
 - **机制证据有循环**：最小距离直方图比的是 DivPrune 直接优化的量（E-DP-17）；t-SNE 是个别样本的图。[AI] 它们说明“选得更分散”，不说明“更分散所以答得更好”。Table 4 中随机低 5.68 是更直接的证据，但只有一次抽样、四项平均。
 - **放置消融混了三件事**：Table 3 中越晚剪，之后能留的越少（约 56 → 39 → 21 → 2～3 个，AI），所用特征也从投影层输出变成隐藏状态（p.4）。[AI] “Layer 0 最好”不能直接读成“多样性选择应该放在 LLM 之前”，也可能主要是个数少了。
-- **只有一档预算有表**：约 56 个；其他比例只在 Fig. 1、Fig. 4 的曲线上（看不到数）。作者说在较高的 TFLOP 比例下各方法都接近原模型，FitPrune 略好（p.7）。[AI] 在 128、192 档，DivPrune 的优势可能变小。
+- **只有一档预算有表**：约 56 个；其他比例在 7B 上只在 Fig. 1 的曲线上（看不到数）；Fig. 4 是 LLaVA 1.5-13B 的曲线（p.9 附录 C.1）（复核时改正：原写“Fig. 1、Fig. 4”，Fig. 4 不是 7B）。作者说在较高的 TFLOP 比例下各方法都接近原模型，FitPrune 略好（p.7）。[AI] 在 128、192 档，DivPrune 的优势可能变小。
 - **统计**：单次、无区间、无种子（E-DP-18）。
 - **评测设置不清**：VQAv2 的划分、TextVQA 是否给 OCR 词都没写；原模型的 TextVQA 46.08、VQAv2 76.65 低于常见报告（E-DP-12）。不同论文间的数不能直接比。
 - **TFLOP 比例前后不一**：同一组结果写成 15.63% 或 19.61%（E-DP-14）；Table 1 中 TFLOP 与比例本身也对不上（见「预算口径」）。
@@ -215,7 +215,7 @@
 
 ### 作者自述的局限
 
-全文没有局限一节（DE）。作者写到的例外只有：较高 TFLOP 比例下 FitPrune 略好（p.7）；按 PruMerge 比例时 SQA 不如 PruMerge（p.6）；TextVQA 上不如 M³ 与 PruMerge（p.10）；预填充比 FastV、VTW 慢约 6%～7%（p.8）。
+全文没有局限一节（DE）。作者写到的例外只有：较高 TFLOP 比例下 FitPrune 略好（p.7）；按 PruMerge 比例时 SQA 不如 PruMerge（p.6）；TextVQA 上不如 M³（p.10 明写）；预填充比 FastV、VTW 慢约 6%～7%（p.8）。
 
 ## 与当前项目的关系
 
@@ -317,7 +317,7 @@ evidence_locations:
 missing_evidence:
 - 代码未下载、未核验：保留 token 的顺序与位置编号、第一个 token、所用特征、填充区的处理
 - 没有读 PDF：flash 档解析看不到式 2–4 与 TFLOP 公式、Fig.1–7；Table 1、Table 6 有合并或错位
-- 64/128/192 个 token 的数字（只在 Fig.1、Fig.4 的曲线上）
+- 64/128/192 个 token 的数字（7B 上只在 Fig.1 的曲线上；Fig.4 是 13B）（复核时改正：原写“Fig.1、Fig.4”）
 - VQAv2 划分、TextVQA 的 OCR 设置、解码方式、种子与方差
 - LLaVA-1.5 上的时延与显存
 - 录用会议（全文只有 arXiv 标记）
@@ -371,3 +371,30 @@ unresolved_questions:
 ## 主代理抽查（2026-10-31）
 
 - 写笔记的工作流（2026-10-30）原定由另一个子代理逐条复核，复核因用量上限没有完成；2026-10-31 用户睡觉期间不开子代理（DEC-0063），第二人复核留到之后。本笔记目前只经过主代理的抽查：Table 1 的 DivPrune 一行（0.512 (15.63)、GQA 56.85、MMB 59.19、MME 1328、POPE 86.02、SQA 68.27）、Table 3 的 Layer 0 / Layer 1 两行（62.34、60.44）、Table 4 的余弦 / 随机 / Min-Max 三行（62.34、56.66、46.53）、附录 E 的超参（剪 90.2%，FastV 7B K = 3、R = 0.001，13B R = 0.023）都在解析全文的对应位置找到；笔记里提到的本项目结论（DivPrune-64 的增益主要在是非、计数题）与 0032.md 的分组一致。没有抽查到的数字以 PDF 为准。
+
+## 第二人复核（2026-10-31）
+
+复核方式：另一个子代理从头到尾分段读完解析全文（599 行、17 个页标记，p.1–17），只读，没有读 PDF、没有联网、没有运行 Python 或 git。解析全文的 SHA-256 用 Get-FileHash（只读）重算，与笔记第 13 行一致（4d353c82…）。
+
+**核对了多少处**：约 230 处，包括 Table 1 的 LLaVA-1.5-7B 全部 9 行 × 11 列、13B 与 1.6-7B 的摘录数、Table 2 全部数和效率数、Table 3、Table 4、Table 5 全部数、附录 E 的超参、正文所有差值与百分比（5.1、4.9、12.7%、23.0、42.8、25.1、15.8、5.6、400MB、55%、22%、6–7% 等）；本笔记自己算的数（相对降幅 21.9%、12.7～17.3%、12.0%、11.8%、10.1%、+0.2%、−1.5%、−1.6%、+5.8%；四项平均；POPE 降 5.35 与 13.24；差 0.17～1.09；1.90 与 3.45；0.55 GB、51%、22%；0.512 / 3.228 = 15.86%；VQAv2 低 4.32；M³ 在 7B 上 11 项中 9 项更高、在 1.6-7B 上 11 项中 10 项更高；Ours\* 对 PruMerge 11 项中 10 项更高）全部重算，一致；每条 E-DP 与“本项目已引用说法”中关于这篇论文本身的说法，对照了页标记与原句；“预算口径”里按 FastV 公式做的反推（原模型 3.228 约对应 621 个 token；DivPrune 0.512 约 101 个；FastV 0.514 前 3 层后约 1 个；13B 的 1.003 前 3 层后约 13 个；VTW 0.603 与 4 层后只剩文本相符；K = 1、K = 2 约 39、20 个；64 / 128 / 192 个约对应 17% / 27% / 37%）也用笔记给的结构常数（32 层 / 40 层、4096 / 5120 维、11008 / 13824 前馈维）重算，结果一致（这些仍是 AI，结构常数不是全文给的，笔记已写明）。
+
+**改了哪些**（共 4 类，6 处）：
+
+| # | 位置 | 改前 | 改后 | 依据 |
+| --- | --- | --- | --- | --- |
+| 1 | 「机制方面」与 E-DP-17 行 | Fig. 5 与附录 B 都标 p.9 | 附录 B 文字在 p.9，Fig. 5 图和图注在 p.11 | 解析全文 Fig. 5 图注在 p.11 页标记之后（第 429 行），p.9 只有附录 B 的正文 |
+| 2 | E-DP-19 行与「作者自述的局限」 | “M³、PruMerge 在 TextVQA 上更好”都当作作者写到的例外 | 只有 M³ 是作者明写；PruMerge 在 TextVQA 上更高是读 Table 5 得出（37.70 对 35.97） | p.10 原句只写“worse on TextVQA”是对 M³ 说的；对 PruMerge 只写“higher accuracy on VizWiz and VQAv2” |
+| 3 | 「只有一档预算有表」 | 其他比例只在 Fig. 1、Fig. 4 的曲线上 | 7B 上只在 Fig. 1；Fig. 4 是 13B | p.9 Fig. 4 图注与 C.1 小节标题写 LLaVA 1.5-13B |
+| 4 | YAML 的 missing_evidence 一条 | 64/128/192 的数字只在 Fig.1、Fig.4 | 同上，Fig.4 是 13B | 同 3 |
+
+其余数字、页码和 DE / SC 判断都找到了依据，没有发现数字错误。LLaVA-1.5-7B 表格行、对照方法（VTW、FastV、PruMerge、FitPrune、M³、PruMerge-LoRA）的数字、MME 与其他合并格的按位拆分、预算口径（剪 90.2%、M³ S = 56、TFLOPs 对齐）都与解析全文一致。
+
+**还有哪些读不清 / 不能核**：
+- 式 (1)～(4) 与 TFLOP 公式是公式图块，Fig. 1～7 是图块，看不到；Table 1 的合并格（MME 与 13B 部分行）只能按位数与逐行数据拆分，以 PDF 为准。
+- 笔记里的 PDF 字节数与 SHA-256、MinerU 版本，以及“本项目”部分的数字，不在本次核对范围（PDF 不读）。
+- p.4 “we obtain exact solution” 在解析全文里是完整的一句，读起来像原文措辞，不像解析错误；但它与 Algorithm 1 的贪心写法是否矛盾仍无法凭文本判定，以 PDF 为准。同一段紧接着写了“several solutions including exact and heuristic methods are proposed”。
+- Table 1 的 TFLOP 与比例对不上（15.86% 对 15.63%）确如笔记所写，原因全文未写；顺带一看：7B 各行偏差一致（约 0.23 个百分点），1.6-7B 方向相反，原因未知。
+
+**(a) 保留的视觉 token 的位置编号（position ids / RoPE 位置）**：全文未见。检索 position、RoPE、rotary、order、index、pad、CLS，无相关命中（只有 Algorithm 1 第 12 行 “subsequent”、参考文献标题等无关命中）。p.4 只写“选中的视觉 token 与文本 token 一起送进 LLM，没选中的丢掉”；没写保留顺序，也没写位置编号保留原值、重新连续编号或插值。Algorithm 1 返回的 Ẽv 是按选中先后追加的列表（p.4），论文没说送入 LLM 前是否按原位置排序（UN）。
+
+**(b) 定位类评测（RefCOCO / RefCOCO+ / RefCOCOg、输出框坐标、目标检测、visual grounding）**：全文未见。检索 RefCOCO、grounding、bounding、bbox、detection、localization、referring，无相关命中（只有 “ground truth” 字样，指标准答案）。全部评测是 11 个图像数据集（caption、选择题 / 开放题 QA、POPE、MME 等）与 5 个视频数据集，加附录 C 的 TextVQA、VizWiz、VQAv2（p.6–7、p.9–10 Table 6）；没有输出框坐标的任务，所以也没有定位任务的结果。

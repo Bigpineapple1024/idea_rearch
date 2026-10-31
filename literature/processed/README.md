@@ -31,7 +31,7 @@
 
 PDF 的完整 sha256 与版本见 [论文来源清单](../../analysis/论文笔记/sources-20261023.json)（PAPER-0008、0009 与领域 B 的两篇见 [论文笔记 README](../../analysis/论文笔记/README.md)）。
 
-**2026-10-29 补充解析**：同日经用户许可下载的 11 篇 PDF（“我同意下载所有你需要的论文原文pdf”）用同样的方法解析（脚本 `D:\6CJNM007\tmp\mineru_parse_flash3.sh`，11:53:12～11:56:48，每个都 exit 0；未使用 `--remote`，远程 parse-server 指向本机的空地址，遥测解析前后都是 disabled、`last_flush_at: never`；页标记数与 MinerU 读到的页数相同）。论文 ID 在登记时编号（按下载顺序），原文笔记尚未写（2026-10-31 补注：PAPER-0010～0020 的原文笔记已写，第二人复核待做，见[论文笔记 README](../../analysis/论文笔记/README.md)）。下载地址、字节数、完整 sha256 与版本见[论文笔记 README](../../analysis/论文笔记/README.md)的“2026-10-29 下载的十一篇 PDF 的登记”。
+**2026-10-29 补充解析**：同日经用户许可下载的 11 篇 PDF（“我同意下载所有你需要的论文原文pdf”）用同样的方法解析（脚本 `D:\6CJNM007\tmp\mineru_parse_flash3.sh`，11:53:12～11:56:48，每个都 exit 0；未使用 `--remote`，远程 parse-server 指向本机的空地址，遥测解析前后都是 disabled、`last_flush_at: never`；页标记数与 MinerU 读到的页数相同）。论文 ID 在登记时编号（按下载顺序），原文笔记尚未写（2026-10-31 补注：PAPER-0010～0020 的原文笔记已写，第二人复核已做（2026-10-31，DEC-0072），见[论文笔记 README](../../analysis/论文笔记/README.md)）。下载地址、字节数、完整 sha256 与版本见[论文笔记 README](../../analysis/论文笔记/README.md)的“2026-10-29 下载的十一篇 PDF 的登记”。
 
 | 论文 ID | PDF（papers/，不跟踪） | PDF sha256（前 16 位） | 页数 | 解析文件 | 解析文件 sha256（前 16 位） |
 | --- | --- | --- | --- | --- | --- |

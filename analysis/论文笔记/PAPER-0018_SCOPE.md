@@ -12,7 +12,7 @@
 - PDF：`papers/SCOPE-arxiv-2510.24214.pdf`，26 页，2,516,112 字节，SHA-256 `50a1f9a32777dc0f7146ace8a1c49fe58a99e44c97018447a1aff06c81fde14e`，2026-10-29 经用户许可从 https://arxiv.org/pdf/2510.24214 下载（[论文笔记 README](README.md) 的登记）。PDF 不在本次读的只读导出里，没有重算校验和。能访问原文不等于获得再分发许可，全文不提交 Git。
 - 解析全文：[`literature/processed/PAPER-0018/SCOPE-arxiv-2510.24214.md`](../../literature/processed/PAPER-0018/SCOPE-arxiv-2510.24214.md)，MinerU 4.0.12 flash 档（只有文本）。本次用 Get-FileHash 重算 SHA-256 为 `359c9ff16d9e4f998d08722dea5e4de701a73397281d8a7817240fd0b447858a`，与 [literature/processed/README](../../literature/processed/README.md) 登记的前 16 位一致。下文的页码 p.N 取解析文本中的 `<!-- page N of 26 -->` 标记。
 - 解析质量：
-  - 公式块都是图片引用，没有文字。可见的式号只有 (1)、(2)、(4)，正文提到式 (6)。每一步怎么算，只能从正文文字和 Algorithm 1（p.6，伪代码是文本）读出。
+  - 多数公式块是图片引用，没有文字（复核时改正：原写“公式块都是图片引用，没有文字”；式 (1)、(2) 在解析里是零散的文字，如 (1) 的 L(M(S, T), M(V, T)) 与 min S、(2) 的 QK⊤ 与 √d，见 p.4；式 (3)、(5)～(9) 等是图片引用）。可见的式号只有 (1)、(2)、(4)，正文提到式 (6)。每一步怎么算，只能从正文文字和 Algorithm 1（p.6，伪代码是文本）读出。
   - 表格：Table 1、2、3、6、7、8、9 逐格用“原始分数 ÷ 不剪枝分数”复算相对百分比。Table 1 全部对上（FastV-192 的 MMVet 一格除外，那一格是从 VisionZip 原表带来的，见 E-SC-27），说明行列没有错位；Table 2 的 MMMU 一列被解析到方法名前面，按相对值还原后全部对上；Table 6 有两格平均对不上（E-SC-21）。
   - 图（Fig. 1～8）只有图中的零散文字，曲线和柱的数值读不出；下文凡取自图的数字都注明“图中文字”。
 - 实际阅读：解析全文从头到尾读完：正文 p.1–10，参考文献 p.11–13，附录 A～F p.14–19，NeurIPS 检查表 p.20–26。
@@ -26,7 +26,7 @@
 
 ## 方法与贡献
 
-- **在哪里剪**：视觉编码器之后、进入 LLM 之前剪一次；LLM 的每一层都只看留下的 token（p.5 Fig. 3 图注；p.6 §3.3 “Integration into MLLMs”；p.7 §4.1）。
+- **在哪里剪**：视觉编码器之后、进入 LLM 之前剪一次（p.5 Fig. 3 图注写“在送进 LLM 之前减少视觉 token”；p.6 §3.3 “Integration into MLLMs”、p.7 §4.1 写“接在视觉编码器之后”）。[AI] 由此推出 LLM 的每一层都只看留下的 token，原文没有逐字这样写（复核时改正：原写“LLM 的每一层都只看留下的 token”，放在出处后面当作 DE，没有标 AI）。
 - **免训练**：作者写明 train-free，不需要额外训练（p.3 贡献三；p.5 Fig. 3 图注；p.6）。
 - **记号**：V = {v1, …, vN} 是一张图的全部视觉 token，vi ∈ R^d（p.3 §3.1）。LLaVA-1.5 有 576 个（p.3），从中选 K 个（p.4 Fig. 2 图注：576 个中选 64 个）。
 - **每一步怎么算**（p.5–6 §3.3；p.6 Algorithm 1）：
@@ -43,7 +43,7 @@
 
 ## 研究设计
 
-- **模型**：LLaVA-1.5-7B、LLaVA-NeXT-7B（正文）；LLaVA-1.5-13B、LLaVA-NeXT-13B、Qwen2-VL-7B（附录 C）；视频用 Video-LLaVA（p.7 §4.1；p.15–16）。
+- **模型**：LLaVA-1.5-7B、LLaVA-NeXT-7B（正文）；LLaVA-1.5-13B、LLaVA-NeXT-13B、Qwen2-VL-7B（附录 C）；视频用 Video-LLaVA（p.7 §4.1；p.9 Table 3）；附录的几个模型在 p.15–16（复核时改正：原写“视频用 Video-LLaVA（p.7 §4.1；p.15–16）”，p.15–16 讲的是 13B 与 Qwen2-VL，不是视频）。
 - **图像基准与划分**（p.7 §4.1；p.14–15 附录 B）：
   - GQA：testdev_balanced_instructions，12,578 题。
   - MMBench：约 3,000 道选择题，划分未写。
@@ -63,7 +63,7 @@
 
 ## 预算与计算量口径
 
-- **“保留 N 个 token”指什么**：SCOPE 在进 LLM 之前剪，N 就是进入 LLM 的视觉 token 数，LLM 的 32 层每层都是 N（p.5 Fig. 3 图注；p.7 §4.1）。表头写“Retain 64 Tokens (↓ 88.9%)”（p.7 Table 1），即 576 个中留 64 个。[AI] 按本项目的层平均口径，SCOPE-64 就是层平均 64，与 VisionZip-64、本项目的 DivPrune-64 同口径。
+- **“保留 N 个 token”指什么**：SCOPE 在进 LLM 之前剪，N 就是进入 LLM 的视觉 token 数（p.5 Fig. 3 图注；p.7 §4.1）；[AI] 因此 LLM 每层看到的视觉 token 数都是 N（复核时改正：原写“LLM 的 32 层每层都是 N”并标 p.5、p.7；全文未见“32 层”，层数不是这篇论文写的）。表头写“Retain 64 Tokens (↓ 88.9%)”（p.7 Table 1），即 576 个中留 64 个。[AI] 按本项目的层平均口径，SCOPE-64 就是层平均 64，与 VisionZip-64、本项目的 DivPrune-64 同口径。
 - **CLS**：只用来算显著性。LLaVA-1.5 送进 LLM 的是 576 个 patch token（p.3），SCOPE 从这 576 个里选（p.4 Fig. 2 图注）。[AI] 所以 CLS 不在候选里，也不占名额。对照的 VisionZip-64 在本项目的实现里是 53 个主导 patch + CLS + 10 个合并的上下文 token（VisionZip 源码核验与 F62、F64；不是本文的内容）。
 - **合并 token**：SCOPE 不合并。VisionZip 的 64 个里含合并 token，本文只说 VisionZip 会合并（p.3），没写怎么拆分。
 - **与 FastV 一族怎么对齐**：全文没有说明 FastV、SparseVLM、PDrop 这些在 LLM 内剪的方法“保留 64 个”是怎么定义的：在哪一层剪、前面几层看多少、是否按层平均（UN）。
@@ -130,21 +130,21 @@
 - **LLaVA-1.5-13B**（p.15 Table 6，只与 VisionZip 比）：192 / 128 / 64 个时 SCOPE 100.2% / 98.7% / 96.9%，VisionZip 98.7% / 97.0% / 93.7%。[AI] 按表中 VisionZip-128 的 8 个相对值复算，平均约 98.0%，不是 97.0%；VisionZip-64 复算约 93.4%（表中 93.7%）。是原表的错还是解析的问题，要对 PDF。13B 上也不是每项都赢：128 档 MME 1735 对 1743，64 档 SQA 73.2 对 74.4。
 - **LLaVA-NeXT-13B**（p.16 Table 7，只与 VisionZip 比）：640 / 320 / 160 个时 SCOPE 98.8% / 96.9% / 95.1%，VisionZip 97.8% / 94.8% / 91.7%。
 - **Qwen2-VL-7B**（p.16 C.3、Table 8；GQA / MMB / MME / POPE 四项）：保留 25% 时 DivPrune 93.9%（59.4 / 72 / 2043 / 85.9），SCOPE 94.6%（59.8 / 72.5 / 2065 / 86.5）；保留 10% 时 DivPrune 85.9%（54.3 / 63.7 / 1874 / 80.8），SCOPE 89.6%（56.6 / 66.8 / 1953 / 84.3）。这是全文唯一的 DivPrune 对照；DivPrune 是重跑还是引用、用什么特征，未写（UN）。
-- **OCR 类**（p.17 C.4、Table 9，LLaVA-1.5-7B，只与 VisionZip 比；DocVQA / ChartQA / OCRBench）：不剪 28.0 / 18.2 / 31.3。64 个时 VisionZip 21.1 / 16.0 / 28.2（84.4%），SCOPE 23.2 / 16.7 / 29.5（89.6%）；128 个时 93.1% 对 95.2%；192 个时 95.8% 对 96.6%。
+- **OCR 类**（p.16–17 C.4、p.17 Table 9，LLaVA-1.5-7B，只与 VisionZip 比；DocVQA / ChartQA / OCRBench；复核时改正：原写“p.17 C.4”，C.4 小节标题在 p.16）：不剪 28.0 / 18.2 / 31.3。64 个时 VisionZip 21.1 / 16.0 / 28.2（84.4%），SCOPE 23.2 / 16.7 / 29.5（89.6%）；128 个时 93.1% 对 95.2%；192 个时 95.8% 对 96.6%。
 - **α**（p.17 C.5、Fig. 6）：LLaVA-1.5-7B、64 个，在 GQA、SQA、TextVQA、MMB 上扫 α ∈ {0, 0.5, 1.0, 1.5, 2.0}，作者说多数基准在 α = 1.0 最好；数值读不出（UN）。[AI] 扫描用的就是报告结果的基准，没有单独的验证集；只有这一个超参数，默认值又是自然的 1.0，影响有限。
-- **θ-覆盖**（p.4 Definition 1；p.4–5 Fig. 2）：一个 token 若与某个被选 token 的余弦不低于 θ，就算被覆盖；θ-覆盖是被覆盖 token 的比例。MME、64 个，θ 从 0.5 到 0.9：只按显著性选的覆盖在各个 θ 下都低于随机，SCOPE 明显高于只按显著性选（SC/DE，p.5）。Coverage-only 与 SCOPE 哪个更高，曲线读不出（UN）。
-- **注意力偏斜**（p.2 Fig. 1(b)）：MME 上按 CLS 注意力排前 128 个的平均分布；后 64 个（第 65～128 名）的注意力均值 0.0021、标准差 0.0003、最大 0.0029、最小 0.0016（图中文字，解析可能错位）。
+- **θ-覆盖**（p.4 Definition 1；p.4–5 Fig. 2）：一个 token 若与某个被选 token 的余弦不低于 θ，就算被覆盖；θ-覆盖是被覆盖 token 的比例。MME、64 个，θ 从 0.5 到 0.9：作者文字写：只按显著性选的覆盖在不同 θ 下都偏低，“甚至比随机还差”，SCOPE 明显高于只按显著性选（SC，p.5 §3.2 文字；图在 p.4）。曲线读不出，是否每个 θ 下都低于随机无法确认（复核时改正：原写“只按显著性选的覆盖在各个 θ 下都低于随机”并标 SC/DE；原文没有逐个 θ 说）。Coverage-only 与 SCOPE 哪个更高，曲线读不出（UN）。
+- **注意力偏斜**（p.2 Fig. 1(b)）：MME 上按 CLS 注意力排前 128 个的平均分布；后 64 个（图中文字写“64 tail tokens”；“第 65～128 名”是按“前 128 个”推的，AI）的注意力均值 0.0021、标准差 0.0003、最大 0.0029、最小 0.0016（图中文字，解析可能错位）。
 - **不确定性**：全文没有误差条或区间（p.22）。[AI] 作为量级参照：本项目在同一个 GQA testdev 划分（12578 题）上，逐题配对差的 95% 区间半宽约 0.5～0.9（例如 +0.87 [+0.37, +1.40]，experiment-results 的 C-0022-1）。SCOPE − Coverage-only 的 GQA +0.2 在这个量级之内。
 
 ## 证据与实现核对
 
 | E ID | 层级 | 内容 | 位置 | 支持范围/限制 |
 | --- | --- | --- | --- | --- |
-| E-SC-1 | DE | 在视觉编码器之后、进 LLM 之前剪一次，LLM 每层都只看留下的 token；免训练 | p.5 Fig. 3 图注；p.6 §3.3；p.7 §4.1；p.3 贡献三 | 没有在 LLM 内剪的对照；“接在编码器后信息保留最多”（p.6）没有实验 |
+| E-SC-1 | DE / AI | 在视觉编码器之后、进 LLM 之前剪一次；免训练（DE）。“LLM 每层都只看留下的 token”由此推出（AI，复核时补标：原整行标 DE） | p.5 Fig. 3 图注；p.6 §3.3；p.7 §4.1；p.3 贡献三 | 没有在 LLM 内剪的对照；“接在编码器后信息保留最多”（p.6）没有实验 |
 | E-SC-2 | DE | 显著性 = 视觉编码器第 −2 层 CLS 对各视觉 token 的注意力；α 默认 1.0 | p.7 §4.1 | 多头如何合并未写 |
 | E-SC-3 | DE | 贪心：Δ(v; S) = Σ_u [max(S_uv, c_u) − c_u]，每轮取 Δ · A_v^α 最大的，共 K 轮；输入里没有题目 | p.6 Algorithm 1；p.5 式 (6) 前后；p.6 正文 | 公式块解析为图片，只能按伪代码与正文读；没有理论保证（p.21） |
 | E-SC-4 | UN | 余弦用哪层、哪个空间的特征，是否去均值；留下的 token 的顺序与位置编号；LLaVA-NeXT 是否按子图；Video-LLaVA 的做法；Qwen2-VL 的显著性从哪里取；是否避开填充区 | 全文通读 | 自己实现时要自己定 |
-| E-SC-5 | SC | 只按显著性选的 θ-覆盖在 θ = 0.5～0.9 下都低于随机，SCOPE 明显更高 | p.4–5 §3.2、Definition 1、Fig. 2 | 只在 MME、64 个；曲线数值读不出；θ-覆盖与覆盖目标在同一空间（AI） |
+| E-SC-5 | SC | 只按显著性选的 θ-覆盖在不同 θ（图横轴 0.50～0.90）下都偏低，文字说甚至比随机还差；SCOPE 明显更高（复核时改正：原写“θ = 0.5～0.9 下都低于随机”） | p.4–5 §3.2、Definition 1、Fig. 2 | 只在 MME、64 个；曲线数值读不出；θ-覆盖与覆盖目标在同一空间（AI） |
 | E-SC-6 | DE | 按 CLS 注意力排前 128 个中，后 64 个注意力均值 0.0021、标准差 0.0003（最大 0.0029、最小 0.0016） | p.2 Fig. 1(b) | 图中文字，解析可能错位；只在 MME 上 |
 | E-SC-7 | DE / AI | “保留 N 个”= 进 LLM 的视觉 token 数，从 576 个 patch 中选；不合并；CLS 只用来算显著性、不占名额（后一句为 AI） | p.3；p.4 Fig. 2 图注；p.5 Fig. 3 图注；p.6 Algorithm 1；p.7 Table 1 | 按本项目口径即层平均 N（AI） |
 | E-SC-8 | UN / AI | 在 LLM 内剪的对照（FastV、SparseVLM、PDrop）“保留 N 个”的定义未写；本项目按层平均实测的 FastV（K = 2，留 30 / 98 / 166）POPE F1 36.19 / 68.29 / 75.76、准确率 60.34 / 75.33 / 79.83，与表中 48.0 / 59.6 / 64.8 都对不上 | p.7 Table 1；EXP-0002-R11 / R09 / R07 | 表中 FastV 不能套用本项目的层平均口径 |
@@ -161,9 +161,9 @@
 | E-SC-19 | DE | LLaVA-NeXT-7B：640 / 320 / 160 个时 SCOPE 98.9 / 97.1 / 95.1%，VisionZip 97.4 / 95.0 / 92.5%，SparseVLM 96.0 / 93.6 / 86.9% | p.8 Table 2；p.9 | 6 项平均；MMMU 列按相对值还原；对照来自 VisionZip 论文（E-SC-12） |
 | E-SC-20 | DE | Video-LLaVA 2048 → 136 个：SCOPE 100.5%、VisionZip 93.2%、SparseVLM 86.5%、FastV 52.1% | p.9 Table 3 | 视频上的选法未写 |
 | E-SC-21 | DE / AI | LLaVA-1.5-13B（只对 VisionZip）：SCOPE 100.2 / 98.7 / 96.9%，VisionZip 98.7 / 97.0 / 93.7%；按 VisionZip 各项相对值复算，128 档约 98.0%、64 档约 93.4% | p.15 C.1、Table 6 | 复算不一致的原因要对 PDF；13B 上也不是每项都赢 |
-| E-SC-22 | DE | LLaVA-NeXT-13B（只对 VisionZip）：SCOPE 98.8 / 96.9 / 95.1%，VisionZip 97.8 / 94.8 / 91.7%（640 / 320 / 160） | p.16 C.2、Table 7 | — |
+| E-SC-22 | DE | LLaVA-NeXT-13B（只对 VisionZip）：SCOPE 98.8 / 96.9 / 95.1%，VisionZip 97.8 / 94.8 / 91.7%（640 / 320 / 160） | p.15–16 C.2、p.16 Table 7（复核时改正：原写 p.16 C.2；C.2 小节标题在 p.15） | — |
 | E-SC-23 | DE | Qwen2-VL-7B：保留 25% / 10% 时 DivPrune 93.9 / 85.9%，SCOPE 94.6 / 89.6% | p.16 C.3、Table 8 | 唯一的 DivPrune 对照；DivPrune 的来源、实现与特征未写 |
-| E-SC-24 | DE | OCR 类（LLaVA-1.5-7B；DocVQA、ChartQA、OCRBench）：SCOPE 96.6 / 95.2 / 89.6%，VisionZip 95.8 / 93.1 / 84.4%（192 / 128 / 64） | p.17 C.4、Table 9 | 只对 VisionZip |
+| E-SC-24 | DE | OCR 类（LLaVA-1.5-7B；DocVQA、ChartQA、OCRBench）：SCOPE 96.6 / 95.2 / 89.6%，VisionZip 95.8 / 93.1 / 84.4%（192 / 128 / 64） | p.16–17 C.4、p.17 Table 9（复核时改正：原写 p.17 C.4；C.4 小节标题在 p.16） | 只对 VisionZip |
 | E-SC-25 | DE | 不报误差条（检查表第 7 项 [No]） | p.22 | 运行次数未写 |
 | E-SC-26 | DE | 划分与指标：GQA testdev_balanced 12,578；POPE test 9,000（F1）；MME “dev 4,377”、写作 accuracy；TextVQA “test 5,000”（EM）；MM-Vet 218（GPT 打分）；lmms-eval，4 × A100，batch 1 | p.14–15 附录 B；p.7 §4.1 | MME、TextVQA 的写法与常见设置不一致（AI） |
 | E-SC-27 | AI | 文字与表不一致：192 档对 FastV“+6.0%”（表为 +10.0）；192 档 POPE“100.2%”（表为 100.6%）；p.2 写 9 倍、p.6 写 8 倍；FastV-192 的 MMVet 27.7 应为 89.1%，表写 89.7%（VisionZip 原表即如此）；局限一节只说两个模型 | p.2；p.6；p.7 Table 1；p.8 §4.2；p.18；VisionZip 解析全文 p.5 | 不改变主要结论；正文数字以表为准 |
@@ -283,7 +283,7 @@
 
 ## 交接 Deep Read
 
-- 候选 P：只按显著性（CLS 注意力）挑出的 token 挤在少数区域，θ-覆盖低于随机（p.5 Fig. 2，SC）；按注意力排在后面的 token 几乎分不开（p.2 Fig. 1(b)）。但 θ-覆盖与覆盖目标在同一特征空间里算，不能证明覆盖是答对的原因（AI）。
+- 候选 P：只按显著性（CLS 注意力）挑出的 token 挤在少数区域，θ-覆盖偏低、文字说甚至比随机还差（图在 p.4 Fig. 2，文字在 p.5，SC；复核时改正：原写“θ-覆盖低于随机（p.5 Fig. 2）”）；按注意力排在后面的 token 几乎分不开（p.2 Fig. 1(b)）。但 θ-覆盖与覆盖目标在同一特征空间里算，不能证明覆盖是答对的原因（AI）。
 - 候选 F：LLaVA-1.5-7B、64 个时，与题目无关的覆盖选择（只看覆盖）已比 VisionZip-64 高 GQA +3.0、POPE +5.1，再乘 CLS 显著性只多 +0.2～+1.8（p.9 Table 4 对 p.7 Table 1；单次、混了来源，AI）；提高集中在 POPE、SEED、GQA，MME、SQA、MMVet 几乎不变或更低（p.7 Table 1）。
 - 候选连接：覆盖 / 多样性底座提高最多的题型（SCOPE 的 POPE 存在类是非题；本项目 DivPrune-64 的 yes/no 与计数题）与本项目路由的目标题型重合，路由在这类底座上的增量可能变小（AI，待 EXP-0033 的 X3 检验）。
 - 机制候选见「方法与贡献」；适用条件与替代解释见「限制与替代解释」。没有自有实验，不向实验台账写入成功或失败结果。
@@ -323,9 +323,9 @@ evidence_locations:
 - 'E-SC-19: p.8 Table 2；p.9'
 - 'E-SC-20: p.9 Table 3'
 - 'E-SC-21: p.15 C.1、Table 6'
-- 'E-SC-22: p.16 C.2、Table 7'
+- 'E-SC-22: p.15–16 C.2、p.16 Table 7'
 - 'E-SC-23: p.16 C.3、Table 8'
-- 'E-SC-24: p.17 C.4、Table 9'
+- 'E-SC-24: p.16–17 C.4、p.17 Table 9'
 - 'E-SC-25: p.22 检查表第 7 项'
 - 'E-SC-26: p.14–15 附录 B；p.7 §4.1'
 - 'E-SC-27: p.2；p.6；p.7 Table 1；p.8 §4.2；p.18（推断）'
@@ -351,7 +351,7 @@ results_with_uncertainty: 见「结果及不确定性」
 claim_evidence_implementation_map: 见「证据与实现核对」
 limitations_biases_and_ethics: 见「限制与替代解释」
 reproducibility_and_transferability: 见「代码与许可」与「与当前项目的关系」
-candidate_P: 只按 CLS 显著性挑出的 token 集中、θ-覆盖低于随机（p.5 Fig.2，SC），尾部注意力几乎分不开（p.2 Fig.1(b)）；θ-覆盖与覆盖目标同空间，不能证明覆盖是答对的原因（推断）。
+candidate_P: 只按 CLS 显著性挑出的 token 集中、θ-覆盖偏低、文字说甚至比随机还差（图在 p.4 Fig.2，文字 p.5，SC；复核时改正：原写“低于随机（p.5 Fig.2）”），尾部注意力几乎分不开（p.2 Fig.1(b)）；θ-覆盖与覆盖目标同空间，不能证明覆盖是答对的原因（推断）。
 candidate_F: LLaVA-1.5-7B、64 个时，只看覆盖已比 VisionZip-64 高 GQA +3.0、POPE +5.1，再乘 CLS 显著性只多 +0.2～+1.8（p.9 Table 4 对 p.7 Table 1，单次，推断）；提高集中在 POPE、SEED、GQA。
 evidence_index:
 - E-SC-1
@@ -396,3 +396,49 @@ unresolved_questions:
 ## 主代理抽查（2026-10-31）
 
 - 写笔记的工作流（2026-10-30）原定由另一个子代理逐条复核，复核因用量上限没有完成；2026-10-31 用户睡觉期间不开子代理（DEC-0063），第二人复核留到之后。本笔记目前只经过主代理的抽查：摘要的 96.0% 与 Table 4 的 Coverage-only 一行（GQA 58.1）在解析全文里找到。没有抽查到的数字以 PDF 为准。
+
+## 第二人复核（2026-10-31）
+
+复核人：另一个子代理，只读解析全文（D:/6CJNM007/tmp/read_repo/main_54bf807 的只读导出）；没有看 PDF，没有联网、下载或运行代码。本节之前的正文只改了下面列出的地方，每处改动在正文里带“（复核时改正：原写 …）”。上一节“主代理抽查”保留原文。
+
+### 核对了多少
+
+- 解析全文从头读到尾（p.1–26 全部）。约核对 300 处：
+  - Table 1 全部：15 行 × 8 项原始分数逐格对笔记；120 个相对百分比与 15 个平均逐格用“原始分数 ÷ 不剪枝分数”复算。
+  - Table 2、3、4、5、6、7、8、9 中笔记引用的数字；Table 6、7 的平均也复算过。
+  - 附录 B 的划分与指标；检查表第 5、7、11、12、16 项；Fig. 1(b) 图中文字；Algorithm 1 的行号；页标记与章节出处。
+  - 笔记里“方法与贡献”“研究设计”“预算与计算量口径”“结果”“证据与实现核对”“限制与替代解释”“与当前项目的关系”“交接 Deep Read”“ANALYSIS_PACKAGE”中关于这篇论文本身的说法（约 80 条）。
+- 另外对照了同一导出里的 VisionZip 解析全文（PAPER-0006 p.5–6 的 Table 1、2）和 SparseVLM 解析全文（PAPER-0005 p.6 表格行）：E-SC-12 说 SCOPE 表里 FastV / SparseVLM / VisionZip / 不剪的数字与 VisionZip 论文逐格相同（含 VisionZip-192 的 MME 1782.6 写成 1783，FastV-192 的 MMVet 89.7%）——对上了；E-SC-13 与“限制”里 SparseVLM-64 的 GQA 53.8、POPE 77.5，以及 PDrop 的 SEED 90.7% 对 93.3%——对上了。
+- 用只读命令重算了解析全文的 SHA-256，与笔记和 literature/processed/README 登记的前 16 位一致。PDF 本身没有读，其校验和与页数 26 只核对了登记表和页标记。
+- 任务里提到的“本项目已引用说法的逐条核对”一节：这份笔记里没有这个标题的小节（全文检索“逐条核对”没有结果）。我核对的是上面列出的各节里关于这篇论文本身的说法。关于本项目自己实验的数字（EXP、F 号、DEC）按任务要求没有核对。
+
+### 数字有没有错
+
+- 没有发现数字错误。LLaVA-1.5-7B 的 Table 1 每一格、相对值和平均都与笔记一致；对照方法（FastV、SparseVLM、VisionZip、PDrop）的数字、预算口径的说法（进 LLM 之前剪、表头 Retain 64 Tokens ↓88.9%、FastV 等“保留 N 个”的定义全文未写、没有 FLOPs、只有 Table 5 一处时延）都与全文一致。
+- 笔记自己标出的文字与表不一致（正文 +6.0% 对表 +10.0；192 档 POPE 100.2% 对表 100.6%；p.2 写 9 倍、p.6 写 8 倍；FastV-192 MMVet 89.7% 对复算 89.1%；Table 6 的 VisionZip 平均 97.0% 对复算 98.0%、93.7% 对复算 93.4%）我都独立复算过，说法成立。补充一点：正文说的 100.2% 在 Table 1 里出现在 128 档的 POPE，也出现在 192 档的 SEED。
+
+### 改了哪些（改前 → 改后，依据）
+
+1. 解析质量一节：“公式块都是图片引用，没有文字” → “多数公式块是图片引用”，补充式 (1)、(2) 在解析里是零散文字。依据：p.4 解析文本里有 L(M(S, T), M(V, T))、min S、QK⊤、√d 和式号。
+2. “方法与贡献”的“在哪里剪”：“LLM 的每一层都只看留下的 token”原放在出处后面，像是原文直接写的 → 改为 AI（由“在送进 LLM 之前剪”推出）；E-SC-1 的层级 DE → DE / AI。依据：p.5 Fig. 3 图注、p.6 §3.3、p.7 §4.1 只写“送进 LLM 之前减少”“接在视觉编码器之后”，没有逐字写每层。
+3. “预算与计算量口径”：“LLM 的 32 层每层都是 N（p.5、p.7）” → 去掉“32 层”并标 AI。依据：全文检索“32”只出现在分数和 Fig. 4 的 32 个 token 里，层数全文未见。
+4. θ-覆盖（共 4 处：“结果及不确定性”的 θ-覆盖条、E-SC-5、交接里的候选 P、ANALYSIS_PACKAGE 的 candidate_P）：“只按显著性选的覆盖在各个 θ 下都低于随机，标 SC/DE” → “在不同 θ 下都偏低，文字说甚至比随机还差（SC）”，并说明曲线读不出、无法确认每个 θ 都低于随机。依据：p.5 §3.2 文字说覆盖在不同 θ 下一直偏低，并用了“even performing worse than the random selection baseline”这样的话，没有逐个 θ 说；图在 p.4，曲线数值读不出。
+5. 同上几处里的页码：Fig. 2 写“p.5” → 图在 p.4、文字在 p.5。依据：p.4 页标记之后是 Fig. 2 及其图注。
+6. Fig. 1(b) 的尾部统计：“后 64 个（第 65～128 名）” → 补注“图中文字写 64 tail tokens；第 65～128 名是按‘前 128 个’推的（AI）”。依据：图里只有“Statistics of 64 tail tokens”与数值，没有写名次。
+7. “研究设计”的模型一行：“视频用 Video-LLaVA（p.7 §4.1；p.15–16）” → “（p.7 §4.1；p.9 Table 3）；附录的几个模型在 p.15–16”。依据：Video-LLaVA 在 p.7 和 p.9；p.15–16 讲的是 13B 与 Qwen2-VL。
+8. E-SC-22（LLaVA-NeXT-13B）出处：“p.16 C.2、Table 7” → “p.15–16 C.2、p.16 Table 7”（ANALYSIS_PACKAGE 同改）。依据：C.2 小节标题在 p.15 末，表在 p.16。
+9. E-SC-24 与“其他结果”的 OCR 类条（OCR 类）出处：“p.17 C.4” → “p.16–17 C.4、p.17 Table 9”（ANALYSIS_PACKAGE 同改）。依据：C.4 小节标题在 p.16 末，表在 p.17。
+
+### 还有哪些读不清（没有改）
+
+- Fig. 1(c) 的图中文字里有 97.8 和 97.2 两个数，名次顺序错乱；Table 1 的 SCOPE-64 里 MMVet 是 97.7%、TextVQA 是 97.3%。差 0.1，可能是图与表取整不同，解析读不出对应关系，笔记没有引用图里这两个数，所以没改。
+- 公式 (3)、(5)～(9) 是图片，Algorithm 1 以外的式子只能按正文文字读。
+- Fig. 2、4、6 的曲线读不出（笔记已写）。
+- E-SC-13 中 SparseVLM 自己的论文表（PAPER-0005 p.6）的表号归属：解析里表注排在表格后面，我只核对了表格行的数字，没有逐一确认它属于哪个表号。
+- PDF 本身、SparseVLM / VisionZip 两篇的 PDF 都没有看。
+
+### 两条专门的问题
+
+(a) 剪枝后留下的视觉 token 的位置编号（position ids / RoPE 位置）：全文未见。检索 position、RoPE、rotary、positional、order、index、indices 都没有相关内容（匹配到的只是 compositional 等词的一部分）。Algorithm 1 返回的是集合 S（p.6），没有写送进 LLM 时的顺序，也没有写保留原始编号、重新连续编号或插值。笔记 E-SC-4 与“方法与贡献”第 6 点的 UN 成立。
+
+(b) 定位类任务（RefCOCO 一类、输出框坐标、visual grounding）：全文未见。检索 RefCOCO、grounding、bounding、bbox、detection、localiz、coordinate 都没有相关内容。图像任务只有 GQA、MMBench、MME、POPE、ScienceQA、TextVQA、SEED-Bench、MM-Vet（p.7 §4.1、p.14–15）；附录另有 MMMU（Table 2、7）、DocVQA、ChartQA、OCRBench（Table 9）；视频有 TGIF、MSVD、MSRVTT、ActivityNet（p.7、p.9）；Qwen2-VL 上只有 GQA、MMB、MME、POPE 四项（p.16 Table 8）。没有一项要求输出框坐标。

@@ -7,8 +7,8 @@
 ## 来源与阅读范围
 
 - 标题：Beyond Attention or Similarity: Maximizing Conditional Diversity for Token Pruning in MLLMs（方法名 CDPruner）。p.1。
-- 作者/机构：Qizhe Zhang（一作，在字节跳动实习期间完成）、Mengzhen Liu、Lichen Li、Ming Lu（项目负责人）、Yuan Zhang、Junwen Pan、Qi She（项目负责人）、Shanghang Zhang（通讯作者）；National Key Laboratory for Multimedia Information Processing, School of Computer Science, Peking University 与 ByteDance（按原文英文名）。p.1。
-- 版本：arXiv:2506.10967v2 [cs.CV]，2025-07-01（p.1 页边）。第 1 页页脚写 “Preprint. Under review.”，全文没有出现 NeurIPS 或其他会议名。本项目多处写“NeurIPS 2025”，本次无法从全文核实（UN；见「本项目已引用说法的核对」）。
+- 作者/机构：Qizhe Zhang（署名第一位，脚注写工作是在字节跳动实习期间完成，p.1；全文没有写“第一作者”字样）（复核时改正：原写“一作”）、Mengzhen Liu、Lichen Li、Ming Lu（项目负责人）、Yuan Zhang、Junwen Pan、Qi She（项目负责人）、Shanghang Zhang（通讯作者）；National Key Laboratory for Multimedia Information Processing, School of Computer Science, Peking University 与 ByteDance（按原文英文名）。p.1。
+- 版本：arXiv:2506.10967v2 [cs.CV]，2025-07-01（p.1 页边）。第 1 页页脚写 “Preprint. Under review.”，全文没有写本文已被任何会议接收（“NeurIPS”字样在全文只出现一次，是参考文献里 Cai 等 2024a 的 workshop 名，p.10；表 1–9 的方法名旁和参考文献里的 ECCV、CVPR 等是别人的论文）（复核时改正：原写“全文没有出现 NeurIPS 或其他会议名”，这与表和参考文献不符）。本项目多处写“NeurIPS 2025”，本次无法从全文核实（UN；见「本项目已引用说法的核对」）。
 - PDF：`papers/CDPruner-arxiv-2506.10967.pdf`，22 页，5,408,917 字节，SHA-256 `2a46e68695ee0a81ee6bef16d16628d3be3bb99cc0f39b17853a0795376c1937`；2026-10-29 经用户许可从 https://arxiv.org/pdf/2506.10967 下载（登记见[论文笔记 README](README.md)的“2026-10-29 下载的十一篇 PDF 的登记”）。PDF 不在只读导出里（papers/ 不跟踪），按规则本次不读工作区，所以没有读 PDF，也没有重算它的校验和。能访问原文不等于获得再分发许可，全文不提交 Git。
 - 解析全文：`literature/processed/PAPER-0013/CDPruner-arxiv-2506.10967.md`（MinerU 4.0.12，flash 档，只有文本；2026-10-29 解析）。本次用 Get-FileHash 重算 SHA-256 为 `5c9c01eaa4f929c9a58431aa5cd553b4f95f9ea6a5936e4cdb92a3dc1bb3f3ea`，前 16 位与 [literature/processed/README](../../literature/processed/README.md) 的登记一致。PAPER-0013 目录下只有这一个文件，没有单独的 README。
 - 实际阅读：解析全文 1604 行从头读到尾，页标记 p.1–22 都在。正文 p.1–9，参考文献 p.10–13，附录 p.14–22（A 贪心算法、B 实验设置、C 补充实验、D 可视化、E 局限、F 社会影响）。页码按解析文本的页标记写（README 说页标记数与 PDF 页数相同）。
@@ -55,7 +55,7 @@
 
 ## 预算口径
 
-- **“保留 N 个”指什么**：CDPruner 与在 LLM 之前剪的对照（PruMerge+、TRIM、VisionZip、DART、DivPrune），N 都是送进 LLM 的视觉 token 个数，每一层相同（p.4 Fig. 2；p.6 Table 1 表头“保留 64 个（剪掉 88.9%）”，88.9% = 1 − 64/576）。[AI] 所以这些方法的“64”就是本项目口径下的层平均 64，与本项目的 VisionZip-64、DivPrune-64 相同。
+- **“保留 N 个”指什么**：CDPruner 剪在 LLM 之前，N 是送进 LLM 的视觉 token 个数，每一层相同（p.4 Fig. 2；p.6 Table 1 表头“保留 64 个（剪掉 88.9%）”，88.9% = 1 − 64/576）。对照里，PruMerge+、TRIM、VisionZip 被论文归入“在语言模型之前剪”的一组（p.3 §2 Visual token reduction，第二组）；DART 与 DivPrune 在全文里只被归入“按视觉 token 相似度剪”的一组（p.3），它们剪在哪里全文未见（复核时改正：原把 DART、DivPrune 也写成“在 LLM 之前剪”并引 p.4 Fig. 2，全文没有这句话）。[AI] 对 PruMerge+、TRIM、VisionZip，“64”就是本项目口径下的层平均 64，与本项目的 VisionZip-64 相同；DART、DivPrune 的位置要看它们自己的论文，本文不能证明。
 - **CLS 与合并 token**：CDPruner 只挑选、不合并（p.4–5 §3）。[AI] 按 §3 的描述，它也不用 CLS；它用在了需要 [cls] 的方法用不上的 Qwen2.5-VL 上（p.8）。LLaVA-1.5 每张图 576 个视觉 token（p.15 B.1.1），[AI] 即 24×24 个 patch，不含 CLS。VisionZip 的主导 / 上下文 token 怎么分、PruMerge+ 合并后的 token 怎么计，全文没写（UN）。[AI] 表中 VisionZip-64 与本项目按 54 个主导 + 10 个上下文的实测几乎相同（POPE 77.0 / 77.03，MME 1365.2 / 1364.22，GQA 55.1 / 55.18；EXP-0002-R17、R35，EXP-0022-R07），大概率也是 54 + 10。
 - **与 FastV 一族怎样对齐**：全文只写 FastV 在第 2 层之后剪掉注意力最低的 token（p.18 B.3.1），没有写“保留 N 个”是第 2 层后的个数还是层平均（UN）。两条间接证据都指向层平均（AI）：
   - 表 5（LLaVA-NeXT-7B）的 KV cache：不剪枝 2880 个对应 1440.0 MB，即每个视觉 token 0.5 MB（32 层，4096 维，半精度）。FastV、PDrop、SparseVLM 是 160.3 / 160.2 / 161.2 MB，约等于层平均 320 个；若 FastV 在前 2 层保留全部 2880 个、之后留 320 个，应约为 240 MB。160.3 MB 正好对应 K = 2、第 2 层后留 150 个（(2×2880 + 30×150)/32 = 320.6 个）。13B 的表 9 同向（250.8 MB，约 321 个）。
@@ -162,7 +162,7 @@
 - LLaVA-1.5-13B（Table 6，p.19）：128 / 64 / 32 个，CDPruner 98.0% / 96.6% / 93.8%（VQAv2 77.7 / 76.7 / 75.2，GQA 59.7 / 59.4 / 58.5），DivPrune 96.8% / 94.1% / 90.8%，VisionZip 97.0% / 93.8% / 87.6%。LLaVA-NeXT-13B 的 640 档 99.9%（p.19 C.1）。
 - LLaVA-Video-7B（Table 3，p.8）：每帧 64 / 32 / 16 个，CDPruner 98.6% / 95.0% / 89.7%，DivPrune 96.2% / 93.0% / 88.3%。正文说 16 个时比 SparseVLM 高 10%（79.9%），比 DivPrune 只高 1.4（AI，由表算出）。
 - Qwen2.5-VL-7B（Table 4，p.8）：留 512 / 256 / 128 个，CDPruner 97.5% / 92.8% / 85.2%，FastV 97.0% / 90.8% / 79.0%，DivPrune 96.0% / 88.2% / 79.9%。
-- InternVL3-8B（Table 8，p.20）：留 256 / 128 个，CDPruner 92.9% / 83.9%，FastV 92.4% / 80.9%，DivPrune 82.8% / 75.7%。[AI] 在这两个模型上，相关性用的是“LLM 指令嵌入的平均对投影层输出”这一支；DivPrune 明显落后于 FastV，CDPruner 只比 FastV 高 0.5～6.2 个百分点，增益更像来自相关性而不是多样性（没有分开检验）。
+- InternVL3-8B（Table 8，p.20）：留 256 / 128 个，CDPruner 92.9% / 83.9%，FastV 92.4% / 80.9%，DivPrune 82.8% / 75.7%。[AI] 在这两个模型上，相关性用的是“LLM 指令嵌入的平均对投影层输出”这一支；DivPrune 明显落后于 FastV，CDPruner 只比 FastV 高 0.5～3.0 个百分点（复核时改正：原写 0.5～6.2；Table 8 的 Rel. 差为 92.9−92.4 = 0.5 与 83.9−80.9 = 3.0，正文 p.19 C.2 也写“3% higher”），增益更像来自相关性而不是多样性（没有分开检验）。
 
 ### 效率（Table 5，p.9；Table 9，p.21）
 
@@ -210,7 +210,7 @@
 | E-CD-19 | AI | 表 1 的不剪枝、VisionZip-64、FastV-64 / 128 与本项目实测几乎相同：POPE 85.9 / 85.90、77.0 / 77.03、35.5 / 36.19、68.2 / 68.29；MME 1506.5 / 1507.63（感知分）、1365.2 / 1364.22；GQA 61.9 / 61.96、55.1 / 55.18 | p.6 Table 1；本项目 EXP-0002-R04、R08～R11、R17、R35，EXP-0022-R06、R07 | 所以 POPE 列是 F1、MME 列是感知分、GQA 划分与本项目相同；SparseVLM 的数字低于本项目实测，来源不明 |
 | E-CD-20 | DE | 其他模型的 Rel.：LLaVA-NeXT-7B、LLaVA-1.5-13B、LLaVA-Video、Qwen2.5-VL、InternVL3 上 CDPruner 都最高（见上） | p.7–8 Table 2–4；p.19–20 Table 6、8；正文 p.7–9、p.19 | 部分表格错位，只引能与正文对上的数 |
 | E-CD-21 | DE | 作者自述局限：只适用于能拿到视觉 token 的开源模型；Qwen2.5-VL、InternVL3 对剪枝更敏感，可能因为架构里已有 pixel unshuffle 一类压缩 | p.21 附录 E；p.8 §4.5 | — |
-| E-CD-22 | DE | 版本 v2（2025-07-01），第 1 页写 “Preprint. Under review.”；全文没有出现 NeurIPS | p.1 | 本项目多处写“NeurIPS 2025”，本次无法核实 |
+| E-CD-22 | DE | 版本 v2（2025-07-01），第 1 页写 “Preprint. Under review.”；全文没有写本文被会议接收（NeurIPS 只在参考文献 Cai 等 2024a 的 workshop 名里出现一次）（复核时改正：原写“全文没有出现 NeurIPS”） | p.1 | 本项目多处写“NeurIPS 2025”，本次无法核实 |
 | E-CD-23 | DE | 代码地址 https://github.com/Theia-4869/CDPruner；全文没有写许可证 | p.1 摘要 | 代码未下载、未核验（需许可） |
 | E-CD-24 | DE | 没有方差、种子或区间；没有按题型（如 VQAv2 的 yes/no、number、other）的分析；定性图只有 POPE 的“有没有某物”题 | 全文；p.5 Fig. 3；p.22 Fig. 5 | 通读判断 |
 | E-CD-25 | AI | 本项目查新补充里 CoverPruner 表（HTML 摘录）64 档 FastV～DivPrune 的数字与本文表 1 一一相同（只有 TRIM 的 GQA 写作 56.1），很可能直接引用了本表 | [查新补充](../专题分析/查新补充_覆盖与多样性_2026-10-26.md)；p.6 Table 1 | MODE_C-0002 的 P13 间接依赖本表 |
@@ -253,7 +253,7 @@
 | 维度 | CDPruner（原文位置） | 本项目 | 判断（AI，理由） |
 | --- | --- | --- | --- |
 | 剪在哪里 | LLM 之前，每层都是 m 个（p.4 Fig. 2；§3.1） | FastV 一族在 LLM 内（K = 2 或 K = 1）；VisionZip-64、DivPrune-64 在 LLM 之前 | 放置不同。CDPruner 没有测 LLM 内的放置 |
-| 预算口径 | 保留 m 个视觉 token（128 / 64 / 32），每层相同（Table 1 表头） | 32 层平均 64 / 128 / 192 | 对 CDPruner 和在 LLM 之前剪的对照，m 就是层平均；FastV 一族的对齐全文没写，推断也是层平均（E-CD-16） |
+| 预算口径 | 保留 m 个视觉 token（128 / 64 / 32），每层相同（Table 1 表头） | 32 层平均 64 / 128 / 192 | 对 CDPruner 和被论文归入“在语言模型之前剪”的 PruMerge+、TRIM、VisionZip，m 就是层平均（DART、DivPrune 的位置全文未见）；FastV 一族的对齐全文没写，推断也是层平均（E-CD-16）（复核时改正：原写“和在 LLM 之前剪的对照”，默认包含 DART、DivPrune） |
 | 是否用题目 | 是，所有题都用（p.5 §3.3） | 只对路由题用 | 本项目的差别是“按题决定用不用” |
 | 题目信号的来源 | LLaVA：CLIP 文本编码器的指令向量对 CLIP 视觉特征；Qwen2.5-VL、InternVL3：LLM 中指令 token 嵌入的平均对投影层输出（p.5） | LLM 输入层词向量按 IDF × 可视性加权的平均，对投影层输出 | CDPruner 的第二支就是本项目查询去掉加权后的样子；对 LLaVA 它用的是 CLIP 空间 |
 | 题目信号怎样进入选择 | 相关性乘进 DPP 核，与多样性在同一个目标里连续地权衡，没有固定名额（p.5 §3.4） | A′+B+V：n_q = round(keep × S) 个名额给余弦最高的 token，其余按 A | 软结合对硬分名额 |
@@ -321,7 +321,7 @@
   - 成立的部分：CDPruner 确实在同一次选择里同时用了题目相关性和多样性（p.1 摘要；p.4–5 §3.2–3.4）。怎么用的：①每个视觉 token 与指令向量算余弦，min-max 到 0～1，得到相关性；②视觉 token 两两余弦相似度构成 DPP 核；③用相关性调制核，子集的对数概率同时含两者；④贪心求解，选出 m 个。两者在一个目标里连续地权衡，不是先按一个挑、再按另一个补，也不是分开的两份名额（不同于 CLASP 的 K1 / K2 和本项目的 n_q / A）。消融显示两部分都有贡献（p.9 Fig. 4；Table 10）。
   - 要限定的部分：
     - 它的“覆盖”是特征空间的多样性（不选彼此相似的 token），不看位置，没有空间分块、没有框，也没有强制的名额。本项目在 DEC-0016 前后说的覆盖是空间的（6×6 分块轮流取，[第 7 步排序](../第7步_改进方向排序.md)里写成“强制覆盖”）。“题目相关 + 强制覆盖 / 空间覆盖”这一组合，CDPruner 没有做。
-    - 对 LLaVA，相关性来自 CLIP 文本编码器，不是 LLM 的注意力，也不是 LLM 输入层的词向量（p.5 §3.3）。
+    - 对 LLaVA，相关性来自 CLIP 文本编码器，不是 LLM 的注意力，也不是 LLM 输入层的词向量（p.5 §3.3）。（复核时补注：§3.3 为“带配套文本编码器”这一类点名引用的是 LLaVA、LLaVA-NeXT、LLaVA-OneVision，没有点名 LLaVA-1.5；LLaVA-1.5 用 CLIP 做视觉编码器见 p.15 B.1.1，Fig. 3 说相关性图用 LLaVA-1.5-7B 算。所以“LLaVA-1.5 的相关性来自 CLIP 文本编码器”是推断（AI），本笔记其他处写“对 LLaVA 用 CLIP”同此。）
     - 对所有题一视同仁，不按题型切换。
     - “NeurIPS 2025”：全文 v2 只写 “Preprint. Under review.”，无法核实（UN）。
   - “候选 1 的新颖性降为低”：对“题目相关 + 多样性”这个组合本身成立；对本项目后来的输入层 IDF × 可视性查询、按句式路由、按答案类型的证据不适用（全文都没有）。
@@ -342,9 +342,9 @@
 | [IDEA-0004](../IDEA-0004_预算内放大.md)第 116 行 | FSR 表 1（论文报告值）：CDPruner 64 档 GQA 58.6、TextVQA 55.1 | 部分成立：GQA 58.6 与 CDPruner 自己的表 1 相同；TextVQA 在 CDPruner 自己的表 1 是 55.3（用 Rel. 复算，55.3 得 97.0%，55.1 得 96.9%）；FSR 为什么是 55.1 不知道 | p.6 Table 1 |
 | IDEA-0004 第 119 行 | 64 档的 CDPruner、DivPrune 报告的 GQA 比本项目的路由（55.47）高 2～3 分 | 成立（58.6、57.5，差 3.1、2.0） | p.6 Table 1 |
 | [IDEA-0005](../IDEA-0005_定位后覆盖.md)第 78 行；[EXP-0026 记录](../实验报告/EXP-0026_record.md)第 124 行 | 64 个 token 时，在 LLM 之前剪的方法与本项目的计法相同；GridPrune、CDPruner、FSR 报告的 GQA 58.2～58.7、VQAv2 75.3～75.4 | 成立（CDPruner 58.6、75.4；每层都是 64 个） | p.6 Table 1；p.4 Fig. 2 |
-| [论文主张与证据_草稿](../论文主张与证据_草稿.md)第 45 行；DEC-0038；[EXP-0022 记录](../实验报告/EXP-0022_record.md)第 176 行；[最新实验分析报告](../最新实验分析报告.md)第 120 行 | FSR 表 1 的 64 档 CDPruner、DivPrune、FSR：GQA 57.5～58.6、VQAv2 74.1～75.4；预算口径可能不同（本项目按 32 层平均） | 数字成立（CDPruner 58.6 / 75.4，DivPrune 57.5 / 74.1）。“预算口径可能不同”可以收窄：两者都在 LLM 之前剪，64 就是层平均 64；GQA 划分相同（test-dev balanced），本项目的不剪枝 61.96、VisionZip-64 55.18 与表中 61.9、55.1 只差 0.1；VQAv2 划分不同（test-dev 对验证集子集） | p.6 Table 1；p.16 B.2.1；EXP-0022-R06、R07 |
+| [论文主张与证据_草稿](../论文主张与证据_草稿.md)第 45 行；DEC-0038；[EXP-0022 记录](../实验报告/EXP-0022_record.md)第 176 行；[最新实验分析报告](../最新实验分析报告.md)第 120 行 | FSR 表 1 的 64 档 CDPruner、DivPrune、FSR：GQA 57.5～58.6、VQAv2 74.1～75.4；预算口径可能不同（本项目按 32 层平均） | 数字成立（CDPruner 58.6 / 75.4，DivPrune 57.5 / 74.1）。“预算口径可能不同”可以收窄：CDPruner 在 LLM 之前剪，64 就是层平均 64（p.4 Fig. 2），DivPrune 剪在哪里本文未写（复核时改正：原写“两者都在 LLM 之前剪”）；GQA 划分相同（test-dev balanced），本项目的不剪枝 61.96、VisionZip-64 55.18 与表中 61.9、55.1 只差 0.1；VQAv2 划分不同（test-dev 对验证集子集） | p.6 Table 1；p.16 B.2.1；EXP-0022-R06、R07 |
 | MODE_C-0002 P13（第 672 行） | 两边的划分与实现不同，数字不能直接相减 | 部分成立：GQA 划分相同；VQAv2 划分不同；实现不同 | 同上 |
-| DEC-0046；[EXP-0029 记录](../实验报告/EXP-0029_record.md)第 16 行；论文主张 CL-15；[论文素材库](../论文素材库.md)第 42 行 | 覆盖 16 − 不围框（Q3）是与 VisionTrim、CDPruner 一类逐 token 文本相关性方法的区别 | 成立（全文没有区域或框，相关性是逐 token 的）；补充：CDPruner 的逐 token 相关性同时受多样性约束，“不围框”（按逐 token 相似度多留）不等于它的做法 | p.5 §3.3–3.4 |
+| DEC-0046；[EXP-0029 记录](../实验报告/EXP-0029_record.md)第 16 行；论文主张 CL-15；[论文素材库](../论文素材库.md)第 42 行 | 覆盖 16 − 不围框（Q3）是与 VisionTrim、CDPruner 一类逐 token 文本相关性方法的区别 | 成立（方法里没有区域或框的机制，相关性是逐 token 的；“区域”一词只在 Fig. 1 图注和附录 D p.21 泛指图中的区域）（复核时改正：原写“全文没有区域或框”，措辞过强）；补充：CDPruner 的逐 token 相关性同时受多样性约束，“不围框”（按逐 token 相似度多留）不等于它的做法 | p.5 §3.3–3.4 |
 | 论文主张与证据_草稿第 40 行 | 文本—图像相似度选 token 已有 CDPruner、AdaFV、TRIM 等 | 成立 | p.5 §3.3 |
 | [EXP-0022 squeeze](../实验报告/EXP-0022_squeeze.md)第 64 行；EXP-0022 记录第 216 行；论文素材库第 35 行 | 文献中更强的免训练方法（CDPruner、DivPrune）报告的数字更高，未复现 | 成立 | p.6 Table 1 |
 
@@ -462,3 +462,42 @@ unresolved_questions:
 ## 主代理抽查（2026-10-31）
 
 - 写笔记的工作流（2026-10-30）原定由另一个子代理逐条复核，复核因用量上限没有完成；2026-10-31 用户睡觉期间不开子代理（DEC-0063），第二人复核留到之后。本笔记目前只经过主代理的抽查：Table 1 的 64 档里 POPE 87.5 / MME 1415.1（CDPruner）、85.5 / 1334.7（DivPrune）、85.9（TRIM）都在解析全文里找到；表格错位较多，其余数字没有逐个抽查。没有抽查到的数字以 PDF 为准。
+
+## 第二人复核（2026-10-31）
+
+复核方法：只读 `D:/6CJNM007/tmp/read_repo/main_54bf807/literature/processed/PAPER-0013/CDPruner-arxiv-2506.10967.md`（1604 行，从头读到尾，页标记 p.1–22 都在；没有读 PDF，没有联网，没有运行 Python / git）。用 PowerShell 的 Get-FileHash 重算这份解析全文的 SHA-256 为 `5C9C01EA…3BB3F3EA`（前 16 位 `5c9c01eaa4f929c9`），与笔记写的值相同，也与 `literature/processed/README.md` 第 41 行登记相同。本笔记关于本项目自己实验的数字没有核对。
+
+### 核对了多少处
+
+- 数字：约 560 个。其中 Table 1 的 24 行 × 12 列（含 Acc.、Rel.）共 288 个全部与解析全文逐格对上；我另用算术重算了 24 行的 Acc.（MME 除以 20）和 Rel.，24 行全部对上（最大差 0.05，是四舍五入）。Table 10 的 6 行 × 12 列 72 个对上；“64 档的差”表、θ 两步拆分表、128 档的差共约 48 个差值重算对上；Table 2–4、6、8 里笔记引用的 Rel. 和正文数字、Table 5 与 Table 9 的 16 行效率数字、E-CD-18 的 −78%（275→60）与 −17%（16.7→13.8）、KV cache 推算（0.5 MB/token；160.3 MB 对应 320.6 个）也都对上。
+- 文字说法与出处：约 70 条（来源与阅读范围、方法四步、研究设计、预算口径、各 E-CD 条目、作者局限、“本项目已引用说法的逐条核对”里关于论文本身的说法、“与当前项目的关系”里关于论文本身的说法）。除下面列出的以外，页标记与章节都对得上。
+- 主代理抽查没有覆盖的 LLaVA-1.5-7B 表格行（128 档 9 行、64 档 9 行、32 档 6 行）：全部对上，没有发现数字错误。
+
+### 改了哪些（改前 → 改后；依据）
+
+1. 「来源与阅读范围」版本一条与 E-CD-22：改前“全文没有出现 NeurIPS 或其他会议名” → 改后“全文没有写本文被接收；NeurIPS 字样只在参考文献 Cai 等 2024a 的 workshop 名里出现一次；表和参考文献里有别人论文的 ECCV、CVPR 等”。依据：全文搜索 “NeurIPS” 只命中解析全文第 833 行（p.10）；表 1–9 方法名旁写有 ECCV24、CVPR25、COLING25、ICML25。本文自己的接收状态仍是“p.1 写 Preprint. Under review.，无法核实 NeurIPS 2025”，这一结论不变。
+2. 「结果及不确定性」里“其他模型”一节的 InternVL3-8B 一条：改前“CDPruner 只比 FastV 高 0.5～6.2 个百分点” → 改后“0.5～3.0”。依据：Table 8（p.20）Rel. 92.9 对 92.4、83.9 对 80.9；正文 p.19 C.2 写 “3% higher than the second-best FastV”。6.2 在 Table 8 里找不到来源。
+3. 「预算口径」第一条、「与本项目的精确对照」预算口径一行、「本项目已引用说法的核对」里 EXP-0022 / DEC-0038 一行：改前把 DART、DivPrune 也写成“在 LLM 之前剪”并引 p.4 Fig. 2 → 改后只有 PruMerge+、TRIM、VisionZip 被论文归入“在语言模型之前剪”（p.3 §2 第二组），CDPruner 自己剪在 LLM 之前（p.4 Fig. 2），DART、DivPrune 剪在哪里全文未见。依据：p.3 §2 原文只写第二组 [Shang, Yang, Song] “prunes before the language model”，第三组 [Wen 2025b (DART), Alvar (DivPrune), Jeddi] 只说按特征相似度剪；附录 B.3.3（p.18）对 DART、DivPrune 的描述也没有写位置。
+4. 来源与阅读范围的作者一条：改前“Qizhe Zhang（一作…）” → 改后“署名第一位…全文没有写‘第一作者’字样”。依据：p.1 作者栏与脚注 “Work done during an internship at ByteDance”。
+5. 「本项目已引用说法的核对」DEC-0016 一节“对 LLaVA，相关性来自 CLIP 文本编码器”：补注这是推断（AI）。依据：p.5 §3.3 为“带配套文本编码器”一类点名引用的是 LLaVA（Liu 2023）、LLaVA-NeXT（Liu 2024b）、LLaVA-OneVision（Li 2024a），LLaVA-1.5（Liu 2024a）不在其中；LLaVA-1.5 用 CLIP 见 p.15 B.1.1。笔记其他处“对 LLaVA 用 CLIP”同此（「方法与贡献」里已标 AI，没有改）。
+6. 「本项目已引用说法的核对」里 DEC-0046 / CL-15 一行“全文没有区域或框”：改后“方法里没有区域或框的机制”。依据：“regions” 在 Fig. 1 图注（p.2）和附录 D（p.21）里出现，但只是泛指图中区域。
+
+### 还读不清的
+
+- 全部公式（式 1–17、C.4 的两个式子）在解析全文里是图片块，条件核的确切写法、主实验相当于哪个 θ，只能靠文字推断，要对照 PDF。θ = 0 等于“不加相关性”、主实验 θ = 2/3 的说法是推断，没有改。
+- Fig. 4 的曲线数值读不出。
+- Table 1：TRIM-64 的 GQA 解析为 56.6，换成 56.1 时 Acc.、Rel. 也对得上，区分不了（笔记已写，维持）。
+- Table 2、6、7：列错位；我只核对了 Rel. 和正文引用的数字，没有核对它们的每一格。Table 7（LLaVA-NeXT-13B）上界那一行在解析里被标成 “LLaVA-NeXT-7B”（p.20），可能是解析或原文笔误；Table 7 里 FastV 的一个数字解析为 “669.8”（明显是解析错误）。笔记没有引用这两处。
+- “一作”之类署名角色、MinerU 版本号、PDF 的大小与校验和、下载经过，是笔记里关于文件来源的说法，解析全文里没有，我没有核对（PDF 校验和只有一个旁证：解析全文里的块编号 `doc:2a46e68` 与笔记写的 PDF SHA-256 前 7 位相同）。
+
+### (a) 剪枝之后留下的视觉 token 的位置编号怎么处理
+
+全文未见。这篇论文没有讲留下的 token 保留原始位置编号、重新连续编号或别的做法。能找到的相关文字只有：p.4 §3.1 与 Fig. 2 说留下的子集 H_v* 与文本 token 一起送进语言模型；p.15 Algorithm 1 返回的是被选中的集合 S（贪心的选取顺序），没有写之后是否按原顺序排回；p.16 附录 B.1.2 提到 InternVL3 自带 “Variable Visual Position Encoding”，这是对模型的介绍，不是对剪枝后位置的处理。
+
+### (b) 有没有评测定位类任务
+
+全文未见。评测只有 14 个图像基准（VQAv2、GQA、VizWiz、ScienceQA-IMG、HallBench、POPE、MME、MMBench、MMBench-CN、MM-Vet、TextVQA、ChartQA、AI2D、OCRBench）和 4 个视频基准（MLVU、MVBench、LongVideoBench、Video-MME）（p.6 §4.1；p.16–17 附录 B.2）。没有 RefCOCO / RefCOCO+ / RefCOCOg，没有输出框坐标，没有目标检测或 visual grounding 的结果。POPE 是“有没有某物”的是非题（p.16），Fig. 3 与 Fig. 5（p.5、p.22）只是相关性热图。附录 B.1.2（p.15）介绍 Qwen2.5-VL 时提到它擅长目标检测，这是模型介绍，没有对应的评测。
+
+### 结论
+
+笔记整体可靠：LLaVA-1.5-7B 的 Table 1 数字、对照方法数字、Table 10、效率表都没有数字错误。改动共 6 处，其中一处是明确的数字错误（InternVL3 的 6.2），一处是明确的事实错误（“全文没有出现 NeurIPS 或其他会议名”），一处是预算口径里把 DART、DivPrune 的位置说过头了，其余是措辞收紧。

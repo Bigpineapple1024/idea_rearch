@@ -8,7 +8,7 @@
 
 - 标题：VScan: Rethinking Visual Token Reduction for Efficient Large Vision-Language Models（p.1）。
 - 作者/机构：Ce Zhang（卡内基梅隆大学；工作在腾讯 AI Lab 实习期间完成）、Kaixin Ma、Tianqing Fang、Wenhao Yu、Hongming Zhang、Zhisong Zhang、Haitao Mi、Dong Yu（腾讯 AI Lab）（p.1）。
-- 版本：arXiv:2505.22654v3 [cs.CV]，2026-01-30（p.1）。每页页眉写 Published in Transactions on Machine Learning Research (01/2026)；p.1 给出 OpenReview 评审页 https://openreview.net/forum?id=KZYhyilFnt（未访问）。全文没有出现 ICML（见「本项目引用过的说法」第 3 条）。v1、v2 与 v3 的差别未知（UN）。
+- 版本：arXiv:2505.22654v3 [cs.CV]，2026-01-30（p.1）。每页页眉写 Published in Transactions on Machine Learning Research (01/2026)；p.1 给出 OpenReview 评审页 https://openreview.net/forum?id=KZYhyilFnt（未访问）。全文没有把 VScan 本身说成 ICML 论文；“ICML”只出现在对照方法 SparseVLM 的发表地标注（p.9 Table 2 的 ICML'25）和参考文献 [71]（p.17）（见「本项目引用过的说法」第 3 条）（复核时改正：原写“全文没有出现 ICML”，与 p.9、p.17 的 SparseVLM 标注不符）。v1、v2 与 v3 的差别未知（UN）。
 - PDF：`papers/VScan-arxiv-2505.22654.pdf`，24 页，10,737,611 字节，SHA-256 `da9c58244a7145c9e648d9dd101f35fae8a7d2846f1f083e10b7682635c42f50`（据[论文笔记 README](README.md)“2026-10-29 下载的十一篇 PDF 的登记”；本次没有打开 PDF，也没有重算）。2026-10-29 经用户许可下载。能访问原文不等于获得再分发许可，全文不提交 Git。
 - 解析全文：`literature/processed/PAPER-0014/VScan-arxiv-2505.22654.md`（MinerU 4.0.12，flash 档，只有文本），92,649 字节，SHA-256 `11656ff42e9a25cd906e4be310fae2cd8014c984ceb565870b53a31255fb586d`（本次用 Get-FileHash 重算，前 16 位与 [processed README](../../literature/processed/README.md) 的登记一致）。PAPER-0014 目录里没有单独的 README，来源与版本以上面两个 README 为准。
 - 解析的缺口：
@@ -47,7 +47,7 @@
 - **模型**：LLaVA-1.5-7B（每张图 576 个视觉 token）、LLaVA-NeXT-7B（最多 2,880 个）、Video-LLaVA-7B（8 帧 2,048 个）、Qwen-2.5-VL 3B / 7B / 32B（4～16,384 个）（p.7–8 §5.1）。
 - **benchmark**：图像 9 个（GQA、ScienceQA、VQAv2、TextVQA、VizWiz、MMBench、MMBench-CN、MME、POPE）；指代定位 3 个（RefCOCO、RefCOCO+、RefCOCOg，IoU ≥ 0.5 算对）；视频 4 个（TGIF、MSVD、MSRVTT、ActivityNet，用 gpt-3.5-turbo 判对错并打 0–5 分）（p.8 §5.1；p.23 B.4）。附录另有 DocVQA、InfoVQA、MME-RealWorld、MM-Vet、MMMU（p.19 A.3）。
   - 图像 benchmark 用的哪个划分（如 VQAv2 是 test-dev 还是 val、GQA 是哪个划分）、POPE 报的是哪个指标，全文未见（UN）。p.8 说评测协议与提示见 B.4，但 B.4 只写了视频的 GPT 评分（p.23）。
-- **对照**：ToMe、FastV、SparseVLM、HiRED、PyramidDrop（下称 PDrop）、VisionZip（p.8）。LLaVA-1.5 与 LLaVA-NeXT 上，对照数字直接抄各自原论文，除非另有说明（p.8）；Qwen-2.5-VL、Video-LLaVA、DocVQA/InfoVQA 上的 FastV、PDrop、VisionZip 是作者重跑的，表中标 †（p.10 Table 4；p.11 Table 5；p.20 Table A2；p.21 B.1）。
+- **对照**：ToMe、FastV、SparseVLM、HiRED、PyramidDrop（下称 PDrop）、VisionZip（p.8）。LLaVA-1.5 与 LLaVA-NeXT 上，对照数字直接抄各自原论文，除非另有说明（p.8）；Qwen-2.5-VL 指代定位（Table 4）与 Video-LLaVA（Table 5）上的 FastV、PDrop、VisionZip 是作者重跑的，表中标 †；DocVQA/InfoVQA（Table A2）只有 FastV、PDrop 标 †，表里没有 VisionZip（p.10 Table 4；p.11 Table 5；p.20 Table A2；p.21 B.1，B.1 只点名 FastV 与 PyramidDrop 的重跑）（复核时改正：原写“Qwen-2.5-VL、Video-LLaVA、DocVQA/InfoVQA 上的 FastV、PDrop、VisionZip 是作者重跑的”，依据 p.20 Table A2 没有 VisionZip 行、p.21 B.1 只写 FastV 与 PyramidDrop）。
 - **没有比较的方法**：DivPrune、CDPruner 既没比较、也不在参考文献里；参考文献 [60]（题为 Stop looking for important tokens…，即 DART 的论文，AI 据题目判断）只在相关工作里被引用（p.1、p.3），没有比较；FasterVLM [70] 是全局扫描和代码的来源（p.6；p.24 §C），也没有作为对照（通读 p.1–24，参考文献 p.12–17）。
 - **实现**：按各模型代码库默认的推理设置（p.8）。硬件型号、batch 大小、解码方式、随机种子、重复次数，全文未见（UN）。所有表格都是单个数字，没有方差或区间。
 
@@ -70,7 +70,7 @@
 
 ### LLaVA-1.5-7B 主表（Table 2，p.9）
 
-档位是 32 层平均保留的视觉 token 数；FLOPs 取各档标题里的数。“-”是原表空缺。平均 = 各 benchmark 相对 vanilla 的百分比再取平均。原表用加粗、下划线标第一、第二，解析后看不到。除 VScan 外，各行抄自原论文（p.8）。
+档位是 32 层平均保留的视觉 token 数；FLOPs 取各档标题里的数。“-”是原表空缺。平均 = 各 benchmark 相对 vanilla 的百分比再取平均（AI：原文只写“性能保留百分比”（p.8），平均的具体算法全文未见；按此读法用表中数字复算，64 档 VScan 约 96.75%、与表中 96.7% 相符）。原表用加粗、下划线标第一、第二，解析后看不到。除 VScan 外，各行抄自原论文（p.8）。
 
 | 档位 | 方法 | GQA | MMB | MMB-CN | MME | POPE | SQA-IMG | VQAv2 | TextVQA | VizWiz | 平均 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -173,7 +173,7 @@
 | E-VS-4 | DE | LLM 段：第 k 层（LLaVA 16、Qwen-2.5-VL-7B 14）最后一个指令 token 对视觉 token 的注意力，各头平均，留 R2 = 33.3%；R1 随预算调 | p.7 §4.2；p.8 §5.1 | 题目只经这一步进入选择 |
 | E-VS-5 | DE | 预算按 32 层平均；64 档 = 进 LLM 96 个、第 16 层起 32 个；FastV† 按 (100%×2 + 5.2%×30)/32 = 11.1% 对齐 | p.8 §5.2；p.21 B.1 | 128、192 档的 192→64、288→96 是推算（AI）；[CLS] 是否进 LLM 未见 |
 | E-VS-6 | SC | LLaVA-1.5 主表里 FastV、SparseVLM 的数字按最终 token 数报告，比 VScan 占便宜；对照数字直接抄原论文 | p.8 §5.1；p.21 B.1 | 作者说法。旁证（AI）：本项目同口径实测的原版 FastV（K = 2、留 30 个）POPE 36.2（[FastV 源码核验笔记](PAPER-0004_FastV_源码核验.md) E-FV-C10），低于 Table 2 抄录的 48.0，方向相符 |
-| E-VS-7 | DE | LLaVA-1.5-7B 主表：9 项 × 三档 × 六个对照；64 档 VScan 平均 96.7%、VisionZip 92.7% | p.9 Table 2 | 单次，无区间；划分与 POPE 指标未写 |
+| E-VS-7 | DE | LLaVA-1.5-7B 主表：9 项 × 三档 × 五个对照（ToMe、FastV、SparseVLM、PDrop、VisionZip；HiRED 只在 Table 3）（复核时改正：原写“六个对照”，依据 p.9 Table 2 每档只有 5 个对照行；“6 个”是全文对照方法总数，p.8）；64 档 VScan 平均 96.7%、VisionZip 92.7% | p.9 Table 2 | 单次，无区间；划分与 POPE 指标未写 |
 | E-VS-8 | AI | 平均百分比在不同方法上按不同的 benchmark 集合算；只按共同的 7 项，64 档 VScan 95.9% 对 VisionZip 92.7%（差 3.2，原文说 4.0） | p.9 Table 2；p.8 §5.2 | 本笔记的计算 |
 | E-VS-9 | AI | 对照数字出处：FastV 行 = VisionZip CVPR 版 Table 1；VisionZip 192 档 VQAv2 77.4 ≠ 原表 76.8（77.4 是 VisionZip‡ 的），128 档 MME 1763 ≠ 1761.7；SparseVLM 行可能混用两个版本；PDrop 行出处不明 | p.9 Table 2；PAPER-0006 解析 p.5 Table 1；PAPER-0005 解析 p.6 Table 1 | 只核对了只读导出中的两份解析表 |
 | E-VS-10 | DE | 剪在哪一层：GQA，同一层平均（R1 的 75%）下，第 16、20 层最好，第 2 层最多低 1.9；第 24 层起全不留只低 0.5 / 0.3 | p.7 §4.2、Table 1 与页脚 | 解析错位，行列对应是推断（AI）；单次；只用了全局扫描；预算宽松；没有 k < 2 |
@@ -189,7 +189,7 @@
 | E-VS-20 | DE | 其他模型：NeXT-7B 320 档 95.4%（Table 3）；Qwen-2.5-VL-7B 指代 25% 档 80.7%（Table 4）；Video-LLaVA 剪 75%（Table 5）；Qwen 3B / 7B / 32B（图 5、Table A5–A7） | p.9–11；p.20–22 | A6、A7 至少两格不是 VScan 最好（AI，按拆数读法） |
 | E-VS-21 | DE | 代码与许可：摘要给 GitHub 链接；§5.1 仍写“录用后公开”；底座 PDrop（MIT）、FasterVLM（Apache 2.0）；VScan 代码自身的许可全文未见 | p.1；p.8；p.24 §C | 代码未下载、未核验（需许可） |
 | E-VS-22 | DE / SC | 作者自述局限：效率与准确率要取舍；激进剪枝在需要细粒度理解或组合推理的难题上可能变差 | p.12 §6；p.24 §D | 没有具体的失败分析或数字 |
-| E-VS-23 | DE | 全文没有：DivPrune、CDPruner 的比较或引用（DART 的论文只在相关工作中引用）；按题型的分析或路由；k < 2；合并的消融；方差、种子、区间；图像 benchmark 的划分、提示与 POPE 指标；硬件 | 全文 p.1–24 通读；参考文献 p.12–17 | 通读判断 |
+| E-VS-23 | DE | 全文没有：DivPrune、CDPruner 的比较或引用（DART 的论文只在相关工作中引用）；按题型分配 R1、R2、k 的做法（Study 3 只在 GQA 与 POPE 两个 benchmark 之间比较预测稳定的层，p.5–6；复核时改正：原写“按题型的分析或路由”，过宽）；k < 2；合并的消融；方差、种子、区间；图像 benchmark 的划分、提示与 POPE 指标；硬件 | 全文 p.1–24 通读；参考文献 p.12–17 | 通读判断 |
 | E-VS-24 | DE | 文字上的不一致：128 / 192 档的降幅写反；Table 6 表注写 reduction rate；“录用后公开代码”与摘要的链接并存；p.8 说协议见 B.4，B.4 只有视频 | p.8；p.11；p.1；p.23 | 不影响主结论（AI） |
 | E-VS-25 | UN | 保留 token 的位置编号与顺序；[CLS] 是否进 LLM；合并所用特征；窗口大小；PDrop† 的日程；Qwen 上 VisionZip† 的做法；vanilla 是否重跑 | — | 需要代码 |
 
@@ -209,7 +209,7 @@
 - **文字上的不一致**：见 E-VS-24。
 - **效率口径**：FLOPs 只算 LLM 层的视觉 token，不含扫描与合并的开销（E-VS-16）；时延只在 POPE 上测，硬件不明（E-VS-15）；同 FLOPs 下 VScan 的预填充比 VisionZip 慢 2.6%～4.2%（E-VS-17）。
 - **多轮对话**：只有文字说明，没有实验（p.20 A.5）。
-- **作者自述的局限**（p.12 §6；p.24 §D，两处文字相同）：效率与准确率之间有取舍；很激进的剪枝仍会扭曲视觉信息，在需要细粒度理解或组合推理的难题上变差。没有给具体的失败例子或数字（AI）。
+- **作者自述的局限**（p.12 §6；p.24 §D，两处文字几乎相同：p.12 写 One potential limitation，p.24 写 One key limitation）（复核时改正：原写“两处文字相同”）：效率与准确率之间有取舍；很激进的剪枝仍会扭曲视觉信息，在需要细粒度理解或组合推理的难题上变差。没有给具体的失败例子或数字（AI）。
 - **伦理**：只用公开的 benchmark 和模型；p.24 的 Broader Impacts 只谈效率带来的应用，没有讨论风险（AI）。
 - **代码与许可**：摘要给出 https://github.com/Tencent/SelfEvolvingAgent/tree/main/VScan（p.1）；§5.1 还留着“录用后公开代码”（p.8）。作者说代码基于 PyramidDrop（MIT）和 FasterVLM（Apache 2.0）（p.24 §C）；VScan 代码本身的许可，全文未见（UN）。作者列出的模型许可：LLaVA-1.5 为 LLaMA 2 Community License，LLaVA-NeXT、Qwen-2.5-VL、Video-LLaVA 为 Apache 2.0（p.24）。代码未下载、未核验（需许可），链接是否有效、代码与论文是否一致都未知（UN）。
 - **可复现等级**：未知（代码未取得）。只凭论文文字不能完整重写：窗口大小、合并用的特征、位置编号等没写（E-VS-25）。
@@ -222,7 +222,7 @@
 | --- | --- | --- | --- | --- |
 | 1 | “VScan 在编码器里扫描合并，再在 LLM 中间层按文本相关性剪”（[IDEA-0007](../IDEA-0007_一层全看再按编码器排序.md) 第 70 行；MODE_C-0001 第 43 行、MODE_C-0002 第 75 行的 S-06 也这样写） | **成立**，措辞宜改 | p.2 §1、图 1(c)；p.6–7 §4.1–4.2；p.8 §5.1 | 扫描与合并都在进 LLM 之前：按编码器第 6 层（局部、分窗口）与倒数第二层（全局）的 [CLS] 注意力各选一半，未选的并入最相似的已选 token。但编码器本身跑完了全部 token，没有在编码器内部丢 token（AI），所以“在编码器里”宜写成“在视觉编码阶段（进 LLM 之前）”。“中间层”是 LLaVA 的第 16 层；“文本相关性”是最后一个指令 token 的注意力，各头平均，留 1/3 |
 | 2 | “VScan 也指出早层偏向序列后部的 token”（IDEA-0007 第 19 行，用来支持“FastV 第 0 层的注意力有位置偏差”） | **成立**，有限定 | p.2 §1；p.4 §3 Study 1；p.5 图 3 左 | 原文明说 LLM 早层对序列后部的视觉 token 有很强的位置偏差（p.2），Study 1 说第 2、8 层留下的 token 集中在图像底部，因为展平后底部离指令 token 最近（p.4）。限定：证据只有一张图（POPE、LLaVA-1.5-7B、剪 50%），没有数字；看的是第 2、8、16 层，没有第 0、1 层；原因解释（最后一个 token 主要看近处）是作者的推测（SC）。所以它支持“早层有这种偏差”，不能直接当作第 0 层的证据；第 0、1 层的证据要用本项目自己的 F16、EXP-0024 |
-| 3 | “VScan（ICML 2025）”（MODE_C-0001、MODE_C-0002 第 75 行的“ICML 2025 / TMLR 2026”；[version-evolution](../version-evolution.md) 第 14 行 DEC-0008；归档的 SOP v1 第 111 行；专题分析/所有论文在baseline骨架的改进内容 第 59 行） | **全文未见** | p.1 | v3 第 1 页只写 TMLR（01/2026）和 OpenReview 评审页，全文没有 ICML。有没有 ICML 2025 版本，离线无法核对（UN）。建议改写为“TMLR 2026（arXiv 2505.22654v3）”，除非另有核实 |
+| 3 | “VScan（ICML 2025）”（MODE_C-0001、MODE_C-0002 第 75 行的“ICML 2025 / TMLR 2026”；[version-evolution](../version-evolution.md) 第 14 行 DEC-0008；归档的 SOP v1 第 111 行；专题分析/所有论文在baseline骨架的改进内容 第 59 行） | **全文未见** | p.1 | v3 第 1 页只写 TMLR（01/2026）和 OpenReview 评审页，全文没有把 VScan 说成 ICML（ICML 只出现在 SparseVLM 的发表地标注和参考文献 [71]，p.9、p.17）（复核时改正：原写“全文没有 ICML”）。有没有 ICML 2025 版本，离线无法核对（UN）。建议改写为“TMLR 2026（arXiv 2505.22654v3）”，除非另有核实 |
 | 4 | “VisionZip + LLM 内文本引导剪枝已被 VScan 实现”（DEC-0008；MODE_C-0001 第 115、128、133 行的 C4；专题分析/所有论文在baseline骨架的改进内容 第 59 行） | **部分成立** | p.6–7 §4.1–4.2；p.11 Table 6(b) | “编码阶段压缩 + LLM 内按题目再剪”这一类组合确实已有。但 VScan 的第一段不是 VisionZip：全局扫描用的是同一种 [CLS] 分数，另加浅层分窗口的局部扫描，并且把未选 token 并进已选 token，没有单独的上下文 token；第二段是 FastV 式的注意力，但在第 16 层而不是第 2 层。最接近“VisionZip + 中间层剪”的是 Table 6(b) 的“只全局”一行（GQA 57.5、MME 1665） |
 | 5 | “只有按样本或任务自适应分配两部分预算可能还有空间”（MODE_C-0001 第 115 行 C4；IDEA-0001 第 17 行） | **与原文一致** | p.8 §5.1 | VScan 对所有样本固定 R2 = 33.3%、k = 16，只按目标预算调 R1，没有按样本或题型分配（DE）。按题型分配仍要查 CLASP、VIP-Router 等（见各自笔记） |
 | 6 | S-06 把 VScan 的模型写成“LLaVA-1.5 / NeXT”（MODE_C-0001 第 43 行、MODE_C-0002 第 75 行） | **部分成立**（不完整） | p.7–8 §5.1 | 还有 Qwen-2.5-VL 3B / 7B / 32B 和 Video-LLaVA-7B |
@@ -262,7 +262,7 @@
 
 ### 可辩护的差别（AI，附理由）
 
-1. **按题型路由**：VScan 对所有题用同一组 R1、R2、k（p.8），没有题型分析（E-VS-23）。本项目按题目开头分流，并有按答案类型的证据（F38、F39 等，见 IDEA-0003）。
+1. **按题型路由**：VScan 对所有题用同一组 R1、R2、k（p.8），没有按题型分配（Study 3 只比较了 GQA 与 POPE 两个 benchmark，p.5–6；E-VS-23）（复核时改正：原写“没有题型分析”）。本项目按题目开头分流，并有按答案类型的证据（F38、F39 等，见 IDEA-0003）。
 2. **题目在 LLM 之前就进入选择**：VScan 的第一段与题目无关，第二段只在第 16 层通过注意力用到题目。本项目的题目查询在输入层词向量空间直接算余弦。VScan 只在构造对抗子集时用过 CLIP 的“按题目选 token”（A.1，p.18），那不是方法的一部分，也没有全集上的结果。
 3. **K = 1**：VScan 只测了 k = 2～24，并主张避开早层（p.6）；本项目 K = 1 在 64 档好于 K = 2（F51）。理由：两者条件不同。VScan 的 Table 1 先用全局扫描减到 288 / 144 个，层平均 216 / 108 个，是宽松预算；本项目从 576 个直接到层平均 64。而且在层平均 64 下只在 LLM 内剪时，最多只能让前 3 层看全部 576 个（第 3 层起留 11 个；4 层就超过 64）；想在第 16 层剪，必须先在 LLM 之前减到 128 个以内（AI 计算）。所以 VScan 的“晚剪”与本项目的 K = 1 不在同一个设计空间里，不矛盾，但论文中要正面说明。
 4. **评测方式**：本项目的对照都自己跑，给按图像重抽的区间，确认集预注册；VScan 在 LLaVA-1.5 上抄对照数字、单次、无区间（E-VS-6、E-VS-9、E-VS-23）。这是方法学上的区别，不是方法贡献。
@@ -396,3 +396,40 @@ unresolved_questions:
 ## 主代理抽查（2026-10-31）
 
 - 写笔记的工作流（2026-10-30）原定由另一个子代理逐条复核，复核因用量上限没有完成；2026-10-31 用户睡觉期间不开子代理（DEC-0063），第二人复核留到之后。本笔记目前只经过主代理的抽查：VScan 的 58.3 / 1698（Table 2 的 VScan 行）与 Table 6(a) 的 1651、1720 都在解析全文里找到。没有抽查到的数字以 PDF 为准。
+
+## 第二人复核（2026-10-31）
+
+复核方式：另一个子代理从头到尾读了解析全文（p.1–24，含参考文献与附录），逐条对照笔记；只读，没有打开 PDF，没有运行代码，没有联网。笔记里关于本项目自己实验的数字没有核对。
+
+### 核对了多少处
+
+约 280 处，包括：Table 2 全部 18 行 × 10 列逐格（含 64 / 128 / 192 档三组差值与 7 项重算的平均）；Table 3、4、5、7 的主要数字；Table 6(a)(b)(c) 全部；Table 1 的读法（与正文“第 2 层最多低 1.9”相符）；Table A1–A4 全部，Table A5–A7 的拆数和两处“不是 VScan 最好”；预算口径（96 → 32 的算式、(100%×2 + 5.2%×30)/32 = 11.1%、R1 / R2 推算、KV 缓存反推）；FLOPs 复算（3.817 / 0.416 / 0.4155 / 0.421 T）；各节页码和作者、版本、许可、局限的说法；“本项目引用过的说法”6 行与“与本项目的精确对照”里关于 VScan 的说法。解析全文的字节数 92,649 与 SHA-256 前 16 位（11656ff42e9a25cd）已重算，与笔记一致。另外对照了只读导出中 VisionZip（PAPER-0006 解析 p.5 Table 1）与 SparseVLM（PAPER-0005 解析 p.6 Table 1）的表格，“对照数字从哪里来”一节的逐数结论全部成立。
+
+### 改了哪些
+
+| # | 位置 | 改前 | 改后 | 依据 |
+| --- | --- | --- | --- | --- |
+| 1 | 来源与阅读范围「版本」；核对表第 3 行 | 全文没有出现 ICML | 全文没有把 VScan 说成 ICML；“ICML”只出现在 SparseVLM 的发表地标注和参考文献 [71] | p.9 Table 2（SparseVLM [71] ICML'25）；p.17 参考文献 [71]。原句字面不实，核对结论“全文未见（VScan 为 ICML）”不变 |
+| 2 | 研究设计「对照」 | Qwen、Video-LLaVA、DocVQA/InfoVQA 上的 FastV、PDrop、VisionZip 都是作者重跑的 | Table 4、5 上三者重跑；Table A2 只有 FastV†、PDrop†，没有 VisionZip；B.1 只点名 FastV 与 PyramidDrop | p.20 Table A2；p.21 B.1；p.10 Table 4；p.11 Table 5 |
+| 3 | E-VS-7 | 六个对照 | 五个对照（ToMe、FastV、SparseVLM、PDrop、VisionZip） | p.9 Table 2 每档 5 行；6 个是全文对照总数（p.8，HiRED 只在 Table 3） |
+| 4 | E-VS-23；“可辩护的差别”第 1 条 | 全文没有按题型的分析或路由 / 没有题型分析 | 没有按题型分配 R1、R2、k；Study 3 在 GQA 与 POPE 之间比较了预测稳定的层 | p.5–6 Study 3 |
+| 5 | 限制与替代解释「作者自述的局限」 | 两处文字相同 | 几乎相同：p.12 写 One potential limitation，p.24 写 One key limitation | p.12 §6；p.24 §D |
+| 6 | Table 2 说明 | 平均 = 各 benchmark 相对 vanilla 的百分比再取平均（当作原文说法） | 标为 AI：原文只写“性能保留百分比”，平均算法全文未见；复算相符 | p.8 §5.2；Table 2 |
+
+其余数字、页码、DE / SC 标注逐条核对后没有发现错误；笔记里已标 AI 的推断（FLOPs 复算、KV 反推、7 项重算的 95.9 / 98.0 / 98.7、VisionZip 慢 2.6%～4.2%、“正文 1.0% 与 1.2% 写反”）我独立复算后都成立。Table A6、A7 不是 VScan 最好的格子，我读了全部格子，恰好是笔记列出的两格（3B、50% 档的 MMB-CN 与 MME）。
+
+### 还有哪些读不清
+
+- Table 1 与 Table 6 的行列对应仍是推断；与正文数字（第 2 层最多低 1.9；只留局部 / 只留全局低 0.3 / 0.8；表 6(c) 的 l = 2、l = 23 的 GQA 57.1、57.3）一致，但没有 PDF 对照。
+- Table A5–A7 同格三个数连在一起，拆法是推断（按两位小数或四位整数）；拆开后与 A5 全是 VScan 最好、A6 和 A7 各有一格例外的说法自洽。
+- 式 1–5 与 B.2 的 FLOPs 公式只剩占位；编码器一段各注意力头怎么合并仍读不到（p.7 写 “similarly average … across heads”，可能暗示同样取平均，但公式缺失，不作结论）。
+- 图 1–5、A1、A2 里的数字看不到。
+- 本次没有核对 PDF 原件；以 PDF 为准的提醒保留。
+
+### (a) 保留的视觉 token 的位置编号（position ids / RoPE）
+
+全文未见。逐词检索 position、RoPE、rotary、position id、interpolat：“position”只出现在“position bias”（位置偏差，p.2、p.4、p.6、p.7）和“compositional”里，讲的是哪些 token 被选中，没有讲剪枝或合并之后留下的 token 用什么位置编号（保留原始编号、重新连续编号或别的）。p.4 Study 1 只说展平后图像底部的 token 离指令 token 最近。这与笔记 E-VS-25 的“全文未见”一致。
+
+### (b) 定位类任务（RefCOCO 一类、输出框坐标、visual grounding）
+
+有。DE：p.8 §5.1 列了 RefCOCO、RefCOCO+、RefCOCOg，框与真值的 IoU ≥ 0.5 算对；只在 Qwen-2.5-VL-7B 上做（p.10 Table 4，val / testA / testB 与 val / test 共 8 个子集加平均）。平均保留 75% / 50% / 25% 时，VScan 为 98.3% / 96.1% / 80.7%，VisionZip† 97.9% / 89.7% / 67.8%，PDrop† 97.2% / 85.1% / 50.4%，FastV† 94.8% / 81.2% / 48.5%（对照为作者重跑，标 †）。SC：p.10 作者说定位比一般理解任务需要更多 token，75% 的剪枝使 FastV 与 PDrop 的表现约减半，VScan 仍保留 80.7%。p.18–19 A.2 与图 A2 有 RefCOCO 的定性例子（预测框与保留的 token 图），图中内容解析看不到。LLaVA-1.5 上没有定位评测（全文未见）。单次、无区间；原始分数里 VScan 的 RefCOCO val 为 88.75 / 86.78 / 74.32（对应 75% / 50% / 25% 档），未剪枝为 89.45（p.10 Table 4）。

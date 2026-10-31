@@ -12,7 +12,7 @@
 - PDF：`papers/CoverPruner-arxiv-2609.03158.pdf`，20 页，6,927,504 字节，SHA-256 `b2f40481bc02b3ae6b97a22651027b09aaee6eae7b32759233c2798fffb724bf`；2026-10-29 经用户许可从 https://arxiv.org/pdf/2609.03158 下载（[论文笔记 README](README.md) 的登记）。本次没有读 PDF，也没有复核它的校验和。能访问原文不等于获得再分发许可，全文不提交 Git。
 - 解析全文：`literature/processed/PAPER-0011/CoverPruner-arxiv-2609.03158.md`，MinerU 4.0.12 flash 档，20 个页标记、787 行、68,299 字节；SHA-256 `b453cadd441f5d0991d0ec3bd5dad6e26a90116d12fe4a0177637c69b77f92b6`（本次用 Get-FileHash 计算，与 [processed/README](../../literature/processed/README.md) 登记的前 16 位一致）。PAPER-0011 目录里只有这一个文件，没有单独的 README，来源与版本见上面两个 README。下文页码按解析全文的页标记。
 - 解析的限制：式 1–6 都是“Formula block”，没有文字，下文按正文与附录 B 的 Algorithm 1 复述；Table 3（Qwen2.5-VL）被拆成图片块和零散数字，行列对应读不清，单项数字不引用；Table 11 的两行在解析中交错（E-CP-13）；Fig. 1–7 只有图注（Fig. 3 里 192 档的曲线读不到）；表中的加粗丢失。Table 1、2、4–10 是对齐的文本，Table 1 按 Acc. 复算核对过（E-CP-7）。按 processed/README 的规则，数字以 PDF 为准，本笔记的数字待对照 PDF 原表。
-- 代码与许可：全文没有给出代码仓库地址，唯一的链接是 p.1 指向本文 arXiv 页面的那一个；没有许可说明（全文未见）。代码未下载、未核验（需许可）。致谢写 NSF IIS-2223768 与 DRL-2507128（p.9）。
+- 代码与许可：全文没有给出代码仓库地址（复核时改正：原写“唯一的链接是 p.1 指向本文 arXiv 页面的那一个”；实际 p.1 页边的 arXiv 编号链接指向本文页面，参考文献 p.9–11 里另有其他论文的 arXiv / OpenReview 链接，只是没有本文的代码地址）；没有许可说明（全文未见）。代码未下载、未核验（需许可）。致谢写 NSF IIS-2223768 与 DRL-2507128（p.9）。
 - 实际阅读：解析全文从头到尾读完：正文 p.1–9（§1–§7、致谢），参考文献 p.9–11，附录 p.12–20（A 实验设置与基准，B 算法，C 13B 模型，D 定性图，E 补充消融）。为核对基线数字与预算口径，另读了三份解析全文的个别段落：VisionZip（PAPER-0006）p.5 Table 1；MMTok（PAPER-0012）p.3–6；DivPrune（PAPER-0010）p.8 Table 3 一段。都是 flash 档，只作旁证。
 - 标签：SC = 作者主张，DE = 解析全文里直接写着的设置、表格或数字，AI = 本笔记的推断，UN = 未知 / 全文没有。DE 不代表我们复现过。
 
@@ -32,7 +32,7 @@
 
 - **剪枝位置**：在 LLM 之前（解码器的输入处）。探针借用第 0 层的参数，但只在剪之前算一次 Q·K，不让第 0 层处理全部 576 个；所有解码层看到的都是 m 个视觉 token（p.3 §3.1；p.4）。
 - **免训练**：是。不改模型，不加任何训练过的部件（p.1 摘要；p.8–9 §6）；同一组设置用于所有模型、基准与预算（p.1–2 §1）。
-- **用不用题目文字**：用，只经由第一层注意力探针，作为需求权重；不直接排序，也不决定预算（p.4）。
+- **用不用题目文字**：用，只经由第一层注意力探针，作为需求权重；不直接排序，也不改变总个数 m（p.4）（复核时改正：原写“也不决定预算”；p.4 写 τ 越大，越把“representational budget”（名额）往与题目相关的区域倾斜，所以题目权重会影响名额怎么分，只是不改总数）。
 - **默认配置**：去均值的相似度、第一层注意力相关性 τ = 0.3、求和聚合（p.5 §4.1；p.19 附录 E）。
 - **未写明（UN）**：探针里是否加 RoPE；softmax 在哪些 key 上归一化（只在视觉 token 上，还是连同系统提示与文本）；“用户指令”是否包括回答格式的提示语；选中 token 的位置编号；LLaVA-NeXT 多张子图的预算怎么分（Table 8 说相似度在 2,880 个 token 的源序列上算，[AI] 像是全图一起选）。
 - **作者列出的三点贡献**（SC，p.2）：①把剪枝重新表述为 RCM，判据从“留下者重不重要”换成“在目标 VLM 的表示空间里需求有没有被覆盖”；②提出免训练的 CoverPruner，为当前指令挑原始投影 token，不需要外部定位；③多个 VLM、多个压缩率上平均增益明显，并发现相关性用来加权覆盖比用来给 token 排序更有效。
@@ -145,7 +145,7 @@
 | E-CP-3 | SC | 非负效用与权重下目标是单调子模函数，贪心有 (1−1/e) 的近似保证 | p.3 §3.2 | 引 Nemhauser 等（1978）的标准结论，没有自己的证明；[AI] 形式即加权 facility location，结论成立 |
 | E-CP-4 | DE | 预算网格：LLaVA-1.5 576 个中留 128 / 64 / 32；LLaVA-NeXT 2,880 个中留 640 / 320 / 160；Qwen2.5-VL（1008×1008，1,296 个）留 512 / 256 / 128；所有比较“相同的预算”，各方法参数按公开 / 默认配置 | p.5 Table 1、§4.1；p.6 Table 2、§4.2；p.7 Table 3 | FastV 一族的对齐方式与 K、合并 token 的计数都没写（UN）；Table 1 没有 192 档 |
 | E-CP-5 | DE | LLaVA-1.5-7B、64 个：CoverPruner VQAv2 75.9、GQA 58.4、SQA 69.3、TextVQA 55.6、POPE 86.1、MME 1432.4、MMB 60.8、MMB-CN 54.4，Acc. 66.5（96.4%）；VQAv2 / GQA：VisionZip 72.4 / 55.1，DivPrune 74.1 / 57.5，MMTok 75.2 / 58.3，FastV 55.9 / 46.0，SparseVLM 66.9 / 52.0，不剪枝 78.5 / 61.9 | p.5 Table 1 | 每格一个数，没有运行次数与区间；划分与指标见 E-CP-8 |
-| E-CP-6 | DE | 128 个：CoverPruner 76.7 / 59.1（VQAv2 / GQA），Acc. 67.9（98.4%），GQA 低于 DivPrune 59.4、MMTok 59.3；32 个：72.3 / 56.0，Acc. 64.6（93.7%），对照只有 6 个（没有 MMTok） | p.5 Table 1；p.6 §4.2 | 同上 |
+| E-CP-6 | DE | 128 个：CoverPruner 76.7 / 59.1（VQAv2 / GQA），Acc. 67.9（98.4%），GQA 低于 DivPrune 59.4、MMTok 59.3；32 个：72.3 / 56.0，Acc. 64.6（93.7%），32 档表中只有 5 个对照（PruMerge、VisionZip、DART、TRIM、DivPrune，没有 MMTok），连 CoverPruner 共 6 行（复核时改正：原写“对照只有 6 个”，6 是含 CoverPruner 的行数） | p.5 Table 1；p.6 §4.2 | 同上 |
 | E-CP-7 | AI | 复算：Acc. = 8 项平均（MME 除以 2000），Rel. = Acc. ÷ 不剪枝的 Acc.（69.02）；29 行中 27 行两项都对上，MMTok-64 复算为 65.9 / 95.5%（表中 66.0 / 95.6%），CoverPruner-32 的 Rel. 复算为 93.6%（表中 93.7%） | p.5 Table 1；p.12 A.1–A.2 | 说明解析的行列没有错位；末位差可能来自舍入前的值 |
 | E-CP-8 | AI | 口径：POPE 列很可能是 F1（Table 5 标 F1，它的 4 个值与 Table 2 的 POPE 列相同；LLaVA-1.5-7B 不剪枝的 85.9 与本项目实测的 F1 均值 85.90 相同，见 [PAPER-0008 笔记](PAPER-0008_CLASP.md)）；LLaVA 各表的 MME 按满分 2000 归一化，像是只算感知；VQAv2、GQA 的划分与 TextVQA 是否给 OCR 词都没写（UN） | p.6 Table 2；p.7 Table 5；p.12 A.2 | 推断；不剪枝 78.5 / 61.9 是 LLaVA-1.5 常见的报告值 |
 | E-CP-9 | DE | 消融（TextVQA / POPE）：按第一层注意力取前 m 个 51.9 / 73.0；覆盖 + CLIP 相关性 47.3 / 83.8；覆盖 + LLM 词向量相关性 55.2 / 85.6；覆盖 + 第一层注意力 55.6 / 86.1；不剪枝 58.2 / 85.9 | p.7 Table 4；p.6–7 §4.3；p.8 §5 | 64 个、两个基准、单次；两种替代相关性怎么算没写；“权重好于排序”与“覆盖好于排序”没有分开（见上文增益拆分） |
@@ -156,14 +156,14 @@
 | E-CP-14 | DE | 效率（LLaVA-NeXT-7B，POPE，320 个）：prefill 246 / 71 / 38 / 33 ms，decode 52 / 25 / 22 / 20 ms，FLOPs 41.7 / 4.5 / 4.2 / 3.9 T，F1 86.8 / 76.9 / 84.7 / 87.3（不剪枝 / SparseVLM / DivPrune / CoverPruner）；A6000、FP16，预热 10 次后 100 次平均，按 token 报告，不含分词、视觉编码与投影 | p.7 Table 5、§4.4；p.12 A.1 | FLOPs 公式没写；同为 320 个，DivPrune 与 CoverPruner 的 FLOPs 与 prefill 不同，未解释；prefill“按 token”的口径存疑（AI）；没有 LLaVA-1.5 的时延 |
 | E-CP-15 | DE | 剪枝开销（ms/例，prefill 之前）：LLaVA-1.5 为 0.175 / 0.143 / 0.121（128 / 64 / 32），LLaVA-NeXT-7B 为 1.872 / 1.521 / 1.363（640 / 320 / 160）；相似度与探针各预算共用 | p.19 E.1 Table 8 | 实现方式没写；[AI] 64 步顺序贪心 0.060 ms，每步不到 1 微秒，一般要把循环合成一次 GPU 调用才做得到，待核验 |
 | E-CP-16 | DE | 其他模型：LLaVA-NeXT-7B Rel. 99.7 / 98.4 / 96.6%，对最强对照 +0.3 → +2.3 Acc.；Qwen2.5-VL-7B 对 FastV、DivPrune 领先 1.3 → 4.1 个 Rel. 点；LLaVA-1.5-13B 98.4 / 96.5 / 94.3%；LLaVA-NeXT-13B 99.9 / 98.3 / 96.8% | p.6 Table 2、§4.2；p.7 Table 3；p.13–14 附录 C、Table 6–7 | Table 3 读不清；LLaVA-NeXT 与 Qwen 的表里没有 MMTok |
-| E-CP-17 | AI | 正文与表不符：正文说 LLaVA-NeXT-7B 的 TextVQA 每档都是第一，但 Table 2 中 640、320 档 VisionZip（59.9、58.8）高于 CoverPruner（58.7、57.8），只有 160 档第一；正文说 Fig. 3 的 TextVQA 每个比例都领先，但 Table 1 中 128、64 档 MMTok（57.0、56.0）高于 CoverPruner（56.9、55.6） | p.6 §4.2、Table 2；p.5 Table 1 | Fig. 3 看不到，可能没画 MMTok（UN） |
+| E-CP-17 | AI | 正文与表不符：正文说 LLaVA-NeXT-7B 的 TextVQA 每档都是第一，但 Table 2 中 640、320 档 VisionZip（59.9、58.8）高于 CoverPruner（58.7、57.8），只有 160 档第一；正文说 Fig. 3 的 VQAv2、TextVQA、MME 三条曲线上 CoverPruner 在每个剪枝比例都领先（复核时改正：原写“Fig. 3 的 TextVQA 每个比例都领先”；p.6 原话不是只说 TextVQA，而是三个基准合起来说“leading at every ratio”），但 Table 1 中 128、64 档 MMTok（57.0、56.0）高于 CoverPruner（56.9、55.6） | p.6 §4.2、Table 2；p.5 Table 1 | Fig. 3 看不到，可能没画 MMTok（UN） |
 | E-CP-18 | AI | 64 档 CoverPruner 在 SQA、TextVQA、MMB、MMB-CN 上不是最高；Acc. 对 MMTok 的领先约 0.6，其中约 0.38 来自 MME；对 DivPrune 的约 1.7，其中约 0.61 来自 MME | p.5 Table 1 | 算术；MME 一列的来源见 E-CP-19 |
 | E-CP-19 | AI | 基线数字的来源：VisionZip-64 的 VQAv2、GQA、SQA、TextVQA、POPE、MMB 六项与 VisionZip 原文 Table 1 相同；MMTok-64、MMTok-128 的这六项与 MMTok 原文 Table 1 舍入后相同（128 档原文 76.35、86.25 两个尾数是 5 的，本表取成 76.3、86.2），而 MMTok 原文写明 VisionZip 等基线直接取自 VisionZip 论文、VQAv2 用 test-dev；但 MME 都不同（原文 VisionZip-64 1690、MMTok-64 1715.33，本表 1365.2、1371.5）；VisionZip-128 有四项差 0.1～0.2；DivPrune-64 与 MMTok 原文里的 DivPrune 行不同（GQA 57.78 对 57.5） | p.5 Table 1；[VisionZip 解析](../../literature/processed/PAPER-0006/VisionZip-cvpr.md) p.5 Table 1；[MMTok 解析](../../literature/processed/PAPER-0012/MMTok-arxiv-2508.18264.md) p.5–6 | 本文没写重跑还是引用（UN）；三份都是 flash 档解析 |
 | E-CP-20 | DE / SC | 作者自述局限：需要投影 token 与早层解码器信号，只给 API 的闭源模型用不了；小物体、OCR 细节、精确计数、空间关系等局部证据上覆盖较弱；两两相似度随 token 数平方增长；视频还有时间上的冗余；解码前只选一次，需求在多步推理、对话、长生成中变化时不适用；需要按 OCR、计数、定位、空间、幻觉、时间定位做更细的分析 | p.9 §7 | “较弱”没有给数字（SC） |
 | E-CP-21 | DE | 全文没有按题型（是非 / 计数 / 其他）的分析，没有 VQAv2 或 GQA 上的消融，没有运行次数、种子、方差或区间，没有解码设置 | 全文 p.1–20 通读 | 通读判断（flash 解析） |
 | E-CP-22 | SC | 定性：按内容疏密分配 token，被问的物体上多留，比 FastV、SparseVLM 覆盖更全；GQA 上有剪枝后答对、不剪枝答错的例子；POPE 上小或模糊的物体会答错 | p.8 Fig. 4、§4.5；p.15 附录 D；p.16–18 Fig. 5–7 | 图在解析中看不到；例子是挑选的 |
 | E-CP-23 | DE | 全文没有代码地址和许可说明，没有写会议；致谢 NSF IIS-2223768、DRL-2507128 | p.1；p.9 致谢；全文 | 代码未下载、未核验（需许可） |
-| E-CP-24 | DE / SC | 已列出的同类：DivPrune（多样性）、MMTok（多模态覆盖）、CROP（按题目定位区域）、CDPruner（按指令的条件多样性）、ZOO-Prune、AgilePruner，以及 Li 等（2026）的平衡覆盖；作者说这些都没有在目标 VLM 的投影 token 空间上定义覆盖（SC） | p.1 §1；p.2 §2；p.8 §5 | [AI] MMTok 的文本—视觉覆盖用的就是投影后的视觉 token，视觉—视觉覆盖用投影前的特征（MMTok 解析 p.4–5），与 MMTok 的差别主要在视觉—视觉部分的空间、去均值与题目进入的方式 |
+| E-CP-24 | DE / SC | 已列出的同类：DivPrune（多样性）、MMTok（多模态覆盖）、CROP（按题目定位区域）、CDPruner（按指令的条件多样性）、ZOO-Prune、AgilePruner，以及 Li 等（2026）的平衡覆盖；作者只对 DivPrune、MMTok、CROP 这三个集合类方法说“没有在目标 VLM 的投影 token 空间上定义覆盖”（SC，p.1 §1）（复核时改正：原写“作者说这些都没有…”，范围过宽；CDPruner、ZOO-Prune、AgilePruner 在 p.2 §2 只是被列出，没有这句评价；Li 等 2026 在 p.1 §1 被列在打分类里，在 p.8 §5 被引来支持“相关性在集合目标里当需求用比当孤立打分好”，全文未见称它是“平衡覆盖”方法，该叫法来自参考文献标题 “multi-objective balanced covering”） | p.1 §1；p.2 §2；p.8 §5 | [AI] MMTok 的文本—视觉覆盖用的就是投影后的视觉 token，视觉—视觉覆盖用投影前的特征（MMTok 解析 p.4–5），与 MMTok 的差别主要在视觉—视觉部分的空间、去均值与题目进入的方式 |
 | E-CP-25 | UN | 探针的 RoPE、softmax 范围、指令位置的范围、位置编号；LLaVA-NeXT 子图预算的分法；FLOPs 公式；基线数字的来源；VQAv2、GQA 划分；192 档的数字；代码 | — | 需要 PDF 原表、补充材料或代码 |
 
 没有源码核验：全文没有代码地址；代码未下载、未核验（需许可）。
@@ -263,7 +263,7 @@
 ### 对写作与实验的影响（AI）
 
 - **相关工作**：把 CoverPruner 写成“在 LLM 之前、投影层输出上做按题目加权的覆盖选择”，与 DivPrune、MMTok、CDPruner 并列；会议信息先写 arXiv 预印本（2026-09）。
-- **引用 Table 1 时注明**：LLaVA-1.5-7B、576 个中留 64 个（在 LLM 之前剪的方法即每层 64）；基线来源没写；VQAv2、GQA 划分没写；POPE 很可能是 F1；MME 按满分 2000 计。不要和本项目的数字直接相减；能比的只有“相对 VisionZip-64 的差”的方向。
+- **引用 Table 1 时注明**：LLaVA-1.5-7B、576 个中留 64 个（在 LLM 之前剪的方法即每层 64）；基线来源没写；VQAv2、GQA 划分没写；POPE 很可能是 F1；MME 按满分 2000 计（复核时补注：全文 p.12 A.2 只说“按评测协议的满分归一化”，没写 2000；2000 是按 Table 1 复算反推的，见 E-CP-7）。不要和本项目的数字直接相减；能比的只有“相对 VisionZip-64 的差”的方向。
 - **旁证**：本项目自己的 DivPrune-64 − VisionZip-64（+2.20 / +1.63，开发集）与它表中的 +1.7 / +2.4 方向一致、量级相近，可以写成“本实现与文献同向”（划分不同）。
 - **“提升大”的门槛**：在它的表里，CoverPruner 比 DivPrune 高 VQAv2 +1.8、GQA +0.9。以 DivPrune-64 为底座时，我们的增量至少要在本流程里与“自己实现的 CoverPruner”比，而不是只与 DivPrune 比。
 - **一个低成本的补充（建议，未做）**：在 VQAv2 dev2、GQA val400 上跑自己实现的 CoverPruner（τ = 0 与 0.3）各一次，与已有的 DivPrune-64 比；之后再看软路由。约 4 次开发运行；结论以新数据上的预注册确认为准。
@@ -371,3 +371,46 @@ unresolved_questions:
 ## 主代理抽查（2026-10-31）
 
 - 写笔记的工作流（2026-10-30）原定由另一个子代理逐条复核，复核因用量上限没有完成；2026-10-31 用户睡觉期间不开子代理（DEC-0063），第二人复核留到之后。本笔记目前只经过主代理的抽查：Table 1 的 64 档五行（不剪枝 78.5 / 61.9，VisionZip 72.4，DivPrune 74.1 / 57.5 / POPE 85.5，MMTok 75.2 / 58.3，CoverPruner 75.9 / 58.4 / POPE 86.1）与 Table 4 的 “Top-m by attention rel.” 73.0 都在解析全文里找到。没有抽查到的数字以 PDF 为准。
+
+## 第二人复核（2026-10-31）
+
+复核方式：由另一个子代理独立通读解析全文（`D:/6CJNM007/tmp/read_repo/main_54bf807/literature/processed/PAPER-0011/CoverPruner-arxiv-2609.03158.md`，20 个页标记、787 行，从头到尾读完，没有跳段），只读，没有联网、没有读 PDF、没有运行 Python 或 git。为核对基线数字另读了只读导出里 VisionZip（PAPER-0006）p.5 Table 1、MMTok（PAPER-0012）p.5–6 的表与实验设置段、DivPrune（PAPER-0010）的 Layer 0 段，以及查新补充的 11 行表。解析全文是 MinerU flash 档，只有文本，表格可能错位。
+
+### 核对了多少处
+
+Table 1 的 29 行 × 10 列共 290 个数字全部逐格对照（全部与解析全文一致），另外约 190 处说法与数字（不含 Table 1 的逐格）：Table 2、6、7 中笔记引用的 Rel.、Acc.、对照数字；Table 4、5、8、9、10、11 的全部数字；Table 3 的 Rel. 碎片；所有页码与章节出处；E-CP-1 至 E-CP-25 逐条；「本项目已引用说法的核对」「与当前项目的关系」两节里关于这篇论文本身的说法；查新补充 11 行 × 5 列共 55 格与 Table 1 逐格对照（一致）；文件的 SHA-256（`b453cadd…f92b6`，一致）、页标记数 20、行数 787、字节数 68,299（一致）。用 PowerShell 做了只读算术（不写文件）：Table 1 的 Acc.、Rel. 复算，64 档对 MMTok / DivPrune 的差，MME 对 Acc. 的份额，Table 5 的倍数，Table 8 的加和，Table 9 / 4 的差，都与笔记一致。
+
+### 改了哪些
+
+1. 来源与阅读范围，代码与许可：改前“唯一的链接是 p.1 指向本文 arXiv 页面的那一个”；改后改成“全文没有代码仓库地址，p.1 页边的 arXiv 编号链接指向本文页面，参考文献里另有其他论文的链接”。依据：参考文献 p.9–11 有多条其他论文的 arXiv / OpenReview 链接，“唯一”说过头了。
+2. 方法与贡献，“用不用题目文字”：改前“也不决定预算”；改后“也不改变总个数 m”，并注明题目权重会影响名额怎么分。依据：p.4 §3.3 “larger τ steers more representational budget toward query-relevant regions”。
+3. E-CP-6：改前“32 个……对照只有 6 个（没有 MMTok）”；改后“只有 5 个对照（PruMerge、VisionZip、DART、TRIM、DivPrune），连 CoverPruner 共 6 行”。依据：p.5 Table 1 的 Retain 32 Tokens 一节共 6 行，其中 1 行是 CoverPruner。
+4. E-CP-17：改前“正文说 Fig. 3 的 TextVQA 每个比例都领先”；改后“Fig. 3 的 VQAv2、TextVQA、MME 三条曲线上 CoverPruner 在每个剪枝比例都领先”。依据：p.6 §4.2 原文是三个基准合在一起说 “with CoverPruner leading at every ratio”，没有单独说 TextVQA。其余部分（Table 2 的 640、320 档 VisionZip 59.9、58.8 高于 58.7、57.8；Table 1 的 128、64 档 MMTok 57.0、56.0 高于 56.9、55.6）已核对无误。
+5. E-CP-24：改前“作者说这些都没有在目标 VLM 的投影 token 空间上定义覆盖”（这些 = DivPrune、MMTok、CROP、CDPruner、ZOO-Prune、AgilePruner、Li 等 2026）；改后只对 DivPrune、MMTok、CROP 三个成立。依据：p.1 §1 这句话只针对 “Set-level methods (Alvar…; Dong…; Guo…)”；CDPruner、ZOO-Prune、AgilePruner 在 p.2 §2 只是被列出；Li 等 2026 在 p.1 §1 被列在打分类里，在 p.8 §5 被引用；“平衡覆盖”是参考文献标题 “multi-objective balanced covering”，正文未见这样称呼。
+6. 「对写作与实验的影响」：改前“MME 按满分 2000 计”；改后补注“全文只说按评测协议的满分归一化，没写 2000，2000 是按 Table 1 复算反推”。依据：p.12 A.2 MME 一段。
+
+没有找到依据而删去的说法：无（其余 UN / 全文未见的说法，已逐条在全文中确认确实没有）。
+
+### 核对后确认无误的重点
+
+- Table 1 全部 29 行（含 128 / 64 / 32 三档、不剪枝行、各行的会议标注）与笔记一致；Acc.、Rel. 复算 29 行中 27 行两项都对上，MMTok-64 复算 65.9 / 95.5%（表 66.0 / 95.6%）、CoverPruner-32 的 Rel. 复算 93.6%（表 93.7%），与 E-CP-7 一致。
+- 预算口径：576 个中留 128 / 64 / 32（↓77.8% / 88.9% / 94.4%）；CoverPruner 把 [V_S; H_q] 送进不改动的解码器（p.3 §3.1）；全文没有 CLS、“层平均”、FastV 一族对齐方式、基线是重跑还是引用、VQAv2 / GQA 划分的说明（用关键词在全文中查过）。
+- E-CP-19 的旁证数字：VisionZip 原文 64 档 MME 1690、128 档四项差 0.1～0.2；MMTok 原文 64 档 MME 1715.33、128 档 76.35 / 86.25；MMTok 原文 DivPrune 行 GQA 57.78；MMTok 原文写 VQAv2-Test-Dev、其他基线直接取自 VisionZip 论文。全部属实。
+- 会议：全文没有 “EMNLP 2026” 或任何会议信息，笔记写“全文未见”正确。
+
+### 还有哪些读不清
+
+- 式 1–6 在解析中全是图块，没有文字；笔记按正文与 Algorithm 1 复述，未能逐符号核对。
+- Table 3（Qwen2.5-VL）被拆成图片块和零散数字：Rel. 一列的碎片（100.0、96.3、97.0、98.3、91.3、92.7、94.5、82.9、83.9、88.0）能读出，笔记的“差 1.3 / 1.8 / 4.1”与正文“1.3 到 4.1”吻合，但哪一行是 FastV、哪一行是 DivPrune 读不出。
+- Table 11 的两行交错，Top-K 均值与 concave-over-modular 的对应只是推断（数字 55.36 / 44.97、85.5 / 64.6 与正文描述吻合）；其中 concave-over-modular 一行是否也写了 τ = 0，交错的文字读不清。
+- Fig. 1–7 只有图注，Fig. 3 的 192 档读不到。
+- 加粗丢失，“Best in bold”无法核对。
+- PDF 未读，PDF 的 SHA-256 无法核对。
+- 数字仍以 PDF 原表为准。
+
+### 两条专项结论
+
+(a) 剪枝后留下的视觉 token 的位置编号（position ids / RoPE 位置）：全文未见。全文没有出现 position ids、RoPE、重新编号、插值这类说法。只有两处与“顺序”有关，都不是位置编号：p.3 §3.1 写保留“an ordered subset V_S”；p.13 附录 B Algorithm 1 末行写 “Return V_S in the original visual-token order”，即按原来的视觉 token 顺序排好再送入解码器。另外 p.4 §3.3 说探针在剪枝之前、“after each MLLM has placed visual and text tokens into its native input layout”（用各模型自己的输入排布）算 Q·K，这讲的是探针，不是剪枝后的位置编号。选中 token 在解码器里用原始位置编号还是连续编号，全文没写（UN）。
+
+(b) 定位类任务评测：全文未见。8 个 LLaVA 系列基准（VQAv2、GQA、SQA-IMG、TextVQA、POPE、MME、MMBench、MMBench-CN，p.5 Table 1）和 10 个 Qwen2.5-VL 基准（HallBench、MME、VQAv2、ChartQA、AI2D、RealWorldQA、CCBench、OCRVQA、SQA-IMG、POPE，p.7 Table 3）里没有 RefCOCO / RefCOCO+ / RefCOCOg，没有输出框坐标、目标检测或 visual grounding 的评测，也没有相应结果。与此相关的只有三处，都不是定位评测：p.2 贡献②写“without external localization”（指方法本身不需要外部定位模块）；p.9 §7 Limitations 把 “grounding” 列在“后续需要做的更细分析”里（OCR、计数、grounding、空间推理、幻觉、时间定位），说明作者自己没有做；p.18 Fig. 7 图注里的 bounding boxes 是在 GQA 的示意图上标出与题目对应的关键区域，用来看保留的 token 有没有覆盖这些区域，不是模型输出的框，也不是定位指标。
+

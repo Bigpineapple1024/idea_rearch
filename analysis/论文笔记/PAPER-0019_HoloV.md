@@ -34,7 +34,7 @@
   2. **块内相似度**：块内各 token 的归一化向量两两相乘得到相似度矩阵，用（1 − 单位阵）去掉自身（p.6）。用哪一层的向量没写（UN）；§3.1 把投影层的输出记为 z_v（p.4），这里用同一符号 Z_v，推断是投影层输出（AI）。
   3. **块内“多样性”**：每个 token 与块内其他 token 的相似度的方差 V；V 高表示它和其他 token 的联系多样（p.6）。“按行求方差”是 AI 的读法。
   4. **打分**：H = γ·V + A，A 是视觉 [CLS] 对该 token 的注意力（p.6；H 的写法见附录 C 条件 C2，p.25）。γ 称为“自适应缩放”，怎么算未见（UN）。[CLS] 注意力取视觉编码器哪一层、各头怎么合并，未见（UN）；p.4 §3.1 只说关注视觉 [CLS] 给各 token 的注意力。
-  5. **块间分名额**：块的优先级 = 块内各 token 得分的平均；归一化成权重 w_c，τ 控制分配的尖锐程度（p.6；形式推断为带温度的 softmax，AI；τ 的取值未见，UN）。初始名额 q_c = ⌊w_c·N̂_v⌋（N̂_v 为保留总数），每块不超过 M 个；取整后的余额按 w_c ×（M − q_c）的比例补给还有空位的块，仍有余额就给权重最高的块（p.6）。
+  5. **块间分名额**：块的优先级 = 块内各 token 得分的平均；归一化成权重 w_c，τ 控制分配的尖锐程度（p.6；形式推断为带温度的 softmax，AI；τ 的取值未见，UN）。初始名额 q_c = ⌊w_c·N̂_v⌋（N̂_v 为保留总数），每块不超过 M 个；超出上限（overflow）时按 q_c = min(q_c + Δc, M)、Δc 正比于 w_c ×（M − q_c）调整，即多出的名额按这个比例补给还有空位的块；名额不足（fall short）时，把剩下的名额给权重最高的块（p.6）。（复核时改正：原写“取整后的余额按 w_c ×（M − q_c）的比例补给还有空位的块，仍有余额就给权重最高的块”。p.6 原文把 overflow 与 fall short 分开写，“先按比例补、仍有余额再给最高权重块”这种先后关系全文未见；公式缺失，两种情形各自的触发条件读不清。）
   6. **块内取前 k 个**：k = q_c，按一个“兼顾块内显著性与全局相关性”的分数取（p.6；分数式未见，UN；可能就是 H，AI）。只选不合并（DE）。
   7. 保留的 token 送入 LLM。顺序与位置编号未见（UN）。
   8. **快速视觉上下文回取（VCR）**：在 LLM 中间的某个“触发层”，模型不确定性高时，把被剪掉的 token 当作 FFN 的额外 key-value 记忆读一次；注入比例 α ∈ [0, 1]，作者说与图像复杂度成正比（p.6 §4.1.1；p.26 D.1–D.2）。触发层、不确定性怎么量、阈值、α 的取值都未见（UN）；各结果表是否开了 VCR，全文没有说，也没有 VCR 的消融（UN）。D.2 里出现 “MemVCR” 的写法和 “N_v = 256（ViT-L/14）” 的例子，与 LLaVA-1.5 的 576 个不符；作者自己的 [101]（同一组作者的“记忆空间视觉回溯”，ICML 2025，p.17）做的是同类的视觉回溯。这一节可能沿用了 [101] 的写法（AI）。
@@ -47,10 +47,10 @@
 
 ## 研究设计
 
-- **模型**：LLaVA-1.5-7B（llava-v1.5-7b）、LLaVA-NeXT-7B（llava-v1.6-vicuna-7b）、Video-LLaVA-7B（A.2，p.20）；Qwen2.5-VL-7B（§5.7，p.10）。
+- **模型**：LLaVA-1.5-7B（llava-v1.5-7b）、LLaVA-NeXT-7B（llava-v1.6-vicuna-7b）、Video-LLaVA-7B（A.2，p.20；“7B”见 Table 2，p.9）（复核时改正：原写“A.2，p.20”，A.2 只写 Video-LLaVA，没有写 7B）；Qwen2.5-VL-7B（§5.7，p.10）。
 - **Benchmark**：图像任务称 10 个：GQA、MMB、MMB-CN、MME、POPE、VizWiz、SQA、VQAv2、TextVQA、MM-Vet（p.7 §5.1；p.19 A.1）。Table 1 只有前 9 个；MM-Vet 只出现在 Fig. 6、Fig. 8 的图里，没有表格数字（DE）。视频：MSVD-QA、MSRVTT-QA（p.8）。
 - **划分与指标**：只说按默认设置（p.8）。VQAv2 的划分、POPE 报哪个指标，全文未见（UN）。A.1 介绍 POPE 有 accuracy、recall、precision、F1（p.19），正文把 80.3 称为 accuracy（p.8）；Table 1 不剪的 85.9 与本项目实测的 POPE F1 均值 85.90 相同（见 CLASP 笔记），推断是三个子集 F1 的平均（AI）。MME 不剪 1862，与 VisionZip 表相同，推断是感知 + 认知总分（AI）。
-- **对照**：ToMe、FastV、SparseVLM、HiRED、PruMerge、PDrop、MustDrop、FasterVLM、GlobalCom²、VisionZip、DART（p.8）。所有对照“按原论文设置”（A.3，p.21）；数字是重跑还是引用，全文未见（UN；部分与 VisionZip 的表逐格相同，见「预算口径」）。DivPrune 不在对照里，参考文献里也没有（p.12–17，DE）。FasterVLM（只用 [CLS] 注意力、在 LLM 之前剪，p.20）只出现在 NeXT 表和效率表，不在 LLaVA-1.5 的 Table 1（DE）。
+- **对照**：ToMe、FastV、SparseVLM、HiRED、PruMerge、PDrop、MustDrop、FasterVLM、GlobalCom²、VisionZip、DART（p.8）。所有对照“按原论文设置”（A.3，p.21）；数字是重跑还是引用，全文未见（UN；部分与 VisionZip 的表逐格相同，见「预算口径」）。DivPrune 不在对照里，参考文献里也没有（p.12–17，DE）。FasterVLM（只用 [CLS] 注意力、在 LLM 之前剪，p.20）只出现在 NeXT 表（Table 3）、效率表（Table 4）和视频表（Table 2），不在 LLaVA-1.5 的 Table 1（DE）。（复核时改正：原写“只出现在 NeXT 表和效率表”；p.9 Table 2 里也有 FasterVLM 一行：MSVD-QA 70.5 / 3.9、MSRVTT-QA 56.2 / 3.5、平均 63.4 / 3.7。）
 - **预算**：LLaVA-1.5 留 192 / 128 / 64 个（剪掉 66.7% / 77.8% / 88.9%，Table 1，p.7）；NeXT 留 320 个（最多 2880 个，p.8）；Qwen2.5-VL 按剪枝率 66.7% / 77.8% / 88.9%（Table 6，p.10）；视频留 50%（Table 2，p.9）；Table 4、Table 7 另用 58 个（剪掉 90%）和 144 个（剪掉 75%）（p.9、p.21）。NeXT 上块数怎么定、各子图之间怎么分名额，未见（UN）。
 - **环境**：A800-80G，Python 3.10，PyTorch 2.1.2，CUDA 11.8（A.3，p.21）。
 - **统计**：没有误差条、区间或重复次数；checklist 第 7 题答 No，理由是“不需要”（p.30）。方法本身没有随机步骤（AI），评测跑了几次未见（UN）。
@@ -139,13 +139,13 @@
   | HoloV | 0.5ms / 0.208s / 15.6G / 99.7% | 0.5ms / 0.176s / 14.5G / 95.7% |
 
   - 总时间一列有 12 个数（35:34、30:41、32:30、29:40、30:09、25:08、25:03、30:08、40:51、31:02、31:28、27:36），HiRED、SparseVLM、HoloV 等几行与它们的对应关系读不清，不使用。
-  - 192 个那一列的相对准确率等于 Table 1 的 POPE ÷ 85.9（FastV 64.8 → 75.4%，SparseVLM 83.6 → 97.3%，HoloV 85.6 → 99.7%）（AI）。不剪、FastV、FasterVLM 三行紧挨方法名的总时间（49:41、35:34、30:09）除以 POPE 的 8,910 题，约等于各自的延迟（0.335s、0.240s、0.203s 对表中 0.334s、0.239s、0.202s），说明“延迟”很可能是每题平均、含生成（AI；HoloV 用的 POPE 题数全文未见）。
+  - 192 个那一列的相对准确率等于 Table 1 的 POPE ÷ 85.9（FastV 64.8 → 75.4%，SparseVLM 83.6 → 97.3%，HoloV 85.6 → 99.7%）（AI）。不剪、FastV、FasterVLM 三行紧挨方法名的总时间（49:41、35:34、30:09）除以 POPE 的 8,910 题（8,910 这个题数全文未见，是写笔记时从外部带入的数；复核时标注），约等于各自的延迟（0.335s、0.240s、0.203s 对表中 0.334s、0.239s、0.202s），说明“延迟”很可能是每题平均、含生成（AI；HoloV 用的 POPE 题数全文未见）。
   - Table 1 里也有的五个方法（FastV、MustDrop、HiRED、SparseVLM、HoloV），58 个那一列都高于 Table 1 的 64 档：HoloV 95.7% ≈ 82.2（Table 1 的 64 档为 80.3，即 93.5%），SparseVLM 92.3% 对 87.4%，HiRED 92.7% 对 85.7%，MustDrop 87.1% 对 79.2%，FastV 66.8% 对 55.9%；少留 6 个反而更高。两张表可能来自不同的运行或口径（AI；UN）。
   - 正文称 58 个时 HoloV 的推理时间降 42.7%、延迟降 42.8%（p.9）。按表中 HoloV 的 0.176s 对 0.334s 是约 −47%，对不上（AI）。正文又说 HoloV 比 FasterVLM 准确率高 3.0%，按拼读是 95.7 − 92.5 = 3.2（AI）。
   - prefill 不剪与剪后都是 0.5～0.6ms，不可能是 7B 模型整段预填充的时间，测的是什么未见（AI；UN）。
 - **Table 7（MMBench dev 20 类，FastV 对 HoloV，p.21）**：
   - 58 个时 HoloV 在 14 类高于 FastV，144 个时 12 类（另有 5 类相同）（AI 计数）。
-  - HoloV 高于不剪的类：58 个时 8 类，144 个时 9 类。最大的是 OCR：不剪 59.0，HoloV 81.8（58 个）/ 84.4（144 个）；Future Prediction 不剪 45.0，HoloV 两档都是 58.3（DE）。
+  - HoloV 高于不剪的类：58 个时 9 类，144 个时 9 类（复核时改正：原写“58 个时 8 类”；逐类比对 p.21 Table 7，58 个时高于不剪的是 Attribute Comparison、Function Reasoning、Future Prediction、Identity Reasoning、Image Quality、Image Topic、Nature Relation、OCR、Spatial Relationship 共 9 类；144 个时 Function Reasoning、Future Prediction、Identity Reasoning、Image Quality、Image Scene、OCR、Physical Property Reasoning、Physical Relation、Spatial Relationship 共 9 类，另有 Attribute Recognition、Image Style、Image Topic 与不剪相同）。最大的是 OCR：不剪 59.0，HoloV 81.8（58 个）/ 84.4（144 个）；Future Prediction 不剪 45.0，HoloV 两档都是 58.3（DE）。
   - FastV 的 OCR 两档都恰好是 59.0，与不剪相同（DE）。58 个时 HoloV 明显低于 FastV 的类：Object Localization 23.3 对 35.8、Physical Property Reasoning 49.3 对 60.3、Physical Relation 32.7 对 41.7、Structured Image-Text 21.8 对 30.8（DE）。
   - 各类题数全文未见（UN）。[AI] 这样大幅“超过不剪”更像小样本波动或评测差异，这张表不宜当作“保住信息”的证据。
 
@@ -193,7 +193,7 @@
 | E ID | 层级 | 内容 | 位置 | 支持范围/限制 |
 | --- | --- | --- | --- | --- |
 | E-HV-1 | DE | 在 LLM 之前剪；选 token 只用视觉信息，不用题目；全文没有训练步骤 | p.3 §2.2；p.5 §4；p.6；p.1 摘要 | VCR 在 LLM 内用隐状态作查询（p.26），若开启则间接依赖题目（AI） |
-| E-HV-2 | DE | 块内相似度（去自身）→ 每个 token 相似度的方差 V；H = γV + A（A 为视觉 [CLS] 注意力）；块优先级 = 块内平均分，经 τ 归一化为 w_c；q_c = ⌊w_c N̂_v⌋，每块上限 M，余额按 w_c(M − q_c) 补，再给权重最高的块；块内取前 q_c 个 | p.5–6 §4.1；p.25 附录 C（C2） | 公式未见；γ、τ 的取值，[CLS] 与向量所在层都未见（UN） |
+| E-HV-2 | DE | 块内相似度（去自身）→ 每个 token 相似度的方差 V；H = γV + A（A 为视觉 [CLS] 注意力）；块优先级 = 块内平均分，经 τ 归一化为 w_c；q_c = ⌊w_c N̂_v⌋，每块上限 M；超出上限时 Δc ∝ w_c(M − q_c)、q_c 以 M 封顶，名额不足时剩余名额给权重最高的块（复核时改正：原写“余额按 w_c(M − q_c) 补，再给权重最高的块”，依据 p.6 §4.1）；块内取前 q_c 个 | p.5–6 §4.1；p.25 附录 C（C2） | 公式未见；γ、τ 的取值，[CLS] 与向量所在层都未见（UN） |
 | E-HV-3 | DE | 块数 C = [1024/N]（64 个时 16 块）；块数消融 4 / 8 / 12 / 16 三行（见上），作者称影响不显著 | p.21 A.3；p.9 §5.5、Table 5 | Table 5 错位，按碎片拼读；benchmark 未见；数值低于 Table 1 同档，口径不明 |
 | E-HV-4 | DE / UN | VCR：中间触发层、高不确定性时把被剪 token 作为 FFN 的 key-value 注入，α ∈ [0, 1] | p.6 §4.1.1；p.26 D.1–D.2 | 触发层、阈值、α、是否用于各表都未见；无消融；D.2 疑似沿用 [101] 的写法（AI） |
 | E-HV-5 | DE | Table 1（LLaVA-1.5-7B）192 / 128 档：HoloV 平均 99.2% / 98.0%，VisionZip 98.1% / 97.2%，DART 98.5% / 97.5% | p.7 Table 1 | 对齐的文本表；无区间 |
@@ -208,7 +208,7 @@
 | E-HV-14 | DE / AI | NeXT-7B 留 320 个：HoloV 95.6%，DART 表中 93.9%，按行复算约 95.6%；正文称远高于“当前最好的 93.3%” | p.9 Table 3；p.8 §5.3 | 其余 9 行复算与表中相差 ≤ 0.1 |
 | E-HV-15 | DE / AI | Qwen2.5-VL-7B：HoloV 94.6 / 92.7 / 90.5%，FastV 92.3 / 89.2 / 84.3%；按行复算 HoloV 为 94.3 / 90.8 / 87.0%，FastV 不变 | p.10 Table 6、§5.7 | 只有 FastV 一个对照；A 项在没有 [CLS] 的编码器上怎么取未见（UN） |
 | E-HV-16 | DE / AI | 视频（留 50%）：HoloV 平均 63.7；DART 两列 71.0、56.7，平均写 58.0，按两列算 63.9 | p.9 Table 2 | 表题称 HoloV 超过最好方法 |
-| E-HV-17 | DE | MMBench dev 20 类（58 / 144 个）：HoloV 高于不剪的类有 8 / 9 个，如 OCR 81.8 / 84.4 对 59.0；FastV 的 OCR 两档都是 59.0 | p.21 Table 7、B.1 | 各类题数未见；更像小样本波动（AI） |
+| E-HV-17 | DE | MMBench dev 20 类（58 / 144 个）：HoloV 高于不剪的类有 9 / 9 个（复核时改正：原写 8 / 9），如 OCR 81.8 / 84.4 对 59.0；FastV 的 OCR 两档都是 59.0 | p.21 Table 7、B.1 | 各类题数未见；更像小样本波动（AI） |
 | E-HV-18 | SC | FastV 的注意力偏向序列首尾；在 VQAv2 样本上，同一层的注意力分布在样本之间高度相似，高注意力集合跨层稳定 | p.4 §3.2、Fig. 4 右 | 只有图示，没有数字；没有“同图换题”的设计 |
 | E-HV-19 | SC | 随机保留在 5 个 benchmark 中过半胜过 FastV，TextVQA 上失败 | p.5 §3.3、Fig. 6 上 | 剪枝率、模型、数字未见 |
 | E-HV-20 | SC | [CLS] 注意力比文本—视觉注意力集中；后者前 20% 的 token 只占约 40% | p.4、Fig. 5 | 曲线读不清 |
@@ -298,7 +298,7 @@
 
 ### 能借鉴什么（AI，附条件）
 
-1. **不看题目的按块分名额，可作为 DivPrune-64 上的空间覆盖对照**：回答 DivPrune 的特征空间多样性是否已经覆盖了空间。写法照 p.6（每块上限、余额按权重 × 剩余容量补、最后给权重最高的块）。先验期望不高：HoloV 自己在 VQAv2、GQA 上只比 VisionZip-64 多零点几；本项目在 VisionZip-64 上调空间分布的几种做法收益也小（F57、F71）。
+1. **不看题目的按块分名额，可作为 DivPrune-64 上的空间覆盖对照**：回答 DivPrune 的特征空间多样性是否已经覆盖了空间。写法照 p.6（每块上限、超出上限的名额按权重 × 剩余容量补、不足的名额给权重最高的块）（复核时改正：原写“余额按权重 × 剩余容量补、最后给权重最高的块”，依据见方法步骤 5）。先验期望不高：HoloV 自己在 VQAv2、GQA 上只比 VisionZip-64 多零点几；本项目在 VisionZip-64 上调空间分布的几种做法收益也小（F57、F71）。
 2. **块数随预算变化** [1024/N]（64 个时 16 块，每块 36 个）可作超参数起点；它比 A 的 6×6 块（每块 16 个）粗。
 3. **若要把 HoloV 当对照复现**（需要用户许可下载代码）：同时跑排除填充区的版本，报告 VCR 开与不开，并按层平均口径记每层个数。
 4. **写作**：引用 HoloV 的数字时注明 VQAv2 划分未知、POPE 很可能是 F1、平均值有不一致，并附 FSR 的第三方数字。
@@ -427,3 +427,37 @@ unresolved_questions:
 ## 主代理抽查（2026-10-31）
 
 - 写笔记的工作流（2026-10-30）原定由另一个子代理逐条复核，复核因用量上限没有完成；2026-10-31 用户睡觉期间不开子代理（DEC-0063），第二人复核留到之后。本笔记目前只经过主代理的抽查：摘要的 95.8% 与表中 VisionZip 的 94.5% 在解析全文里找到。没有抽查到的数字以 PDF 为准。
+
+## 第二人复核（2026-10-31）
+
+复核方式：另一个子代理把解析全文 p.1–34 从头读到尾（只读 MinerU flash 档文本，没有读 PDF，没有联网，没有运行代码），再把本笔记中关于这篇论文本身的说法逐条对回全文；「与当前项目的关系」里只核对了关于 HoloV 本身的说法，关于本项目自己实验的数字没有核对。另外只读了同一导出里 VisionZip 解析全文 Table 1（PAPER-0006 p.5）和 FSR 解析全文 Table 1（PAPER-0016 p.7）来核对 E-HV-9、E-HV-25；解析文件的大小、SHA-256 前 16 位、34 个页标记与登记一致（118,572 字节、ea3cdca76b988778、34）。
+
+**核对了多少处**：约 90 条说法与出处（来源、方法步骤、研究设计、预算、各表、消融、效率、动机、附录、checklist、「项目文档中关于 HoloV 的说法」「与当前项目的关系」里关于本文的部分），以及 600 多个数字：Table 1 的 35 行（LLaVA-1.5-7B 的 192 / 128 / 64 三档，每行 9 项加平均）逐格对回全文；HoloV − VisionZip 的差值；Table 1 各行的平均值用“各项除以不剪、等权平均、缺项不计”重新算（VisionZip 192 / 128 档 98.7% / 97.7%、PDrop 192 档 96.9%、HoloV 64 档 95.7%、去掉 VizWiz 后 94.5% 对 93.1% 等都算得与笔记一致；ToMe、FastV、SparseVLM、HiRED、MustDrop、PruMerge、FiCoCo-V、DART 抽算的行也在 0.1 以内）；Table 2、3、5、6 的数字与复算；Table 4 两列；Table 7 的逐类比对与计数（58 个：HoloV 高于 FastV 14 类，144 个：12 类、5 类相同，笔记正确）；Fig. 14 读数与正文比值（5.2/2.4 ≈ 2.16，5.2/4.6 ≈ 1.13，3.8 对 6.1 约低 37%）。
+
+**结论**：数字基本可靠，Table 1 的所有格子、对照方法的数字、预算口径的说法（保留 N 个 = 进入 LLM 的个数；对照“按原论文设置”、没有统一口径；FastV / SparseVLM / VisionZip-64 与 VisionZip 表逐格相同，VisionZip 192、128 档有 3～4 项不同）都与全文一致。没有发现 Table 1 的数字抄错。发现并改正的错误如下。
+
+**改了哪些**（改前 → 改后；依据）：
+
+1. 方法步骤 5、E-HV-2、「能借鉴什么」第 1 条的名额补法：改前“取整后的余额按 w_c ×（M − q_c）的比例补给还有空位的块，仍有余额就给权重最高的块” → 改后“超出上限（overflow）时按 Δc ∝ w_c ×（M − q_c）补给还有空位的块、q_c 以 M 封顶；名额不足（fall short）时，剩余名额给权重最高的块”。依据：p.6 §4.1“Adaptive holistic token allocation”，两种情形分开写，没有写先后顺序。公式缺失，两种情形的触发条件读不清。
+2. FasterVLM 出现的位置：改前“只出现在 NeXT 表和效率表” → 改后“NeXT 表（Table 3）、效率表（Table 4）、视频表（Table 2）都有，不在 Table 1”。依据：p.9 Table 2 有 FasterVLM 一行（70.5 / 3.9、56.2 / 3.5、63.4 / 3.7）。
+3. Table 7 的计数：改前“HoloV 高于不剪的类：58 个时 8 类”（正文与 E-HV-17 各一处）→ 改后 9 类。依据：p.21 Table 7 逐类比对，58 个时是 Attribute Comparison、Function Reasoning、Future Prediction、Identity Reasoning、Image Quality、Image Topic、Nature Relation、OCR、Spatial Relationship；144 个时 9 类不变。
+4. Table 4 的延迟除法：改前直接写“POPE 的 8,910 题” → 改后注明 8,910 这个题数全文未见，是写笔记时带入的外部数字。依据：全文搜索没有这个数；除法本身（49:41、35:34、30:09 除以该数约等于 0.334s、0.239s、0.202s）算得对。
+5. Video-LLaVA 的“7B”出处：改前“A.2，p.20” → 改后 A.2 只写 Video-LLaVA，“7B”见 p.9 Table 2。
+
+**核对后没有改、但值得提醒的几处**：
+- “选 token 时不用题目文字（DE）”：全文没有逐字写“不用题目”，依据是 p.3 §2.2 称采用以视觉为中心的方案，加上 p.6 的打分项只有 [CLS] 注意力和块内相似度；保留 DE，但读者应知道这是读文字得出的。VCR 在 LLM 中间层用隐状态，不在这个说法里（笔记 E-HV-1 已写）。
+- p.8 的“第二名 76”：笔记指出同表 VisionZip-64 是 77.0；补一句，76.0 是 FiCoCo-V-64 的 POPE（p.7 Table 1），这不改变笔记的结论。
+- 笔记的“全文没有任何训练或微调步骤”“training-free 一词没有用来描述 HoloV 自身”：全文搜索只在参考文献标题里找到 training-free，成立；但 p.27 影响声明里有一句泛泛的“训练数据不够多样”，与方法无关。
+
+**还有哪些读不清 / 没有核对**：
+- Table 4 的总时间一列（12 个数）与方法的对应关系读不清；58 个 token 那一列是最后一行里六组挤在一起，按方法顺序拼读，与正文“准确率只降 4.3%”、Table 1 的数字互相印证，但对应关系仍属推断。
+- Table 5 的“Token Pruning Rate”被拆成碎片，三行数字按碎片拼读；各列对应的 benchmark 全文未见。
+- 公式全是占位：γ、τ 的取值与算法、V 的具体算式、触发层、阈值、α 都无法核对。
+- Fig. 2、4、5、6、8、9、14 的曲线和柱子只有文字标签，没有逐个读数；笔记标 SC 的动机实验我只核对了正文文字，没有核对图。
+- 没有读 PDF，PDF 的字节数、哈希只对了 analysis/论文笔记/README.md 与 literature/processed/README.md 的登记（3701109 字节、34 页、哈希前 16 位一致），没有重算。
+- 笔记里关于 SparseVLM（ICML 版 POPE 77.5）、VisionZip 源码（E-VZ-C 编号）、FSR 的 RTX 3090 的说法，出自别的论文或笔记，不在本次复核范围，没有核对；FSR Table 1 中 HoloV、DivPrune、VisionZip 的 64 个 token 数字（E-HV-25）已对回，正确。
+- 「与当前项目的关系」里的本项目数字（F 编号、DEC 编号等）按任务要求没有核对。
+
+**(a) 剪枝后留下的视觉 token 的位置编号（position ids / RoPE 位置）怎么处理**：全文未见。全文没有写保留的 token 送入 LLM 时是保留原始编号、重新连续编号，还是别的做法，也没有写 RoPE。相关但不是这个问题的文字有三处：p.2 §1 与 p.4 §3.2 把“位置编码带来空间先验、FastV 偏向序列首尾”当作动机（讲的是注意力的位置偏差，不是剪完之后怎么编号）；p.4 §3.2 和 Fig. 5 里的“equi last attn with identical position embedding”是分析注意力集中度时用的一种设置，不是 HoloV 的做法；p.5 §4.1 说先把视觉 token“rearrange into local crops”再统计，只说明分块打分，没有说保留的 token 送入 LLM 时的排列顺序。与笔记方法步骤 7“顺序与位置编号未见”一致。
+
+**(b) 定位类任务（RefCOCO 一类、输出框坐标、visual grounding）**：全文未见。10 个图像 benchmark（p.7、p.19）是 GQA、MMB、MMB-CN、MME、POPE、VizWiz、SQA、VQAv2、TextVQA、MM-Vet，视频是 MSVD-QA、MSRVTT-QA，都不是定位任务；全文没有 RefCOCO，没有输出框坐标的评测。最接近的两处不是定位评测：p.21 Table 7 的 MMBench 里有一类“Object Localization”（多选题，不剪 39.5；58 个：FastV 35.8、HoloV 23.3；144 个：FastV 37.0、HoloV 38.3），POPE 是物体是否存在的判断（p.19 A.1）；Fig. 10–13（p.10、p.22–24）里的方框是作者在 GQA 图上标的示意区域，只是定性展示。

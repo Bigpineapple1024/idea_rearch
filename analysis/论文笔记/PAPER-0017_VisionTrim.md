@@ -55,7 +55,7 @@
 - **CLS**：DVTS 用 [CLS] 的注意力打分（p.4）；[CLS] 本身是否送进 LLM、是否占名额，没写（UN）。[AI] Table 11 的 48 + 16 = 64 里没有 [CLS] 的名额；VisionZip 的 64 个里含 [CLS]（54 个主导含 [CLS]、10 个上下文，[PAPER-0006 笔记](PAPER-0006_VisionZip.md) E-VZ-1）。
 - **合并 token**：TGVC 的每个簇合成 1 个 token、记 1 个（Table 11 的 16，p.17）；VisionZip 的 10 个上下文 token 也各记 1 个。合并 token 在 LLM 里用什么位置编号，没写（UN）。
 - **名额表**（p.17 Table 11–12、D.1）：LLaVA-1.5 的 32 / 64 / 128 / 192 = 24 + 8 / 48 + 16 / 96 + 32 / 144 + 48（3 : 1）；LLaVA-NeXT 的 80 / 160 / 320 / 640 = 70 + 10 / 140 + 20 / 280 + 40 / 560 + 80（7 : 1）；Video-LLaVA 每帧 17 个、8 帧共 136 个。[AI] NeXT 是 7 : 1，与 Table 26 的 3 : 1 和“各模型、各基准超参数一致”（p.21 D.3.7）不符。
-- **与 FastV 一族怎么对齐**：LLaVA-1.5-7B 的表里没有 FastV；对照是 SparseVLM、PDrop（都在 LLM 内分段剪）与 VScan（两阶段），作者说沿用各自论文的默认设置与评测指标（p.7 §4.1）。FastV 只出现在 Qwen2-VL / Qwen2.5-VL（Table 6，约 1/3 的 token）与 InternVL2-2B（Table 14，削减 70%）上，K 与剪除比例没写（UN）。[AI] 对照方法的 token 数沿用各自论文的计法：VScan、SparseVLM 是层平均，VisionZip 每层都是 N 个。
+- **与 FastV 一族怎么对齐**：LLaVA-1.5-7B 的表里没有 FastV；对照是 SparseVLM、VisionZip、PDrop 与 VScan（p.7 §4.1；复核时改正：原写“SparseVLM、PDrop 与 VScan”，漏了 VisionZip），其中 SparseVLM、PDrop 在 LLM 内剪，VisionZip 在 LLM 之前剪，VScan 两阶段（AI，按各自论文），作者说沿用各自论文的默认设置与评测指标（p.7 §4.1）。实验表格里 FastV 只出现在 Qwen2-VL / Qwen2.5-VL（Table 6，约 1/3 的 token）与 InternVL2-2B（Table 14，削减 70%）上，K 与剪除比例没写（UN）；Fig. 2(b)(c) 的曲线图例在解析里读不到，图中有没有 FastV 不知道（UN）。[AI] 对照方法的 token 数沿用各自论文的计法：VScan、SparseVLM 是层平均，VisionZip 每层都是 N 个。
 - **FLOPs 与时延的口径**：
   - C.1 给了“第 K 层之后”的 FLOPs 估算式，C.2 给了理论削减比（都是图片，读不到；p.16–17）。
   - Table 8（LLaVA-NeXT-7B，SQA）报 CUDA 时间、FLOPs、KV cache；Table 9（单张 A100，POPE）报总推理时间、预填充时间、FLOPs；Table 20（A40，LLaVA-NeXT-7B / 13B）报预填充毫秒数、总时间、显存。
@@ -90,7 +90,7 @@
 
 - 表头是“Retain Averaged N Tokens”，VisionTrim 一行是两阶段的结果（Table 4 的“两阶段”一行与 64 档相同）。表里没有 FastV、DivPrune（E-VT-17）；VScan 没有 SEED、MMVet。
 - 平均分是十个基准对 vanilla 比值的平均（复算见「来源与阅读范围」）。VScan 的平均只有八个基准，与其他行不能直接比（AI）。
-- 作者的说法：三档都超过之前的方法；POPE、SQA、TextVQA 上不降反升（p.7）。
+- 作者的说法：三档都超过之前的方法；POPE、SQA、TextVQA 上不降反升（p.7）。（复核时补：按 Table 1，POPE、SQA 三档都高于 vanilla；TextVQA 只有 192 档高于 vanilla（58.4 对 58.2），128 档持平（58.2），64 档低（56.8）。）
 
 **VisionTrim − VisionZip（同表相减，AI 算术）**
 
@@ -131,7 +131,7 @@
 - **DINOv2 编码器**（Table 25，p.22；32 个）：SEED 60.6 → 58.5、MMB 64.2 → 63.0、MME 1404 → 1368、POPE 86.7 → 83.4、SQA 70.0 → 70.7。
 - **“直接文本引导”对照**（Table 23，p.22；LLaVA-1.5-13B，32 个）：POPE 59.5 对 84.4，MME 1240 对 1685，OCRBench 154 对 297，TextVQA 47.4 对 57.6。这个对照怎样实现，没写（UN）。
 - **指代物体分类 ROC**（Table 18，p.19）：Box 一项 vanilla 55.4、VisionZip 40.4、VisionTrim 55.1；token 数没写（UN）。
-- **个案**（Fig. 7，p.15–16）：64 个时，问木凳颜色、问酒的年份两例，VisionZip 与只用 DVTS 答错，加 TGVC 后改对；第 3 例三者都对；第 4 例（32 个，问汽水品牌）三者都错。作者称之为缓解“知识边界漂移”（p.15–16）。是挑出来的 4 个例子，不是统计。
+- **个案**（Fig. 7，p.15–16）：64 个时，问木凳颜色、问左边那瓶饮料陈酿了多久两例（原文是 drink；复核时改正：原写“问酒的年份”），原模型（576 个）答对，VisionZip 与只用 DVTS 答错，加 TGVC 后改对（这两例的对错正文 p.15 明写了）；第 3 例（问女士在做什么）三种设置都答 Cooking，与 576 个时的回答相同；第 4 例（32 个，问汽水品牌）三种设置都答 Drink，576 个时答 Coca-Cola（复核时改正：原写“第 3 例三者都对；第 4 例三者都错”。正文只明写了前两例的对错，第 3、4 例的红字标注在解析里看不到，这里只按回答文字说）。作者称之为缓解“知识边界漂移”（p.15–16）。是挑出来的 4 个例子，不是统计。
 
 ### 效率（LLaVA-1.5-7B）
 
@@ -175,12 +175,12 @@
 | E-VT-14 | DE | 插入层消融（k = 2 ～ 24），插在浅层更好；没有 k = 1 | p.18 Table 15；p.19–20 D.3.1 | 不是 64 档；k = 2 一行的 α2（77.3%）与算式（73.3%）不符（AI） |
 | E-VT-15 | DE | 效率（单张 A100，POPE）：总时间 1303 → 685 s（1.90×），预填充 494 → 235 s（2.10×），FLOPs 3.8 → 0.8 T；只 DVTS 670 s，只 TGVC 741 s | p.10 Table 9；p.16 Table 10；p.21 D.3.8 | 批大小、解码方式没写；CLIP 文本编码器是否计入没写 |
 | E-VT-16 | AI | 内部不一致：NeXT vanilla 的 FLOPs 9.6 T（Table 8）对 12.6 T（Table 9），VisionTrim-320 0.8 T 对 1.2 T；NeXT 的 POPE，SparseVLM-320 78.6（Table 2）对 78.5（Table 9），VisionTrim-320 83.6 对 84.8；3 : 1 对 NeXT 的 7 : 1；同为 320 个 FLOPs 差一倍 | p.7 Table 2；p.9 Table 8；p.10 Table 9；p.17 Table 12；p.21 D.3.7 | 基准不同可能解释 FLOPs 的一部分差别，原文没说明 |
-| E-VT-17 | DE | LLaVA-1.5-7B 的表里没有 FastV、DivPrune；参考文献里没有 DivPrune；FastV 只在 Table 6（Qwen2-VL / Qwen2.5-VL）与 Table 14（InternVL2-2B）出现，设置没写 | 全文 p.1–31；参考文献 p.10–14；p.8 Table 6；p.18 Table 14 | 通读判断，并检索核对过 DivPrune、diversity 等词 |
+| E-VT-17 | DE | LLaVA-1.5-7B 的表里没有 FastV、DivPrune；参考文献里没有 DivPrune；实验表格里 FastV 只在 Table 6（Qwen2-VL / Qwen2.5-VL）与 Table 14（InternVL2-2B）出现，设置没写（复核时补：Fig. 2(b)(c) 图例读不到，图中有没有不知道） | 全文 p.1–31；参考文献 p.10–14；p.8 Table 6；p.18 Table 14 | 通读判断，并检索核对过 DivPrune、diversity 等词 |
 | E-VT-18 | DE | 没有按题型的分析（全文未见 yes/no、answer type、counting、how many 等）；没有重复运行、方差或区间；VQAv2 与 GQA 的划分、解码方式没写 | 全文 p.1–31 | 通读判断，并检索核对 |
 | E-VT-19 | AI | POPE 的指标很可能是 F1（三个子集平均），不是表头写的 Accuracy | p.6 Table 1；p.10 Table 9；[PAPER-0008 笔记](PAPER-0008_CLASP.md)（EXP-0002-R04） | 依据：vanilla 85.9 等于本项目实测 F1 85.90，本项目准确率是 86.87 |
 | E-VT-20 | SC | 没有题目时退回只用 DVTS（POPE 84.6 对 86.2）；题目无关或误导时退化成无监督聚类，因为是合并，语义能保住 | p.9 §4.3；p.16 Table 10 | 后半句没有实验（AI） |
 | E-VT-21 | DE | “直接文本引导”对照在 LLaVA-1.5-13B、32 个时 POPE 59.5（VisionTrim 84.4）、MME 1240（1685） | p.20 D.3.4；p.22 Table 23 | 对照怎样实现没写（UN） |
-| E-VT-22 | DE | 个案 4 例：颜色题、年份题上加 TGVC 改对；第 4 例（32 个）三者都错 | p.15 Fig. 7；p.15–16 附录 A | 挑选的个案，不是统计 |
+| E-VT-22 | DE | 个案 4 例：颜色题、陈酿年数题上加 TGVC 后回答与原模型一致（正文称原模型答对）；第 3 例三者回答与原模型相同；第 4 例（32 个）三者都答 Drink，原模型答 Coca-Cola（复核时改正：原写“年份题”“第 4 例三者都错”；第 3、4 例的对错标注解析里读不到） | p.15 Fig. 7；p.15–16 附录 A | 挑选的个案，不是统计 |
 | E-VT-23 | DE / SC | 作者自述局限：64 档保留 98.8%，仍不是无损；部署到高风险应用前要做个案测试；错误输出可能造成误导或安全问题 | p.10 §5；p.16 附录 A；p.23–24 附录 E | 没有讨论预算口径、对照来源、文本编码器的开销（AI） |
 | E-VT-24 | DE | 代码链接 https://github.com/hanxunyu/VisionTrim；代码许可证没写；Table 27 列出所用数据集与模型的许可证；LLM 只用于润色语言（附录 B） | p.1；p.16 附录 B；p.23 Table 27 | 代码未下载、未核验（需许可） |
 | E-VT-25 | DE | 微调版 VisionTrim‡：微调 TGVC 的跨模态注意力模块与投影层，用 1/10 的 LLaVA-1.5 数据（66K 条）；16 个时平均 90.0% → 94.3% | p.17–18 D.2.1、Table 13；p.24 附录 F | 主表是免训练版 |
@@ -214,7 +214,7 @@
 | 5 | 其余 token 与文本比相似度，取最相似的作聚类中心，把其余合并进去（IDEA-0006 第 73 行；EXP-0028 记录第 111 行） | 成立 | p.5 §3.2 式 7–10：中心是与 CLIP 文本特征平均相似度最高的 R 个；分配按“经由文本”的相似度（式 8），合并是加权平均，迭代 T 次 |
 | 6 | 不围框，中心可以散在全图（IDEA-0006 第 73 行） | 成立（推断） | 方法里没有区域或框，中心在全部剩余 token 中按文本相似度取（p.5）；LTAM 的 3 × 3 邻域只用于打分 |
 | 7 | 64 个 token 时 GQA 58.8、VQAv2 76.8，同表 VisionZip 55.1、72.4（IDEA-0006 第 73 行；EXP-0028 记录第 111 行） | 成立 | p.6 Table 1。条件：表头是“Retain Averaged 64 Tokens”，VisionTrim 一行是两阶段的结果；VisionZip 的数字与 VisionZip 论文 Table 1 相同（引用，E-VT-8） |
-| 8 | 报告比 VisionZip 高 3～4 分（IDEA-0006 第 77、83 行；EXP-0028 记录第 259 行、squeeze 第 92 行；version-evolution 中 DEC-0048 ⑤；实验室会话交接第 120 行） | 部分成立 | 只在 64 档的 GQA、VQAv2 上成立：+3.7、+4.4（平均分 +4.4；POPE +9.2，TextVQA +1.3，MMVet +0.5）。128 档 +2.7、+2.6，192 档 +1.7、+1.6。条件：两阶段、层平均（推断）；VisionZip 数字是引用的；全量基准，划分没写；单次。只在 LLM 之前用时（Table 4 对 Table 1）：GQA +0.5、VQAv2 −0.2、MMB +0.1、POPE +3.2 |
+| 8 | 报告比 VisionZip 高 3～4 分（IDEA-0006 第 77、83 行；EXP-0028 记录第 259 行、squeeze 第 92 行；version-evolution 中 DEC-0048 ⑤；实验室会话交接第 120 行） | 部分成立 | 只在 64 档的 GQA、VQAv2 上成立：+3.7、+4.4（平均分 +4.4；POPE +9.2，TextVQA +1.3，MMVet +0.5）。128 档 +2.7、+2.6，192 档 +1.7、+1.6。条件：两阶段、层平均（推断）；VisionZip 数字是引用的；是否全量、哪个划分都没写（复核时改正：原写“全量基准”，全文没有说用全量还是子集）；单次。只在 LLM 之前用时（Table 4 对 Table 1）：GQA +0.5、VQAv2 −0.2、MMB +0.1、POPE +3.2 |
 | 9 | 页面没有给代码地址；要复现 VisionTrim 但没有代码地址（IDEA-0006 第 73、83 行） | 与 v3 不符 | v3 摘要给了 https://github.com/hanxunyu/VisionTrim（p.1）。当时读的 HTML 是哪个版本，不知道（UN）。代码仍未下载、未核验（需许可） |
 | 10 | VisionTrim 属于“逐 token 文本相关性”一类（version-evolution 中 DEC-0046 ②；论文主张与证据草稿 CL-15；论文素材库 MAT-0032） | 成立，需补一句 | 中心按逐 token 的文本相似度取（p.5）；但它把其余 token 合并进来，不只是“留下最相似的”。本项目的“不围框”对照只留与题目最相似的 16 个、不合并，与它不同 |
 | 11 | GQA testdev 上本项目的 VisionZip-64 为 55.18，与 VisionTrim 表中的 55.1 相近（IDEA-0006 第 83 行） | 部分成立 | 55.1 在 Table 1（p.6），但它与 VisionZip 论文自己的数字相同，是引用的；所以这是在与 VisionZip 原文比，不是与 VisionTrim 的重跑比。VisionTrim 的 GQA 划分没写 |
@@ -241,7 +241,7 @@
 | 额外的模型与计算 | CLIP 文本编码器（LLaVA-1.5 不带）；TGVC 的聚类（只 TGVC 741 s 对只 DVTS 670 s，Table 10） | 无额外模型；路由耗时 +0.7% | 我们更轻；它报告的端到端 1.90× 是否含文本编码器没写 |
 | 训练 | 免训练；另有微调版‡ | 免训练 | 相同 |
 | 对照 | SparseVLM、VisionZip、PDrop、VScan，数字多为引用；LLaVA-1.5 上没有 FastV、DivPrune | 同一流程里实测 VisionZip-64、DivPrune-64（按论文实现）、FastV 一族 | 我们的对照是自己跑的 |
-| 评测 | 全量基准（划分没写），单次，无区间 | 开发集与确认集子集，按图像重抽区间，确认预注册 | 数字不能直接比 |
+| 评测 | 十个基准，是否全量、哪个划分都没写（复核时改正：原写“全量基准”），单次，无区间 | 开发集与确认集子集，按图像重抽区间，确认预注册 | 数字不能直接比 |
 | 64 档相对 VisionZip-64 | 两阶段：GQA +3.7、VQAv2 +4.4（Table 1）；只在 LLM 之前：+0.5、−0.2（Table 4） | K = 1 路由 + 覆盖 16：GQA 两组新数据合并 +2.16，VQAv2 合并 +0.19（F69）；DivPrune-64：开发集 VQAv2 +2.20、GQA +1.63；VisionZip-64 + 每题覆盖 16：两组确认集合并 +0.83 / +0.38（F71） | 方向上：只在 LLM 之前加文本引导，两边都只有小增益；让 LLM 前几层看更多再剪（两阶段 / K = 1），GQA 上都更高（VisionTrim 约 +3～4，本项目约 +1.6～+2.2）。评测集不同，只能比方向 |
 
 ### 重叠（AI）
@@ -257,7 +257,7 @@
 2. **不加模型**：本项目的题目查询在 LLM 输入层的词向量空间里算，与投影后的图像 token 在同一空间；它要另跑 CLIP 文本编码器，视觉特征怎样与之对齐没写（E-VT-2）。
 3. **预算日程明写**：本项目每个配置都写明哪几层看多少个（K = 1：576 → 47）；它的“Averaged”没有定义，层间日程没给，同写 64 的设置 KV 粗算差别不小（E-VT-12）。
 4. **对照在同一流程里实测，结果有区间与预注册**：它的对照数字多为引用（E-VT-8），全部单次。
-5. **本项目的弱点**：只有 LLaVA-1.5-7B、以 64 档为主；它覆盖八个以上模型、高分辨率与视频；它在全量基准上报告的 64 档数字（GQA 58.8、VQAv2 76.8）比我们能写的高，我们没有复现它。审稿人可能要求在同一流程里跑 VisionTrim（有代码，下载要用户许可）。
+5. **本项目的弱点**：只有 LLaVA-1.5-7B、以 64 档为主；它覆盖八个以上模型、高分辨率与视频；它在十个基准上报告的 64 档数字（GQA 58.8、VQAv2 76.8；复核时改正：原写“全量基准”，全文没写是否全量）比我们能写的高，我们没有复现它。审稿人可能要求在同一流程里跑 VisionTrim（有代码，下载要用户许可）。
 
 ### 是否已经做了我们想做的事（新颖性威胁，AI）
 
@@ -387,3 +387,53 @@ unresolved_questions:
 ## 主代理抽查（2026-10-31）
 
 - 写笔记的工作流（2026-10-30）原定由另一个子代理逐条复核，复核因用量上限没有完成；2026-10-31 用户睡觉期间不开子代理（DEC-0063），第二人复核留到之后。本笔记目前只经过主代理的抽查：Table 1 “Retain Averaged 64 Tokens” 一段的 VisionZip（55.1、72.4）与 Ours（GQA 58.8、VQAv2 76.8）两行、消融表的 “w/ DVTS+TGVC” 55.6 / 72.2 都在解析全文里找到；表头写的是 Averaged（层平均口径）。没有抽查到的数字以 PDF 为准。
+
+## 第二人复核（2026-10-31）
+
+复核方式：独立从头读完解析全文（`literature/processed/PAPER-0017/VisionTrim-arxiv-2601.22674.md`，只读导出 main_54bf807，1280 行，p.1–31 全部读完），只对照这份文本，没有对照 PDF，没有联网、没有运行 Python 或 git。MinerU flash 档只有文本，公式是图片，表格可能错位。算术（平均分复算、KV 换算、Table 15 的 α2）用只读的 PowerShell 表达式算了一遍，没有写文件。
+
+### 核对了多少处
+
+约 360 处，包括：Table 1 的 LLaVA-1.5-7B 全部格子（vanilla 与 192 / 128 / 64 三档的 SparseVLM、VisionZip、PDrop、VScan、VisionTrim，逐格对）；“VisionTrim − VisionZip”差值表的 33 个差值（全部重算，无误）；64 档平均分复算（VisionTrim 98.73%、VisionZip 94.38%，与笔记写的 98.7% / 94.4% 和表中 98.8% / 94.4% 相符）；Table 4、5、7、9、10、11、12、13、14、15、18、21、23、24、25、26 与 Table 2、3、6、8 的数字；KV 粗算（0.524288 MB 每 token：579、2884、320、344、194、48、83、58 个都算对）；Table 15 每行的 α2 算式（只有 k = 2 一行不符，笔记写对了：算式应得 73.3%，表中 77.3%）；作者、机构、基金号、版本、日期、代码链接、页码、附录结构；各条 DE / SC 的出处；“本项目引用过的说法：核对”12 条与“与当前项目的关系”里关于这篇论文本身的说法。文件大小（101,960 字节）与 SHA-256 前 16 位（0d83d80811f6e1082b3a7c27e3a02cdec8816805416fe4a31ee0a35b42175d38）与笔记登记一致。VScan 论文的“Retain N Tokens in Average”与“32 层平均”（PAPER-0014 解析全文 p.8 正文、p.9 Table 2）也对了一遍，一致。
+
+### 改了哪些（改前、改后、依据）
+
+1. 个案（「其他消融」的“个案”一条，及 E-VT-22）。
+   - 改前：问“酒的年份”；“第 3 例三者都对；第 4 例三者都错”。
+   - 改后：问左边那瓶饮料陈酿了多久（原文 drink）；第 3 例三种设置都答 Cooking、与 576 个时相同；第 4 例三种设置都答 Drink、576 个时答 Coca-Cola；第 3、4 例的对错不下结论。
+   - 依据：p.15 Fig. 7 图中文字；p.15 正文只明写了前两例“原模型答对，VisionZip 或只用 DVTS 答错，加 TGVC 后恢复”；红字标注（错误）在解析里看不到。“酒”是原笔记的推测，原文只写 drink。
+2. 对照方法（「预算口径」的“与 FastV 一族怎么对齐”）。
+   - 改前：对照是 SparseVLM、PDrop 与 VScan。
+   - 改后：对照是 SparseVLM、VisionZip、PDrop 与 VScan。
+   - 依据：p.7 §4.1 “We compare our approach with SparseVLM, VisionZip, PyramidDrop, and VScan”；Table 1 也有 VisionZip 行。
+3. FastV 的出现范围（同一条及 E-VT-17）。
+   - 改前：“FastV 只出现在 Table 6 与 Table 14”。
+   - 改后：加限定“实验表格里”，并注明 Fig. 2(b)(c) 图例读不到，图中有没有 FastV 不知道。
+   - 依据：全文检索 FastV：正文 p.1、p.3 的引言与相关工作提到，表格里只在 Table 6（p.8）与 Table 14（p.18）；Fig. 2 图中文字没有方法名（p.3）。
+4. “全量基准”（「本项目引用过的说法：核对」第 8 条、「与当前项目的关系」的“评测”行、「可辩护的差别」第 5 条“本项目的弱点”）。
+   - 改前：写“全量基准，划分没写”。
+   - 改后：是否全量、哪个划分都没写。
+   - 依据：全文检索 subset、full set、official 等，没有任何一处说明用全量测试集还是子集（p.7 §4.1 只写“10 widely-used image-based benchmarks”）。
+5. 作者说法的补注（「LLaVA-1.5-7B 主表」后的“作者的说法”）。
+   - 改前：只转述“POPE、SQA、TextVQA 上不降反升”。
+   - 改后：补一句按 Table 1 核对的结果：POPE、SQA 三档都高于 vanilla；TextVQA 只有 192 档高（58.4 对 58.2），128 档持平，64 档低（56.8）。
+   - 依据：p.6 Table 1 与 p.7 §4.2 正文。这不是笔记的转述错误，是补上作者说法与自己表格不完全一致之处。
+
+除以上五处，其余数字、页码与 DE / SC / AI 标签核对后未发现错误。
+
+### 还有哪些读不清
+
+- 公式 1–5、7、9–12 是图片，读不到；式 6、式 8 只有错位文字。尤其“按内积分配”（笔记写“做内积”）：解析里只看到 a_ij = S_v2t^i · S_t2c^j 的乘积形式，是否对文本维度求和（内积）靠上下文推断，以 PDF 为准。式的编号是按出现顺序推定的。
+- Table 3（视频）Ours 一行错位，各项数字仍未能逐一核对；平均 98.0% 与 SparseVLM 86.5%、VisionZip 91.3% 读得清。
+- Table 4 的 KV cache 数字是否两行共用；Table 10 的基准没写（POPE 是推断）。
+- Fig. 1–15 只有图中文字，没有看图像；Fig. 7 的红字标注、Fig. 2(b)(c) 的图例读不到。
+- 笔记里引用其他论文的说法（PAPER-0006 VisionZip、PAPER-0014 VScan 里的数字对比，E-VT-8 的 SparseVLM、PDrop 数字差异）这次只抽查了 VScan 的 Table 2 与“32 层平均”两处，其余没有逐格复核。
+- 关于本项目自己实验的数字，按要求没有核对。
+
+### (a) 剪枝或合并之后留下的视觉 token 的位置编号（position ids / RoPE 位置）
+
+全文未见。全文检索 position、RoPE、rotary，只在两处出现“位置”：p.5 §3.1 的 LTAM 用 token 在视觉网格里的二维坐标 P_xy ∈ R²（“position (x, y)”）算“位置接近”那一项，同页 σ_p 的说明里“positional differences”同指这个；它们是打分用的网格坐标，不是 LLM 里的位置编号。剪枝或合并之后，留下的 K 个主导 token 与 R 个补充 token 进 LLM 时用什么 position ids、合并 token 的位置怎么定、第 2 层后再剪时留下的 token 是否保持原编号，正文、附录、Table 26 都没有写。式 11、式 12 是图片读不到，不能排除图片里有，但文字没有任何说明。这与笔记「预算口径」里“合并 token 在 LLM 里用什么位置编号，没写（UN）”一致。
+
+### (b) 定位类任务的评测
+
+有一处，只有一个数字，且不是专门的定位实验。p.8 Table 6 右半（Qwen2.5-VL-7B，约 1/3 的 token）最后一列是 RefCOCO：vanilla 89.5，FastV 73.6，SparseVLM 78.4，PDrop 77.5，VisionTrim 86.8（比 vanilla 低 2.7）。指标（是否为 Acc@0.5）、用哪个划分（val / testA / testB）、是否有 RefCOCO+ / RefCOCOg、输出框坐标的提示格式，全文都没有写；也没有目标检测或其他 visual grounding 评测。LLaVA-1.5 上没有 RefCOCO 类评测。p.19 Table 18 的“Referring Object Classification”（Box / Mask / Scribble / Point 是指代的提示方式）是指代物体分类，不输出框坐标，不算定位；其中 Box 一列 vanilla 55.4、VisionZip 40.4、VisionTrim 55.1，token 数没写。正文 p.8 把 Table 6 概括为“几个情况下只掉约 0.1%，偶尔超过原模型”，没有单独讨论 RefCOCO 的 2.7 分下降。
