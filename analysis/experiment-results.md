@@ -49,7 +49,8 @@
 | EXP-0041 | IDEA-0011 | CDPruner-64 加四种布局：fill（剪掉的位置用最相似的保留 token 的 K、V 填上）、shuffle、orig、mass，在 VQAv2 dev2、GQA val400 上；8 次 | [EXP-0041_record](实验报告/EXP-0041_record.md)（计划 v1） | 分析 code/output/EXP-0041/analysis（b6e124c5…） | completed（2026-10-31 14:50～17:22，代码 33d3472；Q1 fill − CDPruner-64 +1.02 / +2.63，有希望、提升大；Q2 fill − shuffle −0.18 / +2.17，部分；Q3 fill − orig +4.62 / +5.39，有希望；按计划做确认 EXP-0042，DEC-0081；原写 planned（DEC-0079；开门前按 DEC-0055 读改动部分）） |
 | EXP-0042 | IDEA-0011 | 确认：fill 对 CDPruner-64，在新抽的 VQAv2 test6、GQA val400d 与 MME、POPE 上；10 次 | [EXP-0042_record](实验报告/EXP-0042_record.md)（计划 v1） | 分析 code/output/EXP-0042/analysis（071c47f6…）；深挖 code/output/EXP-0042/squeeze（22809969…） | completed（2026-10-31 17:33～20:51，代码 cea78da；Q1 fill − CDPruner-64 +1.04 / +2.98，有希望、提升大；Q2 MME +1.35 不更差、POPE −1.43 更差 → 未确认，交用户决定，DEC-0082；原写 running（条件满足：EXP-0041 的 Q1“有希望”，DEC-0081；2026-10-31 17:33 起，代码 cea78da；开门前按 DEC-0055 读改动部分；原写 planned（条件性：EXP-0041 的 Q1 满足时才运行；DEC-0080））） |
 | EXP-0043 | IDEA-0011 | 推广：DivPrune-64 加 fill；CDPruner-128、CDPruner-192 各自加与不加 fill，在 VQAv2 dev2、GQA val400 上；10 次 | [EXP-0043_record](实验报告/EXP-0043_record.md)（计划 v1） | — | planned（DEC-0083；开门前按 DEC-0055 读改动部分） |
-| EXP-0045 | IDEA-0011 | 确认：EXP-0043 里满足条件的设置（DivPrune-64、CDPruner-128、-192 加 fill）在新抽的 VQAv2 test7、GQA val400e 上，DivPrune-64 另加 MME、POPE；最多 16 次 | [EXP-0045_record](实验报告/EXP-0045_record.md)（计划 v1） | — | planned（条件性：EXP-0043 的对应问题满足时才运行；DEC-0084） |
+| EXP-0044 | IDEA-0011 | 推广与实现：VisionZip-64 加 fill（577 个槽）、CDPruner-64 加 fill 的紧凑 KV 缓存，在 VQAv2 dev2、GQA val400 上；6 次 | [EXP-0044_record](实验报告/EXP-0044_record.md)（计划 v1） | — | planned（DEC-0085；EXP-0043 之后，开门前按 DEC-0055 读改动部分） |
+| EXP-0045 | IDEA-0011 | 确认：EXP-0043 里满足条件的设置（DivPrune-64、CDPruner-128、-192 加 fill）在新抽的 VQAv2 test7、GQA val400e 上，DivPrune-64 另加 MME、POPE；最多 16 次（计划 v1.1 加 D 部分 VisionZip-64，最多 20 次，DEC-0085） | [EXP-0045_record](实验报告/EXP-0045_record.md)（计划 v1） | — | planned（条件性：EXP-0043 的对应问题满足时才运行；DEC-0084） |
 
 ## 全部运行
 
