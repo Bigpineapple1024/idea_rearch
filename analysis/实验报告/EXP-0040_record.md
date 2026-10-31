@@ -55,3 +55,10 @@
 ### 预算
 
 - 6 次，约 2 GPU 小时；IDEA-0010 上限 30 次或 20 GPU 小时。
+
+## 开门前的阅读（DEC-0055，2026-10-31 中午 12 点后）
+
+- **读的范围**：上一道门（EXP-0039，2026-10-31 11:19）以来的改动：main 的 41dd99e（MODE_C-0002 回流 28）、3754844（EXP-0039 的结果、DEC-0076、F101、F102）、dc52811（回流 29、IDEA-0010、本计划 v1、DEC-0077）；code/token-pruning 的 fc76f1a（EXP-0039 的代码，开门前已读，由 chain_0039 核对 MANIFEST 后提交，仓库里 check_cdpruner 43 / 43）；新的运行产物：EXP-0039 的 R01、R02 与分析（已封存，verify_seal ALL OK）。本实验要提交的代码：run_eval.py（--freeze-layers 的参数、校验、施加与日志，27 行）、exp0002.py（六个配置与冻住的日志，9 行）相对 fc76f1a 的差异；freeze.py、check_freeze.py、analyze_0040.py 为新文件（BASE = cdpruner）；sha256 记在 `D:\6CJNM007\tmp\exp0040\MANIFEST`；run_analyze_0040.sh、seal_0040.sh、提交说明 msg_code74.txt 与排队脚本 chain_0040.sh（bash -n 通过）。
+- **核对**：不加 --freeze-layers 时其余方法的计算不变（新代码只在这个参数存在时施加钩子；回归 check_cdpruner 43 / 43、check_peekc 19 / 19、check_peek 29 / 29、check_divprune 26 / 26、check_k1cls 32 / 32）；check_freeze 24 / 24；GPU 冒烟测试 40 题正常；analyze_0040.py 的替身空跑 44 项都通过。
+- **发现**：代码与计划 v1 一致，没有要改的。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0040.done`。
