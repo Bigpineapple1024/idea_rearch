@@ -17,6 +17,7 @@
 | EXP-0038 | IDEA-0009 的开发运行（编号相同时的第 0 层借看，开发集） | [EXP-0038_record](EXP-0038_record.md)（completed） | [SQZ-EXP-0038](EXP-0038_squeeze.md)（2026-11-01 补成单独的报告） |
 | EXP-0041 | IDEA-0011 的开发运行（虚拟填补，CDPruner 底座，开发集） | [EXP-0041_record](EXP-0041_record.md)（completed） | [SQZ-EXP-0041](EXP-0041_squeeze.md)（2026-11-01 补成单独的报告） |
 | EXP-0042 | IDEA-0011 的确认（新数据与 MME、POPE） | [EXP-0042_record](EXP-0042_record.md)（completed） | [SQZ-EXP-0042](EXP-0042_squeeze.md)（2026-11-01 补成单独的报告） |
+| EXP-0043 | IDEA-0011 的推广（DivPrune-64 加 fill，CDPruner-128、-192 加与不加 fill，开发集） | [EXP-0043_record](EXP-0043_record.md)（completed） | [SQZ-EXP-0043](EXP-0043_squeeze.md)（单独的报告） |
 
 原始产物放在 `code/output/<实验ID>/<运行ID>/`，并备份到实验室电脑的 `D:\6CJNM007\backup\<实验ID>\<运行ID>\`，记录中登记校验和与备份路径。
 
