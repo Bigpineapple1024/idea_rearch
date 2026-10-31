@@ -8,6 +8,7 @@
   python score_pope_mme.py gqa_val400b <answers.jsonl> <out_dir>   # or vqav2_test4: IDEA-0007's fresh sets (EXP-0031)
   python score_pope_mme.py gqa_val400c <answers.jsonl> <out_dir>   # or vqav2_test5: IDEA-0008's fresh sets (EXP-0035)
   python score_pope_mme.py gqa_val400d <answers.jsonl> <out_dir>   # or vqav2_test6: IDEA-0011's fresh sets (EXP-0042)
+  python score_pope_mme.py gqa_val400e <answers.jsonl> <out_dir>   # or vqav2_test7: EXP-0043 / EXP-0044's fresh sets (EXP-0045)
 
 GQA follows LLaVA's scripts/convert_gqa_for_eval.py (answer.rstrip('.').lower()) and the official eval.py accuracy for
 --tier testdev_balanced (exact match with the single gold answer); per-question scores go to <out_dir>/gqa_scores.jsonl.
@@ -192,8 +193,8 @@ def score_vstar(answers, out_dir, log):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("bench", choices=["pope", "mme", "vqav2_test", "vqav2_dev", "vqav2_test2", "vqav2_dev2", "vqav2_test3",
-                                     "vqav2_test4", "vqav2_test5", "vqav2_test6", "gqa_testdev", "gqa_val400", "gqa_val400b",
-                                     "gqa_val400c", "gqa_val400d",
+                                     "vqav2_test4", "vqav2_test5", "vqav2_test6", "vqav2_test7", "gqa_testdev", "gqa_val400",
+                                     "gqa_val400b", "gqa_val400c", "gqa_val400d", "gqa_val400e",
                                      "textvqa_noocr", "textvqa_ocr", "vstar"])
     p.add_argument("answers")
     p.add_argument("out_dir")
@@ -210,7 +211,7 @@ def main():
             metrics = score_vqav2(answers, a.out_dir, a.bench.split("_", 1)[1], log)
         elif a.bench == "gqa_testdev":
             metrics = score_gqa(answers, a.out_dir, log)
-        elif a.bench in ("gqa_val400", "gqa_val400b", "gqa_val400c", "gqa_val400d"):
+        elif a.bench in ("gqa_val400", "gqa_val400b", "gqa_val400c", "gqa_val400d", "gqa_val400e"):
             metrics = score_gqa(answers, a.out_dir, log, split=a.bench.split("_", 1)[1], bench=a.bench)
         elif a.bench.startswith("textvqa_"):
             metrics = score_textvqa(answers, a.out_dir, a.bench.split("_", 1)[1], log)
