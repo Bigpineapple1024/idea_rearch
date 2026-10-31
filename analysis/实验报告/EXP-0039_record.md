@@ -54,3 +54,10 @@
 ### 许可与版本
 
 - 官方代码 source/CDPruner（9541616c，Apache-2.0；2026-10-31 按 DEC-0063 的许可克隆，只读，登记见 source/README.md）。CLIP-L/336 用本地快照（含文本塔，不需要下载）。
+
+## 开门前的阅读（DEC-0055，2026-10-31 中午）
+
+- **读的范围**：上一道门（EXP-0038，2026-10-31 09:25）以来的改动：main 的 82a2fae（EXP-0038 计划 v1.1）、66d9850（EXP-0038 的结果、DEC-0074、F98～F100）、9447b4c（DEC-0075、本计划 v1）；code/token-pruning 的 81cb815（EXP-0038 的代码，开门前已读，由 chain_0038 核对 MANIFEST 后提交）、81db8d7（analyze_0038.py v1.1，由 chain_0038b 核对 MANIFEST 后提交：与 v1 只差 peekc 在 GQA 上的运行号与说明，check_v11 5 / 5）；新的运行产物：EXP-0038 的 R01～R07（R02 failed）、分析与深挖（都已封存，verify_seal ALL OK，深挖的备份已核对）。本实验要提交的代码：run_eval.py（cdpruner 的参数、校验、分支与日志，共 32 行）、exp0002.py（cdpruner64 与它的日志，5 行）相对 81db8d7 的差异；cdpruner.py（与 2026-10-31 03:46 核对过的移植逐字节相同）、check_cdpruner.py、analyze_0039.py 为新文件；sha256 记在 `D:\6CJNM007\tmp\exp0039\MANIFEST`；run_analyze_0039.sh、seal_0039.sh、提交说明 msg_code73.txt 与排队脚本 chain_0039.sh（bash -n 通过）。
+- **核对**：不加 --method cdpruner 时其余方法的计算不变（新分支只在 method 为 cdpruner 时走；回归 check_peekc 19 / 19、check_peek 29 / 29、check_divprune 26 / 26、check_k1cls 32 / 32）；check_cdpruner 43 / 43；GPU 冒烟测试 40 题正常；analyze_0039.py 的替身空跑 35 项都通过。
+- **发现**：代码与计划 v1 一致，没有要改的。
+- **开门**：本节提交之后写门文件 `D:\6CJNM007\tmp\read_repo\gate\EXP-0039.done`。
