@@ -95,7 +95,7 @@
 | [analysis/archied/2026-10-23_SOP-v1_从论文到融合方案.md](../analysis/archied/2026-10-23_SOP-v1_从论文到融合方案.md) | 已归档：SOP v1（被研究流程 v2.0 取代） |
 | [analysis/实验室会话交接.md](../analysis/实验室会话交接.md) | 实验室电脑新会话的交接说明 |
 | [analysis/MODE_C-0001_视觉token剪枝.md](../analysis/MODE_C-0001_视觉token剪枝.md) | MODE_C_PACKAGE：多模态大模型视觉 token 剪枝（历史版本，已由 MODE_C-0002 取代） |
-| [analysis/MODE_C-0002_视觉token剪枝.md](../analysis/MODE_C-0002_视觉token剪枝.md) | MODE_C_PACKAGE：视觉 token 剪枝合并版（原文版 + 源码版 + EXP-0001/0002 回流；之后回流 1～13，2026-10-25 跑偏检查补注；2026-10-31 补注：现为回流 1～27（傍晚补注：现为回流 1～31，回流 31 是 EXP-0041 与查新补充）；2026-10-29 补注：现为回流 1～23，回流 20～23 是 SQZ-EXP-0027、SQZ-EXP-0028、查新补充与 SQZ-EXP-0029） |
+| [analysis/MODE_C-0002_视觉token剪枝.md](../analysis/MODE_C-0002_视觉token剪枝.md) | MODE_C_PACKAGE：视觉 token 剪枝合并版（原文版 + 源码版 + EXP-0001/0002 回流；之后回流 1～13，2026-10-25 跑偏检查补注；2026-10-31 补注：现为回流 1～27（傍晚补注：现为回流 1～32，回流 31 是 EXP-0041 与查新补充，回流 32 是 SQZ-EXP-0041）；2026-10-29 补注：现为回流 1～23，回流 20～23 是 SQZ-EXP-0027、SQZ-EXP-0028、查新补充与 SQZ-EXP-0029） |
 | [analysis/MODE_C-0003_时序预测.md](../analysis/MODE_C-0003_时序预测.md) | MODE_C-0003：时序预测的问题—现象—机制矩阵（iTransformer 为 baseline） |
 | [analysis/IDEA-0002_题目词按信息量加权.md](../analysis/IDEA-0002_题目词按信息量加权.md) | 跨领域迁移方案：用 IDF 给题目加权，构造图像 token 的查询（第 ⑨～⑪ 步，领域 B 信息检索，领域 C BERTScore / SIF） |
 | [analysis/IDEA-0001_编码器侧压缩的位置编号.md](../analysis/IDEA-0001_编码器侧压缩的位置编号.md) | IDEA_PACKAGE：编码器侧压缩的位置编号（融合路线候选，deferred） |
@@ -170,7 +170,7 @@
 | [analysis/实验报告/EXP-0038_record.md](../analysis/实验报告/EXP-0038_record.md) | EXPERIMENT_RECORD：IDEA-0009 的开发运行（计划 v1：VQAv2 dev2、GQA val400，6 次；Q1 peekc − DivPrune-64，Q2 peekc − nopeekc；2026-10-31 补：已完成，Q1 不像，Q2 有希望但是纠正；R02 由 R07 重跑（计划 v1.1）；DEC-0074） |
 | [analysis/实验报告/EXP-0039_record.md](../analysis/实验报告/EXP-0039_record.md) | EXPERIMENT_RECORD：本流程中的 CDPruner-64（计划 v1：VQAv2 dev2、GQA val400，2 次；Q1 CDPruner-64 − DivPrune-64，决定下一轮 IDEA 的底座；2026-10-31 补：已完成，CDPruner-64 − DivPrune-64 +0.74 / +2.49，更强，DEC-0076） |
 | [analysis/实验报告/EXP-0040_record.md](../analysis/实验报告/EXP-0040_record.md) | EXPERIMENT_RECORD：IDEA-0010 的开发运行（计划 v1：VQAv2 dev2、GQA val400，6 次；Q1 f127 − CDPruner-64，Q2 f127 − b127；2026-10-31 补：已完成，f127 − CDPruner-64 +0.59 / −0.46，方向为正、未检出，IDEA-0010 停在开发集，DEC-0078） |
-| [analysis/实验报告/EXP-0041_record.md](../analysis/实验报告/EXP-0041_record.md) | EXPERIMENT_RECORD：IDEA-0011 的开发运行（计划 v1：VQAv2 dev2、GQA val400，8 次；Q1 fill − CDPruner-64，Q2 fill − shuffle，Q3 fill − orig；2026-10-31 补：已完成，fill − CDPruner-64 +1.02 / +2.63，有希望、提升大，按计划做确认 EXP-0042，DEC-0081） |
+| [analysis/实验报告/EXP-0041_record.md](../analysis/实验报告/EXP-0041_record.md) | EXPERIMENT_RECORD：IDEA-0011 的开发运行（计划 v1：VQAv2 dev2、GQA val400，8 次；Q1 fill − CDPruner-64，Q2 fill − shuffle，Q3 fill − orig；2026-10-31 补：已完成，fill − CDPruner-64 +1.02 / +2.63，有希望、提升大，按计划做确认 EXP-0042，DEC-0081；深挖 SQZ-EXP-0041 在记录内，F109、F110） |
 | [analysis/实验报告/EXP-0042_record.md](../analysis/实验报告/EXP-0042_record.md) | EXPERIMENT_RECORD：IDEA-0011 的确认（计划 v1，条件性；VQAv2 test6、GQA val400d、MME、POPE，10 次；在 EXP-0041 的任何结果之前写定；2026-10-31 补：条件满足，17:33 开门运行，DEC-0081） |
 | [analysis/实验报告/EXP-0020_squeeze.md](../analysis/实验报告/EXP-0020_squeeze.md) | SQUEEZE_REPORT：EXP-0020（增益来自 yes/no 与 number F42；与 VisionZip 的差距在开放式题，是底座的差距 F43） |
 | [analysis/论文主张与证据_草稿.md](../analysis/论文主张与证据_草稿.md) | 论文主张与证据对照（草稿）：可以写的主张 CL-1～CL-10、不能写的主张、共同的限定 |
