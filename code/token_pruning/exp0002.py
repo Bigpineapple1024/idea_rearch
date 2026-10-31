@@ -287,6 +287,9 @@ CONFIGS["fastv64k1_qroute_cls_c16"] = ("tp", CONFIGS["fastv64k1_qroute_c16"][1] 
 # the selection is applied differs.
 CONFIGS["divprune64"] = ("tp", ["--method", "divprune", "--divprune-keep", "64"])
 CONFIGS["fastv64k1_div"] = ("tp", ["--method", "fastv", "--fastv-k", "1", "--fastv-keep", "47", "--fastv-score", "div"])
+# CDPruner (Zhang et al.), ported from its official code (cdpruner.py; github.com/Theia-4869/CDPruner at 9541616c, Apache-2.0):
+# 64 of the 576 projected patch tokens by the conditional DPP before the LLM, numbered contiguously as the official code.
+CONFIGS["cdpruner64"] = ("tp", ["--method", "cdpruner", "--cdpruner-keep", "64"])
 # EXP-0033 (step 4, round 2): exploratory combinations, each against its two single methods at a layer average of 64.
 # X1 (MODE_C-0002's C4): VisionZip-128 into the LLM, then plain FastV keeps 60 from layer 2: (2 x 128 + 30 x 60) / 32 = 64.25.
 # X2: VisionZip's CLS top-128 patches as candidates, DivPrune's max-min picks 64. X3: DivPrune-64 with the router's
@@ -423,6 +426,8 @@ def run_one(run_id, config, bench):
         method_args = method_args + ["--fastv-div-log", f"{run_dir}/div.json"]
     if method_args[method_args.index("--method") + 1] == "divprune":        # EXP-0032: one record per image
         method_args = method_args + ["--divprune-log", f"{run_dir}/div.json"]
+    if method_args[method_args.index("--method") + 1] == "cdpruner":        # CDPruner: one record per image
+        method_args = method_args + ["--cdpruner-log", f"{run_dir}/cdp.json"]
     if method_args[method_args.index("--method") + 1] in ("vzcand_div", "div_qroute", "div_ctx"):   # EXP-0033
         method_args = method_args + ["--combo-log", f"{run_dir}/combo.json"]
     if config.endswith("_names"):

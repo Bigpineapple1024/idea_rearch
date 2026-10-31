@@ -13,6 +13,7 @@ Covers the benchmarks that LLaVA-1.5 evaluates through llava.eval.model_vqa_load
   python run_eval.py --method vzcand_div --combo-cand 128 --combo-keep 64 --combo-log c.json -- ...   # X2
   python run_eval.py --method div_qroute --combo-keep 64 --combo-visibility v.npy --combo-log c.json -- ...   # X3
   python run_eval.py --method div_ctx --combo-keep 54 --combo-contextual 10 --combo-log c.json -- ...   # X4
+  python run_eval.py --method cdpruner --cdpruner-keep 64 --cdpruner-log cdp.json -- ...   # CDPruner (cdpruner.py)
 
 VisionZip is imported from its repository root (set VISIONZIP_ROOT or PYTHONPATH): the
 visionzip 0.1.3 wheel on PyPI ships no code.
@@ -54,12 +55,17 @@ def _schedule(text):
 def parse():
     ours = argparse.ArgumentParser()
     ours.add_argument("--method", choices=["vanilla", "fastv", "visionzip", "random", "sparsevlm", "divprune", "vzcand_div",
-                                           "div_qroute", "div_ctx"], required=True)
+                                           "div_qroute", "div_ctx", "cdpruner"], required=True)
     ours.add_argument("--divprune-keep", type=int, default=None,
                       help="divprune (EXP-0032): keep this many projected patch tokens per image before the LLM, chosen by "
                            "DivPrune's max-min diversity (divprune.py, written from the paper; cosine distance)")
     ours.add_argument("--divprune-log", default=None,
                       help="divprune: write one record per encoded image (JSON): the selection order and the kept patches")
+    ours.add_argument("--cdpruner-keep", type=int, default=None,
+                      help="cdpruner: keep this many projected patch tokens per image before the LLM by CDPruner's conditional "
+                           "DPP (cdpruner.py, ported from the official code at 9541616c; CLIP text relevance)")
+    ours.add_argument("--cdpruner-log", default=None,
+                      help="cdpruner: write one record per encoded image (JSON): the DPP order, the kept patches, the text")
     ours.add_argument("--combo-keep", type=int, default=None,
                       help="vzcand_div / div_qroute / div_ctx (EXP-0033): patches kept by the max-min order before the LLM")
     ours.add_argument("--combo-cand", type=int, default=None,
@@ -257,6 +263,12 @@ def parse():
         ours.error("--divprune-keep must be in 1..576")
     if (method_args.divprune_log is not None) != (method_args.method == "divprune"):
         ours.error("--divprune-log goes with --method divprune")
+    if (method_args.method == "cdpruner") != (method_args.cdpruner_keep is not None):
+        ours.error("--method cdpruner and --cdpruner-keep go together")
+    if method_args.cdpruner_keep is not None and not 0 < method_args.cdpruner_keep <= 576:
+        ours.error("--cdpruner-keep must be in 1..576")
+    if (method_args.cdpruner_log is not None) and method_args.method != "cdpruner":
+        ours.error("--cdpruner-log goes with --method cdpruner")
     combo = method_args.method in ("vzcand_div", "div_qroute", "div_ctx")       # EXP-0033
     if combo != (method_args.combo_keep is not None) or combo != (method_args.combo_log is not None):
         ours.error("the combinations need --combo-keep and --combo-log, and only they take them")
@@ -301,7 +313,7 @@ def parse():
     if method_args.vz_cover_top < 0 or (method_args.vz_cover_top and method_args.vz_cover_centre):
         ours.error("--vz-cover-top must be positive and does not go with --vz-cover-centre")
     if method_args.vocab_visibility_log and method_args.method in ("visionzip", "sparsevlm", "divprune", "vzcand_div", "div_qroute",
-                                                                   "div_ctx"):
+                                                                   "div_ctx", "cdpruner"):
         ours.error("--vocab-visibility-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     if (method_args.fastv_score == "mix") != (method_args.fastv_mix_question is not None):
         ours.error("--fastv-score mix and --fastv-mix-question go together")
@@ -309,7 +321,7 @@ def parse():
                                              or method_args.fastv_schedule):
         ours.error("--fastv-score mix needs --fastv-stratify, a single stage and no --text-rows-log")
     if method_args.name_cos_log and method_args.method in ("visionzip", "sparsevlm", "divprune", "vzcand_div", "div_qroute",
-                                                            "div_ctx"):
+                                                            "div_ctx", "cdpruner"):
         ours.error("--name-cos-log needs the 576 image tokens at the LLM input (vanilla, fastv or random)")
     method_args.conv_mode = llava_args.conv_mode          # the contrast vocabulary is tokenised in the same template
     method_args.question_file = llava_args.question_file  # IDF weights are counted over the evaluated questions
@@ -366,6 +378,13 @@ def apply_method(model, m, tokenizer=None):
     if m.method == "divprune":                                 # EXP-0032: DivPrune's selection before the LLM
         from divprune import apply_divprune
         return apply_divprune(model, m.divprune_keep, [])
+    if m.method == "cdpruner":                                 # CDPruner, ported from its official code (cdpruner.py)
+        import cdpruner
+        with open(m.question_file) as f:
+            texts = [json.loads(line)["text"] for line in f]
+        conv_mode = getattr(m, "conv_mode", "vicuna_v1")
+        text_of = {tuple(prompt_ids_after_image(tokenizer, t, conv_mode)): t for t in texts}
+        return cdpruner.apply_cdpruner(model, m.cdpruner_keep, text_of, cdpruner.load_aux(model.device), [])
     if m.method in ("vzcand_div", "div_qroute", "div_ctx"):    # EXP-0033: exploratory combinations, before the LLM
         import combo
         model.combo_log = []
@@ -723,6 +742,8 @@ def main():
             _DIV_MODEL.append(model)
         if method_args.combo_log:                                 # EXP-0033: its log is written at the end
             _COMBO_MODEL.append(model)
+        if method_args.cdpruner_log:                              # CDPruner: its log is written at the end
+            _CDP_MODEL.append(model)
         if method_args.layer_token_log:
             times["n_layers"] = len(model.get_model().layers)
             for i, layer in enumerate(model.get_model().layers):
@@ -825,6 +846,10 @@ def main():
         log = _DIV_MODEL[0].divprune_log if _DIV_MODEL else []
         with open(method_args.divprune_log, "w") as f:
             json.dump({"n_images": len(log), "keep": method_args.divprune_keep, "records": log}, f)
+    if method_args.cdpruner_log:                                # CDPruner: one record per encoded image
+        log = _CDP_MODEL[0].cdpruner_log if _CDP_MODEL else []
+        with open(method_args.cdpruner_log, "w") as f:
+            json.dump({"n_images": len(log), "keep": method_args.cdpruner_keep, "records": log}, f)
     if method_args.fastv_div_log:                               # EXP-0032: one record per prefill
         log = _DIV_MODEL[0].get_model().fastv_div_log if _DIV_MODEL else []
         with open(method_args.fastv_div_log, "w") as f:
@@ -841,6 +866,7 @@ _VZ_MODEL = []
 _CLS_MODEL = []
 _DIV_MODEL = []
 _COMBO_MODEL = []
+_CDP_MODEL = []
 
 
 if __name__ == "__main__":
